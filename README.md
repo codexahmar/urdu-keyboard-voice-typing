@@ -259,7 +259,7 @@ This project is for educational/personal use. Update license as needed.
 
 ## 👤 Developer
 
-Created by: Your Name
+Created by: Ahmaryar Khan
 Version: 1.0.0
 
 ---
