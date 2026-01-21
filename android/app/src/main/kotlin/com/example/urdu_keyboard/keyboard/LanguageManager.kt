@@ -18,7 +18,9 @@ class LanguageManager(
         val savedLanguage = preferenceHelper.getSelectedLanguage()
         currentLanguageIndex = supportedLanguages.indexOf(savedLanguage)
         if (currentLanguageIndex < 0) {
-            currentLanguageIndex = 0 // Default to English
+            // Default to Urdu (index 1) if not found
+            currentLanguageIndex = 1
+            preferenceHelper.setSelectedLanguage("ur")
         }
     }
 

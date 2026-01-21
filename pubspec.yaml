@@ -17,6 +17,9 @@ dependencies:
   # Local storage
   shared_preferences: ^2.2.2
   
+  # Permissions
+  permission_handler: ^11.3.0
+  
   # UI
   cupertino_icons: ^1.0.8
 

@@ -34,42 +34,6 @@ class MainActivity : FlutterActivity() {
         ).setMethodCallHandler(channelHandler)
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        // Request microphone permission for voice input
-        requestMicrophonePermission()
-    }
-
-    /**
-     * Request microphone permission for voice input
-     */
-    private fun requestMicrophonePermission() {
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.RECORD_AUDIO
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.RECORD_AUDIO),
-                RECORD_AUDIO_PERMISSION_CODE
-            )
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        
-        when (requestCode) {
-            RECORD_AUDIO_PERMISSION_CODE -> {
-                // Permission result handled
-                // Voice input will check permission status when used
-            }
-        }
-    }
+    // Microphone permission is now requested from Flutter side on home screen
+    // This allows better UX flow: permission -> keyboard setup
 }

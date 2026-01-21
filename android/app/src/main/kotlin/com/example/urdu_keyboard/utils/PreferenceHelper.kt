@@ -10,8 +10,8 @@ import android.content.SharedPreferences
 class PreferenceHelper(context: Context) {
 
     companion object {
-        private const val PREF_NAME = "urdu_keyboard_prefs"
-        private const val KEY_SELECTED_LANGUAGE = "selected_language"
+        private const val PREF_NAME = "FlutterSharedPreferences"  // Match Flutter's SharedPreferences name
+        private const val KEY_SELECTED_LANGUAGE = "flutter.selected_language"  // Match Flutter key format
         private const val KEY_HAPTIC_FEEDBACK = "haptic_feedback"
         private const val KEY_SOUND_ENABLED = "sound_enabled"
         private const val DEFAULT_LANGUAGE = "ur" // Default to Urdu

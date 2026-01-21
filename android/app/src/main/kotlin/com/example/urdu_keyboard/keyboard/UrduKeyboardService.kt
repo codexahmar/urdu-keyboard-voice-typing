@@ -100,6 +100,13 @@ class UrduKeyboardService : InputMethodService() {
     }
 
     /**
+     * Recreate keyboard view (called when switching layouts)
+     */
+    fun recreateKeyboard() {
+        setInputView(onCreateInputView())
+    }
+
+    /**
      * Insert text from voice recognition
      */
     fun insertVoiceText(text: String) {

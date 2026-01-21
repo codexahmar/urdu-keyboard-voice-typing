@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="#ECEFF1"
+    android:background="#E8EAF6"
     android:padding="4dp">
 
     <!-- First Row: Q W E R T Y U I O P -->

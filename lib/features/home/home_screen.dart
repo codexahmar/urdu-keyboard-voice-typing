@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/action_card.dart';
@@ -16,21 +17,94 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final PlatformChannelService _platformService = PlatformChannelService();
-  bool _hasCheckedKeyboard = false;
+  bool _hasCheckedOnThisLaunch = false;
 
   @override
   void initState() {
     super.initState();
-    // Automatically check and open keyboard settings on first launch
+    // Automatically check microphone permission and keyboard settings on first launch
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAndOpenKeyboardSettings();
+      _checkPermissionsAndKeyboard();
     });
   }
 
-  Future<void> _checkAndOpenKeyboardSettings() async {
-    if (_hasCheckedKeyboard) return;
-    _hasCheckedKeyboard = true;
+  Future<void> _checkPermissionsAndKeyboard() async {
+    if (_hasCheckedOnThisLaunch) return;
+    _hasCheckedOnThisLaunch = true;
 
+    // First, request microphone permission
+    await _requestMicrophonePermission();
+
+    // Small delay to ensure permission dialog is dismissed before showing keyboard dialog
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Then check keyboard status
+    if (mounted) {
+      await _checkAndOpenKeyboardSettings();
+    }
+  }
+
+  Future<void> _requestMicrophonePermission() async {
+    final status = await Permission.microphone.status;
+
+    if (status.isDenied || status.isPermanentlyDenied) {
+      if (mounted) {
+        final shouldRequest = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Microphone Permission'),
+            content: const Text(
+              'This keyboard uses voice typing feature. '
+              'Please grant microphone permission to use voice input.\n\n'
+              'You can enable it now or later from settings.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Later'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Grant Permission'),
+              ),
+            ],
+          ),
+        );
+
+        if (shouldRequest == true) {
+          final result = await Permission.microphone.request();
+          if (result.isPermanentlyDenied && mounted) {
+            // Show dialog to open app settings
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Permission Required'),
+                content: const Text(
+                  'Microphone permission is permanently denied. '
+                  'Please enable it from app settings.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      openAppSettings();
+                    },
+                    child: const Text('Open Settings'),
+                  ),
+                ],
+              ),
+            );
+          }
+        }
+      }
+    }
+  }
+
+  Future<void> _checkAndOpenKeyboardSettings() async {
     try {
       final isEnabled = await _platformService.isKeyboardEnabled();
 
