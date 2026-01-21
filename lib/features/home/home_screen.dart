@@ -4,10 +4,72 @@ import '../../core/constants/app_strings.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/action_card.dart';
 import '../../state/app_state.dart';
+import '../../services/platform_channel_service.dart';
 
 /// Home screen - main dashboard
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final PlatformChannelService _platformService = PlatformChannelService();
+  bool _hasCheckedKeyboard = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Automatically check and open keyboard settings on first launch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndOpenKeyboardSettings();
+    });
+  }
+
+  Future<void> _checkAndOpenKeyboardSettings() async {
+    if (_hasCheckedKeyboard) return;
+    _hasCheckedKeyboard = true;
+
+    try {
+      final isEnabled = await _platformService.isKeyboardEnabled();
+
+      if (!isEnabled && mounted) {
+        // Show dialog and open settings
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Enable Urdu Keyboard'),
+            content: const Text(
+              'To use the Urdu Smart Keyboard, you need to enable it in your device settings.\n\n'
+              'Tap OK to open settings, then:\n'
+              '1. Find "Urdu Smart Keyboard"\n'
+              '2. Toggle it ON\n'
+              '3. Return to this app',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('Later'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await _platformService.openKeyboardSettings();
+                },
+                child: const Text('Open Settings'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error checking keyboard status: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
