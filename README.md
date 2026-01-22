@@ -114,61 +114,21 @@ lib/
 - **Appearance**
   - Theme mode (Light/Dark/System)
   - Text size slider
-- **Accessibility**
-  - High contrast mode (placeholder)
-  - Haptic feedback (placeholder)
+
 - **About**
   - Version info
   - Developer info
   - Open source licenses
 
-## 🔌 Platform Channels (Preparation)
-
-The `PlatformChannelService` provides stubs for native Android communication:
-
-```dart
-// Open Android keyboard settings
-await platformService.openKeyboardSettings();
-
-// Check if keyboard is enabled
-bool isEnabled = await platformService.isKeyboardEnabled();
-
-// Set active language
-await platformService.setKeyboardLanguage('ur');
-
-// Get selected language
-String? lang = await platformService.getSelectedLanguage();
-```
-
-**Note:** These methods are stubs and will need implementation on the Android side using MethodChannel handlers.
-
-## 🎨 Theme & Design
-
-### Colors
-- **Primary:** Green tones (#2E7D32) - Fresh, accessible
-- **Secondary:** Teal tones (#00796B)
-- **Urdu Accent:** Purple (#7B1FA2)
-
-### Typography
-- Large, readable fonts
-- Elder-friendly sizing (18-28pt for body/titles)
-- Support for Urdu script rendering
-
-### Material 3 Components
-- Elevated buttons with large touch targets (56dp min height)
-- Rounded cards (16dp radius)
-- Soft shadows and elevation
-- Segmented buttons for settings
-
 ## 📦 Dependencies
 
 ```yaml
 dependencies:
-  provider: ^6.1.1              # State management
-  shared_preferences: ^2.2.2    # Local storage
+  provider:           
+  shared_preferences: 
 ```
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### 1. Install Dependencies
 
@@ -188,78 +148,13 @@ flutter run
 flutter build apk --release
 ```
 
-## 🔧 Configuration
-
-### Onboarding Reset
-
-To reset onboarding (for testing):
-
-```dart
-final prefs = PreferencesService();
-await prefs.init();
-await prefs.setOnboardingComplete(false);
-```
-
-### Change Default Language
-
-Edit `app_constants.dart`:
-
-```dart
-String getSelectedLanguage() {
-  return _prefs.getString(_selectedLanguageKey) ?? 'ur'; // Change 'ur' to 'en' or 'ar'
-}
-```
-
-## 🔮 Next Steps (Native Integration)
-
-To complete the keyboard functionality, implement in Android (Kotlin):
-
-1. **Create InputMethodService**
-   - Extend `InputMethodService`
-   - Implement keyboard view
-   - Handle key events
-
-2. **Setup MethodChannel Handler**
-   - Listen for Flutter method calls
-   - Implement platform-specific logic
-   - Return results to Flutter
-
-3. **Manifest Configuration**
-   - Register InputMethodService
-   - Add permissions
-   - Configure keyboard settings activity
-
-## 📝 Code Standards
-
-- **Dart style guide** followed
-- **Material 3 guidelines** implemented
-- **Accessibility** prioritized
-- **Comments** on complex logic
-- **const constructors** where possible
-
-## 🌐 Localization (Future)
-
-Currently uses inline English and Urdu strings. For full localization:
-
-1. Use `flutter_localizations`
-2. Create `.arb` files
-3. Generate localization classes
-4. Update `MaterialApp` with `localizationsDelegates`
-
-## 🧪 Testing (Future Enhancement)
-
-Add tests for:
-- Widget tests for UI components
-- Unit tests for state management
-- Integration tests for navigation flow
-
 ## 📄 License
 
 This project is for educational/personal use. Update license as needed.
 
 ## 👤 Developer
 
-Created by: Your Name
+Created by: Ahmaryar khan
 Version: 1.0.0
 
 ---
