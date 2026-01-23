@@ -13,13 +13,13 @@ dependencies:
 
   # State management
   provider: ^6.1.1
-  
+
   # Local storage
   shared_preferences: ^2.2.2
-  
+
   # Permissions
   permission_handler: ^11.3.0
-  
+
   # UI
   cupertino_icons: ^1.0.8
 
@@ -29,6 +29,8 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
 
+  flutter_launcher_icons: ^0.13.1
+
 flutter:
   uses-material-design: true
 
@@ -37,6 +39,9 @@ flutter:
 
 flutter_launcher_icons:
   android: true
-  ios: true
-  image_path: "assets/icons/app_icon.png"
-  adaptive_icon_background: "#FFFFFF"
+  image_path: assets/icons/app_icon.png
+
+  # Android adaptive icon settings
+  adaptive_icon_background: "#00000000" # fully transparent
+  adaptive_icon_foreground: assets/icons/app_icon.png
+
