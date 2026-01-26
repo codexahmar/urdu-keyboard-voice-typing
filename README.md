@@ -2,7 +2,7 @@
 
 A modern, elder-friendly Flutter application for managing an Urdu keyboard on Android. This app provides a clean interface for onboarding, language selection, keyboard preview, and settings management.
 
-## 🎯 Project Overview
+## Project Overview
 
 This is the **UI-only** Flutter application. The actual keyboard implementation is done separately in native Android (Kotlin) using `InputMethodService`. This app communicates with the native keyboard via Platform Channels.
 
