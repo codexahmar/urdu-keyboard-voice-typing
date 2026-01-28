@@ -128,26 +128,6 @@ dependencies:
   shared_preferences: 
 ```
 
-##  Getting Started
-
-### 1. Install Dependencies
-
-```bash
-flutter pub get
-```
-
-### 2. Run the App
-
-```bash
-flutter run
-```
-
-### 3. Build for Android
-
-```bash
-flutter build apk --release
-```
-
 ## 📄 License
 
 This project is for educational/personal use. Update license as needed.
