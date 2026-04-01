@@ -1,4 +1,4 @@
-package com.example.urdu_keyboard.keyboard
+package com.codexahmar.urdu_keyboard.keyboard
 
 import android.content.Context
 import android.content.Intent

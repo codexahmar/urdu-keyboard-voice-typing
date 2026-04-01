@@ -1,4 +1,4 @@
-package com.example.urdu_keyboard.utils
+package com.codexahmar.urdu_keyboard.utils
 
 import android.content.Context
 import android.content.SharedPreferences

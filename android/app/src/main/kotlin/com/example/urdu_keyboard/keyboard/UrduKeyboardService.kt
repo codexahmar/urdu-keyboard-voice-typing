@@ -1,4 +1,4 @@
-package com.example.urdu_keyboard.keyboard
+package com.codexahmar.urdu_keyboard.keyboard
 
 import android.inputmethodservice.InputMethodService
 import android.view.View
@@ -6,7 +6,7 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.content.Intent
 import android.provider.Settings
-import com.example.urdu_keyboard.utils.PreferenceHelper
+import com.codexahmar.urdu_keyboard.utils.PreferenceHelper
 
 /**
  * Main InputMethodService for Urdu Smart Keyboard

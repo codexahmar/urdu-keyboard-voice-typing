@@ -1,4 +1,4 @@
-package com.example.urdu_keyboard.keyboard
+package com.codexahmar.urdu_keyboard.keyboard
 
 import android.content.Context
 import android.util.Log
@@ -10,8 +10,8 @@ import android.view.inputmethod.InputConnection
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.Toast
-import com.example.urdu_keyboard.R
-import com.example.urdu_keyboard.utils.PreferenceHelper
+import com.codexahmar.urdu_keyboard.R
+import com.codexahmar.urdu_keyboard.utils.PreferenceHelper
 
 /**
  * Controller that manages keyboard view and input logic

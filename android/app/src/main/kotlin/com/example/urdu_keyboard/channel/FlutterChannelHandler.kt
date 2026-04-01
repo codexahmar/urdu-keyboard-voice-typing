@@ -1,4 +1,4 @@
-package com.example.urdu_keyboard.channel
+package com.codexahmar.urdu_keyboard.channel
 
 import android.content.Context
 import android.content.Intent
@@ -6,7 +6,7 @@ import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import com.example.urdu_keyboard.utils.PreferenceHelper
+import com.codexahmar.urdu_keyboard.utils.PreferenceHelper
 
 /**
  * Handles communication between Flutter and native Android code
@@ -18,7 +18,7 @@ class FlutterChannelHandler(
 ) : MethodChannel.MethodCallHandler {
 
     companion object {
-        const val CHANNEL_NAME = "com.example.urdu_keyboard/keyboard"
+        const val CHANNEL_NAME = "com.codexahmar.urdu_keyboard/keyboard"
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {

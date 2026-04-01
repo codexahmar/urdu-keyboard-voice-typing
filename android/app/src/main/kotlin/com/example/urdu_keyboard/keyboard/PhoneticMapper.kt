@@ -1,4 +1,4 @@
-package com.example.urdu_keyboard.keyboard
+package com.codexahmar.urdu_keyboard.keyboard
 
 /**
  * Maps Roman/English letters to Urdu script (phonetic mapping)

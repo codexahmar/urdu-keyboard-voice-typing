@@ -1,7 +1,7 @@
-package com.example.urdu_keyboard.keyboard
+package com.codexahmar.urdu_keyboard.keyboard
 
 import android.content.Context
-import com.example.urdu_keyboard.utils.PreferenceHelper
+import com.codexahmar.urdu_keyboard.utils.PreferenceHelper
 
 /**
  * Manages keyboard language switching and persistence

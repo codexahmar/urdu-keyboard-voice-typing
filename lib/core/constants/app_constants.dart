@@ -16,7 +16,7 @@ class AppConstants {
   static const String textSizeKey = 'text_size_scale';
 
   // Platform Channel
-  static const String platformChannel = 'com.example.urdu_keyboard/keyboard';
+  static const String platformChannel = 'com.codexahmar.urdu_keyboard/keyboard';
 
   // Supported Languages
   static const List<Map<String, dynamic>> supportedLanguages = [

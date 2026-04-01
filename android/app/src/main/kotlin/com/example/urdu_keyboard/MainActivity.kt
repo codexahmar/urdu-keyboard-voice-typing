@@ -1,4 +1,4 @@
-package com.example.urdu_keyboard
+package com.codexahmar.urdu_keyboard
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -8,8 +8,8 @@ import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import com.example.urdu_keyboard.channel.FlutterChannelHandler
-import com.example.urdu_keyboard.utils.PreferenceHelper
+import com.codexahmar.urdu_keyboard.channel.FlutterChannelHandler
+import com.codexahmar.urdu_keyboard.utils.PreferenceHelper
 
 class MainActivity : FlutterActivity() {
     

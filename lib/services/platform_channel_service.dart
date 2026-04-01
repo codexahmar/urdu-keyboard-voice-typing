@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 /// This is a STUB - actual implementation will be done via platform channels
 class PlatformChannelService {
   static const MethodChannel _channel = MethodChannel(
-    'com.example.urdu_keyboard/keyboard',
+    'com.codexahmar.urdu_keyboard/keyboard',
   );
 
   /// Opens Android keyboard settings
