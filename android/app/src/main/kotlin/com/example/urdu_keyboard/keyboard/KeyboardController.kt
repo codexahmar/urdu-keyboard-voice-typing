@@ -36,6 +36,7 @@ class KeyboardController(
 
     companion object {
         private const val TAG = "KeyboardController"
+        private const val EXTRA_BOTTOM_GAP_DP = 20
     }
 
     // Urdu keyboard letters (40 keys)
@@ -84,10 +85,11 @@ class KeyboardController(
         val baseTop = keyboardView.paddingTop
         val baseRight = keyboardView.paddingRight
         val minBottomPadding = dpToPx(6)
+        val extraBottomGap = dpToPx(EXTRA_BOTTOM_GAP_DP)
 
         ViewCompat.setOnApplyWindowInsetsListener(keyboardView) { view, insets ->
             val bottomInset = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
-            view.setPadding(baseLeft, baseTop, baseRight, max(minBottomPadding, bottomInset))
+            view.setPadding(baseLeft, baseTop, baseRight, max(minBottomPadding, bottomInset) + extraBottomGap)
             insets
         }
 
@@ -96,7 +98,7 @@ class KeyboardController(
             ViewCompat.requestApplyInsets(keyboardView)
             val rootInsets = ViewCompat.getRootWindowInsets(keyboardView)
             val navBottom = rootInsets?.getInsets(WindowInsetsCompat.Type.navigationBars())?.bottom ?: 0
-            keyboardView.setPadding(baseLeft, baseTop, baseRight, max(minBottomPadding, navBottom))
+            keyboardView.setPadding(baseLeft, baseTop, baseRight, max(minBottomPadding, navBottom) + extraBottomGap)
         }
     }
 
