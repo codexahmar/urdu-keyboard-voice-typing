@@ -2,6 +2,7 @@ package com.codexahmar.urdu_keyboard.keyboard
 
 import android.content.Context
 import android.util.Log
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -26,13 +27,13 @@ class KeyboardController(
     private val languageManager = LanguageManager(context, preferenceHelper)
     private lateinit var voiceInputManager: VoiceInputManager
     private lateinit var backspaceHandler: BackspaceHandler
-    
+
     private var currentInputConnection: InputConnection? = null
     private var isUrduKeyboardLayout = false
     private var isShiftEnabled = false
     private var isAutoCapNext = true
     private var isSymbolMode = false
-    
+
     companion object {
         private const val TAG = "KeyboardController"
     }
@@ -59,38 +60,44 @@ class KeyboardController(
             isUrduKeyboardLayout -> R.layout.keyboard_urdu
             else -> R.layout.keyboard_view
         }
-        
+
         keyboardView = inflater.inflate(layoutId, null)
         applyBottomInsetPadding()
-        
+
         backspaceHandler = BackspaceHandler(context) {
             currentInputConnection
         }
-        
+
         if (context is UrduKeyboardService) {
             voiceInputManager = VoiceInputManager(context, context)
         }
-        
+
         setupKeyboardButtons()
         updateKeyboardLayout()
         refreshEnglishKeyLabels()
-        
+
         return keyboardView
     }
 
     private fun applyBottomInsetPadding() {
+        val baseLeft = keyboardView.paddingLeft
+        val baseTop = keyboardView.paddingTop
+        val baseRight = keyboardView.paddingRight
+        val minBottomPadding = dpToPx(6)
+
         ViewCompat.setOnApplyWindowInsetsListener(keyboardView) { view, insets ->
-            val bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
-            val minBottomPadding = dpToPx(6)
-            view.setPadding(
-                view.paddingLeft,
-                view.paddingTop,
-                view.paddingRight,
-                max(minBottomPadding, bottomInset)
-            )
+            val bottomInset = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
+            view.setPadding(baseLeft, baseTop, baseRight, max(minBottomPadding, bottomInset))
             insets
         }
+
         ViewCompat.requestApplyInsets(keyboardView)
+        keyboardView.post {
+            ViewCompat.requestApplyInsets(keyboardView)
+            val rootInsets = ViewCompat.getRootWindowInsets(keyboardView)
+            val navBottom = rootInsets?.getInsets(WindowInsetsCompat.Type.navigationBars())?.bottom ?: 0
+            keyboardView.setPadding(baseLeft, baseTop, baseRight, max(minBottomPadding, navBottom))
+        }
     }
 
     private fun dpToPx(dp: Int): Int {
@@ -123,12 +130,8 @@ class KeyboardController(
         )
 
         letterKeys.forEach { key ->
-            val buttonId = context.resources.getIdentifier(
-                "key_$key",
-                "id",
-                context.packageName
-            )
-            keyboardView.findViewById<Button>(buttonId)?.setOnClickListener {
+            val buttonId = context.resources.getIdentifier("key_$key", "id", context.packageName)
+            setFastTapListener(keyboardView.findViewById(buttonId)) {
                 onEnglishKeyPressed(key)
             }
         }
@@ -144,7 +147,7 @@ class KeyboardController(
                 "id",
                 context.packageName
             )
-            keyboardView.findViewById<Button>(buttonId)?.setOnClickListener {
+            setFastTapListener(keyboardView.findViewById(buttonId)) {
                 onUrduKeyPressed(letter)
             }
         }
@@ -165,7 +168,7 @@ class KeyboardController(
 
         ids.forEachIndexed { index, idName ->
             val buttonId = context.resources.getIdentifier(idName, "id", context.packageName)
-            keyboardView.findViewById<Button>(buttonId)?.setOnClickListener {
+            setFastTapListener(keyboardView.findViewById(buttonId)) {
                 commitText(numerals[index])
                 isAutoCapNext = false
             }
@@ -178,27 +181,35 @@ class KeyboardController(
         val dot = "."
         val question = if (isUrduKeyboardLayout) "؟" else "?"
 
-        keyboardView.findViewById<Button>(
-            context.resources.getIdentifier("${prefix}comma", "id", context.packageName)
-        )?.setOnClickListener {
+        setFastTapListener(
+            keyboardView.findViewById(
+                context.resources.getIdentifier("${prefix}comma", "id", context.packageName)
+            )
+        ) {
             onPunctuationPressed(comma)
         }
 
-        keyboardView.findViewById<Button>(
-            context.resources.getIdentifier("${prefix}dot", "id", context.packageName)
-        )?.setOnClickListener {
+        setFastTapListener(
+            keyboardView.findViewById(
+                context.resources.getIdentifier("${prefix}dot", "id", context.packageName)
+            )
+        ) {
             onPunctuationPressed(dot)
         }
 
-        keyboardView.findViewById<Button>(
-            context.resources.getIdentifier("${prefix}question", "id", context.packageName)
-        )?.setOnClickListener {
+        setFastTapListener(
+            keyboardView.findViewById(
+                context.resources.getIdentifier("${prefix}question", "id", context.packageName)
+            )
+        ) {
             onPunctuationPressed(question)
         }
 
-        keyboardView.findViewById<Button>(
-            context.resources.getIdentifier("${prefix}fullstop", "id", context.packageName)
-        )?.setOnClickListener {
+        setFastTapListener(
+            keyboardView.findViewById(
+                context.resources.getIdentifier("${prefix}fullstop", "id", context.packageName)
+            )
+        ) {
             onPunctuationPressed("۔")
         }
 
@@ -212,7 +223,7 @@ class KeyboardController(
 
         extraSymbols.forEach { (idName, symbol) ->
             val buttonId = context.resources.getIdentifier(idName, "id", context.packageName)
-            keyboardView.findViewById<Button>(buttonId)?.setOnClickListener {
+            setFastTapListener(keyboardView.findViewById(buttonId)) {
                 onPunctuationPressed(symbol)
             }
         }
@@ -222,16 +233,14 @@ class KeyboardController(
      * Setup symbol keyboard buttons (numbers and special characters)
      */
     private fun setupSymbolButtons() {
-        // Number buttons (0-9)
         for (i in 0..9) {
             val symbolId = context.resources.getIdentifier("sym_key_$i", "id", context.packageName)
             val symbol = i.toString()
-            keyboardView.findViewById<Button>(symbolId)?.setOnClickListener {
-                currentInputConnection?.commitText(symbol, 1)
+            setFastTapListener(keyboardView.findViewById(symbolId)) {
+                commitText(symbol)
             }
         }
 
-        // Symbol buttons
         val symbolMap = mapOf(
             "sym_key_at" to "@",
             "sym_key_hash" to "#",
@@ -266,8 +275,8 @@ class KeyboardController(
 
         symbolMap.forEach { (idName, symbol) ->
             val buttonId = context.resources.getIdentifier(idName, "id", context.packageName)
-            keyboardView.findViewById<Button>(buttonId)?.setOnClickListener {
-                currentInputConnection?.commitText(symbol, 1)
+            setFastTapListener(keyboardView.findViewById(buttonId)) {
+                commitText(symbol)
             }
         }
     }
@@ -286,10 +295,12 @@ class KeyboardController(
             isUrduKeyboardLayout -> "urdu_"
             else -> "key_"
         }
-        
-        keyboardView.findViewById<Button>(
-            context.resources.getIdentifier("${prefix}space", "id", context.packageName)
-        )?.setOnClickListener {
+
+        setFastTapListener(
+            keyboardView.findViewById(
+                context.resources.getIdentifier("${prefix}space", "id", context.packageName)
+            )
+        ) {
             onSpacePressed()
         }
 
@@ -314,9 +325,11 @@ class KeyboardController(
             }
         }
 
-        keyboardView.findViewById<Button>(
-            context.resources.getIdentifier("${prefix}enter", "id", context.packageName)
-        )?.setOnClickListener {
+        setFastTapListener(
+            keyboardView.findViewById(
+                context.resources.getIdentifier("${prefix}enter", "id", context.packageName)
+            )
+        ) {
             onEnterPressed()
         }
 
@@ -332,7 +345,6 @@ class KeyboardController(
             onVoiceInput()
         }
 
-        // Handle symbols toggle button (123 in main layout, ABC in symbol layout)
         val toggleButtonId = if (isSymbolMode) {
             context.resources.getIdentifier("sym_key_abc", "id", context.packageName)
         } else {
@@ -347,6 +359,23 @@ class KeyboardController(
                 context.resources.getIdentifier("${prefix}shift", "id", context.packageName)
             )?.setOnClickListener {
                 onShiftPressed()
+            }
+        }
+    }
+
+    private fun setFastTapListener(button: Button?, onTap: () -> Unit) {
+        button?.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    onTap()
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    view.performClick()
+                    true
+                }
+                else -> false
             }
         }
     }
@@ -413,7 +442,7 @@ class KeyboardController(
     }
 
     private fun refreshEnglishKeyLabels() {
-        if (isUrduKeyboardLayout) {
+        if (isUrduKeyboardLayout || isSymbolMode) {
             return
         }
 
@@ -434,6 +463,7 @@ class KeyboardController(
         }
 
         val shiftButton = keyboardView.findViewById<Button>(R.id.key_shift)
+        shiftButton?.text = if (isShiftEnabled) "⇪" else "⇧"
         shiftButton?.alpha = if (isShiftEnabled) 1.0f else 0.8f
     }
 
@@ -446,7 +476,7 @@ class KeyboardController(
         val oldUrdu = isUrduKeyboardLayout
         isUrduKeyboardLayout = (newLang == "ur")
         val needsLayoutChange = oldUrdu != isUrduKeyboardLayout
-        
+
         if (needsLayoutChange) {
             if (context is UrduKeyboardService) {
                 context.recreateKeyboard()
@@ -457,7 +487,7 @@ class KeyboardController(
         isAutoCapNext = true
         isShiftEnabled = false
 
-        val langName = when(newLang) {
+        val langName = when (newLang) {
             "ur" -> "اردو"
             else -> "English"
         }
@@ -469,7 +499,7 @@ class KeyboardController(
      */
     private fun onVoiceInput() {
         if (::voiceInputManager.isInitialized) {
-            val language = when(languageManager.getCurrentLanguage()) {
+            val language = when (languageManager.getCurrentLanguage()) {
                 "ur" -> "ur-PK"
                 else -> "en-US"
             }
@@ -492,14 +522,15 @@ class KeyboardController(
      */
     private fun updateKeyboardLayout() {
         if (isSymbolMode) {
-            // Symbol layout always shows "EN" for language button
-            val languageButtonId = R.id.sym_key_language
-            val languageButton = keyboardView.findViewById<Button>(languageButtonId)
-            languageButton?.text = "EN"
+            val languageButton = keyboardView.findViewById<Button>(R.id.sym_key_language)
+            languageButton?.text = when (languageManager.getCurrentLanguage()) {
+                "ur" -> "اردو"
+                else -> "EN"
+            }
         } else {
             val languageButtonId = if (isUrduKeyboardLayout) R.id.urdu_key_language else R.id.key_language
             val languageButton = keyboardView.findViewById<Button>(languageButtonId)
-            languageButton?.text = when(languageManager.getCurrentLanguage()) {
+            languageButton?.text = when (languageManager.getCurrentLanguage()) {
                 "ur" -> "اردو"
                 else -> "EN"
             }

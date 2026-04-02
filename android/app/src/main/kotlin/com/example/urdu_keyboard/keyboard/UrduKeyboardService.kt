@@ -104,6 +104,7 @@ class UrduKeyboardService : InputMethodService() {
      */
     fun recreateKeyboard() {
         setInputView(onCreateInputView())
+        keyboardController.onStartInput(currentInputConnection, currentInputEditorInfo)
     }
 
     /**

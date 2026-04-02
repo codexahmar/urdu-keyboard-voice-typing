@@ -81,11 +81,11 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <Button android:id="@+id/key_language" style="@style/KeyboardButton" android:text="EN" />
-        <Button android:id="@+id/key_voice" style="@style/KeyboardButton" android:text="🎤" />
         <Button android:id="@+id/key_symbols" style="@style/KeyboardButton" android:text="123" />
+        <Button android:id="@+id/key_language" style="@style/KeyboardButton" android:text="EN" />
         <Button android:id="@+id/key_space" style="@style/KeyboardButton" android:text="Space" />
         <Button android:id="@+id/key_enter" style="@style/KeyboardButton" android:text="↵" />
+        <Button android:id="@+id/key_voice" style="@style/KeyboardButton" android:text="🎤" />
     </LinearLayout>
 
 </LinearLayout>
