@@ -82,7 +82,7 @@ class UrduKeyboardService : InputMethodService() {
      */
     fun handleEnter() {
         val ic: InputConnection? = currentInputConnection
-        ic?.performEditorAction(EditorInfo.IME_ACTION_DONE)
+        ic?.commitText("\n", 1)
     }
 
     /**

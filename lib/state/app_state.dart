@@ -29,6 +29,13 @@ class AppState extends ChangeNotifier {
 
     _onboardingComplete = _prefsService.isOnboardingComplete();
     _selectedLanguage = _prefsService.getSelectedLanguage();
+    final supportedCodes = AppConstants.supportedLanguages
+        .map((lang) => lang['code'] as String)
+        .toSet();
+    if (!supportedCodes.contains(_selectedLanguage)) {
+      _selectedLanguage = 'ur';
+      await _prefsService.setSelectedLanguage(_selectedLanguage);
+    }
     _textSizeScale = _prefsService.getTextSize();
 
     final themeModeString = _prefsService.getThemeMode();

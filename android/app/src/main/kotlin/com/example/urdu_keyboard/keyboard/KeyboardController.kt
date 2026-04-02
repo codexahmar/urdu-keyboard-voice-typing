@@ -8,10 +8,12 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.codexahmar.urdu_keyboard.R
 import com.codexahmar.urdu_keyboard.utils.PreferenceHelper
+import kotlin.math.max
 
 /**
  * Controller that manages keyboard view and input logic
@@ -22,90 +24,90 @@ class KeyboardController(
 ) {
     private lateinit var keyboardView: View
     private val languageManager = LanguageManager(context, preferenceHelper)
-    private val phoneticMapper = PhoneticMapper()
     private lateinit var voiceInputManager: VoiceInputManager
     private lateinit var backspaceHandler: BackspaceHandler
     
     private var currentInputConnection: InputConnection? = null
-    private var currentBuffer = StringBuilder()
-    private var isUrduKeyboardLayout = false  // Track which layout is active
+    private var isUrduKeyboardLayout = false
+    private var isShiftEnabled = false
+    private var isAutoCapNext = true
+    private var isSymbolMode = false
     
     companion object {
         private const val TAG = "KeyboardController"
     }
-    private var isArabicKeyboardLayout = false  // Track Arabic layout
 
-    // Urdu keyboard letters (40 common Urdu letters)
+    // Urdu keyboard letters (40 keys)
     private val urduLetters = arrayOf(
-        // Row 1 (11 keys)
         "ض", "ص", "ث", "ق", "ف", "غ", "ع", "ہ", "خ", "ح", "ج",
-        // Row 2 (10 keys) 
         "چ", "ظ", "ط", "ز", "ر", "ذ", "د", "ڈ", "خ", "ح",
-        // Row 3 (8 keys)
         "ش", "س", "ژ", "ز", "ص", "ط", "ض", "ظ",
-        // Row 4 (11 keys)
         "ف", "ق", "ک", "گ", "ل", "م", "ن", "و", "ہ", "ی", "ے"
     )
 
-    // Arabic keyboard letters
-    private val arabicLetters = arrayOf(
-        // Row 1
-        "ض", "ص", "ث", "ق", "ف", "غ", "ع", "ه", "خ", "ح", "ج",
-        // Row 2
-        "ش", "س", "ي", "ب", "ل", "ا", "ت", "ن", "م", "ك",
-        // Row 3
-        "ظ", "ط", "ذ", "د", "ز", "ر", "و",
-        // Row 4
-        "ئ", "ء", "ؤ", "ة", "ى", "لا", "آ"
-    )
-
     init {
-        // Initialize keyboard layout based on saved language
         val currentLang = languageManager.getCurrentLanguage()
         isUrduKeyboardLayout = (currentLang == "ur")
-        isArabicKeyboardLayout = (currentLang == "ar")
     }
 
     /**
      * Create and initialize the keyboard view
      */
     fun createKeyboardView(inflater: LayoutInflater): View {
-        // Choose layout based on current language
         val layoutId = when {
+            isSymbolMode -> R.layout.keyboard_symbols
             isUrduKeyboardLayout -> R.layout.keyboard_urdu
-            isArabicKeyboardLayout -> R.layout.keyboard_arabic
             else -> R.layout.keyboard_view
         }
         
         keyboardView = inflater.inflate(layoutId, null)
+        applyBottomInsetPadding()
         
-        // Initialize backspace handler with lambda to get current input connection
         backspaceHandler = BackspaceHandler(context) {
             currentInputConnection
         }
         
-        // Initialize voice input manager
         if (context is UrduKeyboardService) {
             voiceInputManager = VoiceInputManager(context, context)
         }
         
-        // Setup keyboard buttons
         setupKeyboardButtons()
-        
-        // Update keyboard layout based on current language
         updateKeyboardLayout()
+        refreshEnglishKeyLabels()
         
         return keyboardView
+    }
+
+    private fun applyBottomInsetPadding() {
+        ViewCompat.setOnApplyWindowInsetsListener(keyboardView) { view, insets ->
+            val bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
+            val minBottomPadding = dpToPx(6)
+            view.setPadding(
+                view.paddingLeft,
+                view.paddingTop,
+                view.paddingRight,
+                max(minBottomPadding, bottomInset)
+            )
+            insets
+        }
+        ViewCompat.requestApplyInsets(keyboardView)
+    }
+
+    private fun dpToPx(dp: Int): Int {
+        val density = context.resources.displayMetrics.density
+        return (dp * density).toInt()
     }
 
     /**
      * Setup all keyboard button click listeners
      */
     private fun setupKeyboardButtons() {
-        when {
-            isUrduKeyboardLayout -> setupUrduKeyboardButtons()
-            isArabicKeyboardLayout -> setupArabicKeyboardButtons()
-            else -> setupEnglishKeyboardButtons()
+        if (isSymbolMode) {
+            setupSymbolButtons()
+        } else {
+            if (isUrduKeyboardLayout) setupUrduKeyboardButtons() else setupEnglishKeyboardButtons()
+            setupNumberButtons()
+            setupPunctuationButtons()
         }
         setupCommonButtons()
     }
@@ -114,7 +116,6 @@ class KeyboardController(
      * Setup English/Roman keyboard buttons
      */
     private fun setupEnglishKeyboardButtons() {
-        // Setup letter keys
         val letterKeys = arrayOf(
             "q", "w", "e", "r", "t", "y", "u", "i", "o", "p",
             "a", "s", "d", "f", "g", "h", "j", "k", "l",
@@ -128,7 +129,7 @@ class KeyboardController(
                 context.packageName
             )
             keyboardView.findViewById<Button>(buttonId)?.setOnClickListener {
-                onKeyPressed(key)
+                onEnglishKeyPressed(key)
             }
         }
     }
@@ -149,61 +150,159 @@ class KeyboardController(
         }
     }
 
-    /**
-     * Setup Arabic keyboard buttons
-     */
-    private fun setupArabicKeyboardButtons() {
-        arabicLetters.forEachIndexed { index, letter ->
-            val buttonId = context.resources.getIdentifier(
-                "arabic_key_${index + 1}",
-                "id",
-                context.packageName
-            )
+    private fun setupNumberButtons() {
+        val prefix = if (isUrduKeyboardLayout) "urdu_key_" else "key_"
+        val numerals = if (isUrduKeyboardLayout) {
+            arrayOf("۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹", "۰")
+        } else {
+            arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0")
+        }
+
+        val ids = arrayOf(
+            "${prefix}num_1", "${prefix}num_2", "${prefix}num_3", "${prefix}num_4", "${prefix}num_5",
+            "${prefix}num_6", "${prefix}num_7", "${prefix}num_8", "${prefix}num_9", "${prefix}num_0"
+        )
+
+        ids.forEachIndexed { index, idName ->
+            val buttonId = context.resources.getIdentifier(idName, "id", context.packageName)
             keyboardView.findViewById<Button>(buttonId)?.setOnClickListener {
-                onArabicKeyPressed(letter)
+                commitText(numerals[index])
+                isAutoCapNext = false
+            }
+        }
+    }
+
+    private fun setupPunctuationButtons() {
+        val prefix = if (isUrduKeyboardLayout) "urdu_key_" else "key_"
+        val comma = if (isUrduKeyboardLayout) "،" else ","
+        val dot = "."
+        val question = if (isUrduKeyboardLayout) "؟" else "?"
+
+        keyboardView.findViewById<Button>(
+            context.resources.getIdentifier("${prefix}comma", "id", context.packageName)
+        )?.setOnClickListener {
+            onPunctuationPressed(comma)
+        }
+
+        keyboardView.findViewById<Button>(
+            context.resources.getIdentifier("${prefix}dot", "id", context.packageName)
+        )?.setOnClickListener {
+            onPunctuationPressed(dot)
+        }
+
+        keyboardView.findViewById<Button>(
+            context.resources.getIdentifier("${prefix}question", "id", context.packageName)
+        )?.setOnClickListener {
+            onPunctuationPressed(question)
+        }
+
+        keyboardView.findViewById<Button>(
+            context.resources.getIdentifier("${prefix}fullstop", "id", context.packageName)
+        )?.setOnClickListener {
+            onPunctuationPressed("۔")
+        }
+
+        val extraSymbols = arrayOf(
+            Pair("${prefix}apostrophe", "'"),
+            Pair("${prefix}slash", "/"),
+            Pair("${prefix}at", "@"),
+            Pair("${prefix}minus", "-"),
+            Pair("${prefix}plus", "+")
+        )
+
+        extraSymbols.forEach { (idName, symbol) ->
+            val buttonId = context.resources.getIdentifier(idName, "id", context.packageName)
+            keyboardView.findViewById<Button>(buttonId)?.setOnClickListener {
+                onPunctuationPressed(symbol)
             }
         }
     }
 
     /**
-     * Setup common buttons (space, backspace, enter, language, voice)
+     * Setup symbol keyboard buttons (numbers and special characters)
+     */
+    private fun setupSymbolButtons() {
+        // Number buttons (0-9)
+        for (i in 0..9) {
+            val symbolId = context.resources.getIdentifier("sym_key_$i", "id", context.packageName)
+            val symbol = i.toString()
+            keyboardView.findViewById<Button>(symbolId)?.setOnClickListener {
+                currentInputConnection?.commitText(symbol, 1)
+            }
+        }
+
+        // Symbol buttons
+        val symbolMap = mapOf(
+            "sym_key_at" to "@",
+            "sym_key_hash" to "#",
+            "sym_key_dollar" to "$",
+            "sym_key_percent" to "%",
+            "sym_key_amp" to "&",
+            "sym_key_star" to "*",
+            "sym_key_minus" to "-",
+            "sym_key_plus" to "+",
+            "sym_key_lparen" to "(",
+            "sym_key_rparen" to ")",
+            "sym_key_slash" to "/",
+            "sym_key_quote" to "\"",
+            "sym_key_apostrophe" to "'",
+            "sym_key_colon" to ":",
+            "sym_key_semicolon" to ";",
+            "sym_key_exclamation" to "!",
+            "sym_key_question" to "?",
+            "sym_key_comma" to ",",
+            "sym_key_dot" to ".",
+            "sym_key_equal" to "=",
+            "sym_key_lbracket" to "[",
+            "sym_key_rbracket" to "]",
+            "sym_key_lbrace" to "{",
+            "sym_key_rbrace" to "}",
+            "sym_key_backslash" to "\\",
+            "sym_key_less" to "<",
+            "sym_key_greater" to ">",
+            "sym_key_caret" to "^",
+            "sym_key_tilde" to "~"
+        )
+
+        symbolMap.forEach { (idName, symbol) ->
+            val buttonId = context.resources.getIdentifier(idName, "id", context.packageName)
+            keyboardView.findViewById<Button>(buttonId)?.setOnClickListener {
+                currentInputConnection?.commitText(symbol, 1)
+            }
+        }
+    }
+
+    /**
+     * Setup common buttons (space, backspace, enter, language, voice, shift)
      */
     private fun setupCommonButtons() {
         val prefix = when {
+            isSymbolMode -> "sym_key_"
             isUrduKeyboardLayout -> "urdu_key_"
-            isArabicKeyboardLayout -> "arabic_key_"
             else -> "key_"
         }
-        
-        // Backspace button ID is different - no "_key_" in the middle
         val backspacePrefix = when {
+            isSymbolMode -> "sym_"
             isUrduKeyboardLayout -> "urdu_"
-            isArabicKeyboardLayout -> "arabic_"
             else -> "key_"
         }
         
-        // Space button
         keyboardView.findViewById<Button>(
             context.resources.getIdentifier("${prefix}space", "id", context.packageName)
         )?.setOnClickListener {
             onSpacePressed()
         }
 
-        // Backspace with long-press support
-        val backspaceId = context.resources.getIdentifier("${backspacePrefix}backspace", "id", context.packageName)
-        Log.d(TAG, "Looking for backspace button with ID: ${backspacePrefix}backspace, resolved ID: $backspaceId")
+        val backspaceId = context.resources.getIdentifier(
+            "${backspacePrefix}backspace",
+            "id",
+            context.packageName
+        )
         val backspaceButton = keyboardView.findViewById<Button>(backspaceId)
-        Log.d(TAG, "Backspace button found: ${backspaceButton != null}")
-        
+
         backspaceButton?.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    Log.d(TAG, "Backspace pressed, layout: Urdu=$isUrduKeyboardLayout, Arabic=$isArabicKeyboardLayout")
-                    // Clear buffer if using phonetic typing (English keyboard with Urdu/Arabic language)
-                    if (!isUrduKeyboardLayout && !isArabicKeyboardLayout && currentBuffer.isNotEmpty()) {
-                        currentBuffer.deleteCharAt(currentBuffer.length - 1)
-                    }
-                    // Always trigger backspace in input connection
                     backspaceHandler.onBackspaceDown()
                     true
                 }
@@ -215,55 +314,53 @@ class KeyboardController(
             }
         }
 
-        // Enter button
         keyboardView.findViewById<Button>(
             context.resources.getIdentifier("${prefix}enter", "id", context.packageName)
         )?.setOnClickListener {
             onEnterPressed()
         }
 
-        // Language switch button
         keyboardView.findViewById<Button>(
             context.resources.getIdentifier("${prefix}language", "id", context.packageName)
         )?.setOnClickListener {
             onLanguageSwitch()
         }
 
-        // Voice input button
         keyboardView.findViewById<Button>(
             context.resources.getIdentifier("${prefix}voice", "id", context.packageName)
         )?.setOnClickListener {
             onVoiceInput()
         }
+
+        // Handle symbols toggle button (123 in main layout, ABC in symbol layout)
+        val toggleButtonId = if (isSymbolMode) {
+            context.resources.getIdentifier("sym_key_abc", "id", context.packageName)
+        } else {
+            context.resources.getIdentifier("${prefix}symbols", "id", context.packageName)
+        }
+        keyboardView.findViewById<Button>(toggleButtonId)?.setOnClickListener {
+            onSymbolsModeToggle()
+        }
+
+        if (!isSymbolMode) {
+            keyboardView.findViewById<Button>(
+                context.resources.getIdentifier("${prefix}shift", "id", context.packageName)
+            )?.setOnClickListener {
+                onShiftPressed()
+            }
+        }
     }
 
     /**
-     * Handle regular key press (English/Roman layout)
+     * Handle English key press with shift/auto-cap behavior.
      */
-    private fun onKeyPressed(key: String) {
-        when (languageManager.getCurrentLanguage()) {
-            "ur" -> {
-                // Buffer the character for Urdu phonetic conversion
-                currentBuffer.append(key)
-                
-                // Try to find a match in phonetic mapper
-                val suggestions = phoneticMapper.getUrduSuggestions(currentBuffer.toString())
-                
-                if (suggestions.isNotEmpty()) {
-                    // For now, auto-commit the first suggestion
-                    // In production, you'd show suggestions in a suggestion strip
-                    commitText(suggestions[0])
-                    currentBuffer.clear()
-                } else {
-                    // Keep buffering until we find a match or space is pressed
-                    // Show the Roman text temporarily
-                    commitText(key)
-                }
-            }
-            else -> {
-                // English or other languages - direct input
-                commitText(key)
-            }
+    private fun onEnglishKeyPressed(key: String) {
+        val output = if (shouldUseUppercase()) key.uppercase() else key.lowercase()
+        commitText(output)
+        isAutoCapNext = false
+        if (isShiftEnabled) {
+            isShiftEnabled = false
+            refreshEnglishKeyLabels()
         }
     }
 
@@ -272,85 +369,96 @@ class KeyboardController(
      */
     private fun onUrduKeyPressed(urduLetter: String) {
         commitText(urduLetter)
+        isAutoCapNext = false
     }
 
-    /**
-     * Handle Arabic key press (direct Arabic input)
-     */
-    private fun onArabicKeyPressed(arabicLetter: String) {
-        commitText(arabicLetter)
+    private fun onPunctuationPressed(symbol: String) {
+        commitText(symbol)
+        isAutoCapNext = symbol == "." || symbol == "?" || symbol == "؟" || symbol == "!"
+        if (isShiftEnabled) {
+            isShiftEnabled = false
+        }
+        refreshEnglishKeyLabels()
     }
 
     /**
      * Handle space key
      */
     private fun onSpacePressed() {
-        if (currentBuffer.isNotEmpty()) {
-            // Check if buffered text has Urdu mapping
-            val suggestions = phoneticMapper.getUrduSuggestions(currentBuffer.toString())
-            if (suggestions.isNotEmpty()) {
-                // Replace the buffered text with Urdu
-                deleteCharacters(currentBuffer.length)
-                commitText(suggestions[0])
-            }
-            currentBuffer.clear()
-        }
         commitText(" ")
-    }
-
-    /**
-     * Handle backspace
-     */
-    private fun onBackspacePressed() {
-        if (currentBuffer.isNotEmpty()) {
-            currentBuffer.deleteCharAt(currentBuffer.length - 1)
-        }
-        currentInputConnection?.deleteSurroundingText(1, 0)
     }
 
     /**
      * Handle enter key
      */
     private fun onEnterPressed() {
-        currentInputConnection?.performEditorAction(EditorInfo.IME_ACTION_DONE)
-        currentBuffer.clear()
+        commitText("\n")
+        isAutoCapNext = true
+        if (isShiftEnabled) {
+            isShiftEnabled = false
+            refreshEnglishKeyLabels()
+        }
+    }
+
+    private fun onShiftPressed() {
+        if (isUrduKeyboardLayout) {
+            return
+        }
+        isShiftEnabled = !isShiftEnabled
+        refreshEnglishKeyLabels()
+    }
+
+    private fun shouldUseUppercase(): Boolean {
+        return isShiftEnabled || isAutoCapNext
+    }
+
+    private fun refreshEnglishKeyLabels() {
+        if (isUrduKeyboardLayout) {
+            return
+        }
+
+        val uppercase = shouldUseUppercase()
+        val letterKeys = arrayOf(
+            "q", "w", "e", "r", "t", "y", "u", "i", "o", "p",
+            "a", "s", "d", "f", "g", "h", "j", "k", "l",
+            "z", "x", "c", "v", "b", "n", "m"
+        )
+
+        letterKeys.forEach { key ->
+            val buttonId = context.resources.getIdentifier("key_$key", "id", context.packageName)
+            keyboardView.findViewById<Button>(buttonId)?.text = if (uppercase) {
+                key.uppercase()
+            } else {
+                key.lowercase()
+            }
+        }
+
+        val shiftButton = keyboardView.findViewById<Button>(R.id.key_shift)
+        shiftButton?.alpha = if (isShiftEnabled) 1.0f else 0.8f
     }
 
     /**
      * Handle language switch
      */
     private fun onLanguageSwitch() {
-        // Save current language
-        val currentLang = languageManager.getCurrentLanguage()
-        
-        // Switch to next language
         languageManager.switchToNextLanguage()
         val newLang = languageManager.getCurrentLanguage()
-        
-        // Update layout flags
         val oldUrdu = isUrduKeyboardLayout
-        val oldArabic = isArabicKeyboardLayout
-        
         isUrduKeyboardLayout = (newLang == "ur")
-        isArabicKeyboardLayout = (newLang == "ar")
-        
-        // Check if layout needs to be recreated
-        val needsLayoutChange = (oldUrdu != isUrduKeyboardLayout) || (oldArabic != isArabicKeyboardLayout)
+        val needsLayoutChange = oldUrdu != isUrduKeyboardLayout
         
         if (needsLayoutChange) {
-            // Request keyboard to be recreated with new layout
             if (context is UrduKeyboardService) {
                 context.recreateKeyboard()
             }
         } else {
             updateKeyboardLayout()
         }
-        
-        currentBuffer.clear()
-        
+        isAutoCapNext = true
+        isShiftEnabled = false
+
         val langName = when(newLang) {
             "ur" -> "اردو"
-            "ar" -> "العربية"
             else -> "English"
         }
         Toast.makeText(context, "Keyboard: $langName", Toast.LENGTH_SHORT).show()
@@ -362,11 +470,20 @@ class KeyboardController(
     private fun onVoiceInput() {
         if (::voiceInputManager.isInitialized) {
             val language = when(languageManager.getCurrentLanguage()) {
-                "ur" -> "ur-PK"  // Urdu (Pakistan)
-                "ar" -> "ar-SA"  // Arabic (Saudi Arabia)
-                else -> "en-US"  // English (US)
+                "ur" -> "ur-PK"
+                else -> "en-US"
             }
             voiceInputManager.startListening(language)
+        }
+    }
+
+    /**
+     * Toggle between alphabet and symbol modes
+     */
+    private fun onSymbolsModeToggle() {
+        isSymbolMode = !isSymbolMode
+        if (context is UrduKeyboardService) {
+            context.recreateKeyboard()
         }
     }
 
@@ -374,11 +491,18 @@ class KeyboardController(
      * Update keyboard layout based on current language
      */
     private fun updateKeyboardLayout() {
-        val languageButton = keyboardView.findViewById<Button>(R.id.key_language)
-        languageButton?.text = when(languageManager.getCurrentLanguage()) {
-            "ur" -> "اردو"
-            "ar" -> "عربي"
-            else -> "EN"
+        if (isSymbolMode) {
+            // Symbol layout always shows "EN" for language button
+            val languageButtonId = R.id.sym_key_language
+            val languageButton = keyboardView.findViewById<Button>(languageButtonId)
+            languageButton?.text = "EN"
+        } else {
+            val languageButtonId = if (isUrduKeyboardLayout) R.id.urdu_key_language else R.id.key_language
+            val languageButton = keyboardView.findViewById<Button>(languageButtonId)
+            languageButton?.text = when(languageManager.getCurrentLanguage()) {
+                "ur" -> "اردو"
+                else -> "EN"
+            }
         }
     }
 
@@ -387,13 +511,6 @@ class KeyboardController(
      */
     private fun commitText(text: String) {
         currentInputConnection?.commitText(text, 1)
-    }
-
-    /**
-     * Delete characters
-     */
-    private fun deleteCharacters(count: Int) {
-        currentInputConnection?.deleteSurroundingText(count, 0)
     }
 
     /**
@@ -415,8 +532,10 @@ class KeyboardController(
      */
     fun onStartInput(ic: InputConnection?, info: EditorInfo?) {
         currentInputConnection = ic
-        currentBuffer.clear()
+        isAutoCapNext = true
+        isShiftEnabled = false
         Log.d(TAG, "onStartInput: InputConnection = ${if (ic != null) "valid" else "null"}")
+        refreshEnglishKeyLabels()
     }
 
     /**
@@ -424,7 +543,8 @@ class KeyboardController(
      */
     fun onFinishInput() {
         currentInputConnection = null
-        currentBuffer.clear()
+        isAutoCapNext = true
+        isShiftEnabled = false
     }
 
     /**
@@ -432,7 +552,11 @@ class KeyboardController(
      */
     fun handleKeyPress(key: String, ic: InputConnection) {
         currentInputConnection = ic
-        onKeyPressed(key)
+        if (isUrduKeyboardLayout) {
+            onUrduKeyPressed(key)
+        } else {
+            onEnglishKeyPressed(key)
+        }
     }
 
     /**

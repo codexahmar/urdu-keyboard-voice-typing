@@ -34,13 +34,6 @@ class AppConstants {
       'isRecommended': false,
       'description': 'Standard English QWERTY keyboard',
     },
-    {
-      'code': 'ar',
-      'name': 'Arabic',
-      'nativeName': 'العربية',
-      'isRecommended': false,
-      'description': 'Standard Arabic keyboard layout',
-    },
   ];
 
   // Routes

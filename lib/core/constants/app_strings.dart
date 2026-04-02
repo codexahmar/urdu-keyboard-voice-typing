@@ -8,7 +8,7 @@ class AppStrings {
   static const String onboardingWelcomeTitle = 'Welcome to Urdu Smart Keyboard';
   static const String onboardingWelcomeUrdu = 'خوش آمدید';
   static const String onboardingWelcomeDescription =
-      'Type in Urdu, English, and Arabic with ease. No ads, no clutter.';
+      'Type in Urdu and English with ease. No ads, no clutter.';
 
   static const String onboardingEnableTitle = 'Enable the Keyboard';
   static const String onboardingEnableDescription =
@@ -64,7 +64,7 @@ class AppStrings {
   static const String voiceStep3 = 'Your speech will be converted to text';
   static const String supportedLanguages = 'Supported Languages';
   static const String voiceLanguagesInfo =
-      'Voice typing works for Urdu, English, and Arabic';
+      'Voice typing works for Urdu and English';
 
   // Settings
   static const String settingsTitle = 'Settings';

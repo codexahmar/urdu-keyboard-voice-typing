@@ -10,7 +10,7 @@ class LanguageManager(
     private val context: Context,
     private val preferenceHelper: PreferenceHelper
 ) {
-    private val supportedLanguages = listOf("en", "ur", "ar")
+    private val supportedLanguages = listOf("en", "ur")
     private var currentLanguageIndex = 0
 
     init {
@@ -18,7 +18,7 @@ class LanguageManager(
         val savedLanguage = preferenceHelper.getSelectedLanguage()
         currentLanguageIndex = supportedLanguages.indexOf(savedLanguage)
         if (currentLanguageIndex < 0) {
-            // Default to Urdu (index 1) if not found
+            // Default to Urdu if old/unsupported language exists in preferences.
             currentLanguageIndex = 1
             preferenceHelper.setSelectedLanguage("ur")
         }
@@ -57,7 +57,6 @@ class LanguageManager(
     fun getLanguageName(): String {
         return when(getCurrentLanguage()) {
             "ur" -> "Urdu"
-            "ar" -> "Arabic"
             else -> "English"
         }
     }

@@ -103,8 +103,6 @@ class VoiceTypingGuideScreen extends StatelessWidget {
                       _buildLanguageChip(context, 'اردو', 'Urdu'),
                       const SizedBox(height: 8),
                       _buildLanguageChip(context, 'English', 'English'),
-                      const SizedBox(height: 8),
-                      _buildLanguageChip(context, 'العربية', 'Arabic'),
                     ],
                   ),
                 ),
