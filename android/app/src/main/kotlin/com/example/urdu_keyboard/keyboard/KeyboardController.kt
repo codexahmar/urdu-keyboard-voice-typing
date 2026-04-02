@@ -33,6 +33,7 @@ class KeyboardController(
     private var isShiftEnabled = false
     private var isAutoCapNext = true
     private var isSymbolMode = false
+    private var lastKnownBottomInsetPx = 0
 
     companion object {
         private const val TAG = "KeyboardController"
@@ -87,8 +88,13 @@ class KeyboardController(
         val minBottomPadding = dpToPx(6)
         val extraBottomGap = dpToPx(EXTRA_BOTTOM_GAP_DP)
 
+        // Set a stable initial padding before insets callback to avoid first-frame jump.
+        val initialBottom = max(minBottomPadding, lastKnownBottomInsetPx) + extraBottomGap
+        keyboardView.setPadding(baseLeft, baseTop, baseRight, initialBottom)
+
         ViewCompat.setOnApplyWindowInsetsListener(keyboardView) { view, insets ->
             val bottomInset = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
+            lastKnownBottomInsetPx = bottomInset
             view.setPadding(baseLeft, baseTop, baseRight, max(minBottomPadding, bottomInset) + extraBottomGap)
             insets
         }
@@ -97,7 +103,9 @@ class KeyboardController(
         keyboardView.post {
             ViewCompat.requestApplyInsets(keyboardView)
             val rootInsets = ViewCompat.getRootWindowInsets(keyboardView)
-            val navBottom = rootInsets?.getInsets(WindowInsetsCompat.Type.navigationBars())?.bottom ?: 0
+            val navBottom = rootInsets?.getInsets(WindowInsetsCompat.Type.navigationBars())?.bottom
+                ?: lastKnownBottomInsetPx
+            lastKnownBottomInsetPx = navBottom
             keyboardView.setPadding(baseLeft, baseTop, baseRight, max(minBottomPadding, navBottom) + extraBottomGap)
         }
     }

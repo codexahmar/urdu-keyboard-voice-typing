@@ -82,11 +82,11 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <Button android:id="@+id/sym_key_abc" style="@style/KeyboardButton" android:text="ABC" />
-        <Button android:id="@+id/sym_key_language" style="@style/KeyboardButton" android:text="EN" />
-        <Button android:id="@+id/sym_key_space" style="@style/KeyboardButton" android:text="Space" />
-        <Button android:id="@+id/sym_key_enter" style="@style/KeyboardButton" android:text="↵" />
-        <Button android:id="@+id/sym_key_voice" style="@style/KeyboardButton" android:text="🎤" />
+        <Button android:id="@+id/sym_key_abc" style="@style/KeyboardButtonBottomSmall" android:text="ABC" />
+        <Button android:id="@+id/sym_key_language" style="@style/KeyboardButtonBottomSmall" android:text="EN" />
+        <Button android:id="@+id/sym_key_space" style="@style/KeyboardButtonBottomSpace" android:text="Space" />
+        <Button android:id="@+id/sym_key_voice" style="@style/KeyboardButtonBottomSmall" android:text="🎤" />
+        <Button android:id="@+id/sym_key_enter" style="@style/KeyboardButtonBottomEnter" android:text="↵" />
     </LinearLayout>
 
     <View
