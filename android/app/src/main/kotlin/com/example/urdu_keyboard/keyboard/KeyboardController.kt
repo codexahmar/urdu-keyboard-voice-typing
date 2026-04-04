@@ -123,7 +123,6 @@ class KeyboardController(
             setupSymbolButtons()
         } else {
             if (isUrduKeyboardLayout) setupUrduKeyboardButtons() else setupEnglishKeyboardButtons()
-            setupNumberButtons()
             setupPunctuationButtons()
         }
         setupCommonButtons()
@@ -483,9 +482,14 @@ class KeyboardController(
     private fun onLanguageSwitch() {
         languageManager.switchToNextLanguage()
         val newLang = languageManager.getCurrentLanguage()
+        val wasSymbolMode = isSymbolMode
         val oldUrdu = isUrduKeyboardLayout
         isUrduKeyboardLayout = (newLang == "ur")
-        val needsLayoutChange = oldUrdu != isUrduKeyboardLayout
+        if (isSymbolMode) {
+            // In symbols view, language switch should immediately land on the alphabet layout.
+            isSymbolMode = false
+        }
+        val needsLayoutChange = wasSymbolMode || oldUrdu != isUrduKeyboardLayout
 
         if (needsLayoutChange) {
             if (context is UrduKeyboardService) {

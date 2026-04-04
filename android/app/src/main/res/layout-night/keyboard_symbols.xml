@@ -2,10 +2,11 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="332dp"
+    android:minHeight="280dp"
     android:background="#1C1C1E"
     android:clipToPadding="false"
     android:fitsSystemWindows="true"
+    android:gravity="bottom"
     android:orientation="vertical"
     android:padding="4dp">
 
@@ -88,12 +89,5 @@
         <Button android:id="@+id/sym_key_voice" style="@style/KeyboardButtonBottomSmall" android:text="🎤" />
         <Button android:id="@+id/sym_key_enter" style="@style/KeyboardButtonBottomEnter" android:text="↵" />
     </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_margin="1dp"
-        android:importantForAccessibility="no"
-        android:visibility="invisible" />
 
 </LinearLayout>
