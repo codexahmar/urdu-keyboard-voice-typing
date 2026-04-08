@@ -50,15 +50,17 @@
          Set android:text="" in XML and use android:drawableTop
          ===================================================================== -->
     <style name="KeyboardButtonIcon" parent="KeyboardButtonFunctional">
-        <item name="android:layout_weight">1.3</item>
-        <item name="android:paddingTop">8dp</item>
-        <item name="android:paddingBottom">8dp</item>
+        <item name="android:layout_weight">1.04</item>
+        <item name="android:paddingTop">6dp</item>
+        <item name="android:paddingBottom">6dp</item>
+        <item name="android:textSize">0sp</item>
+        <item name="android:gravity">center</item>
         <item name="android:drawableTint">@color/kb_icon_light</item>
     </style>
 
     <!-- Shift uses state-specific vector colors, so we do not force icon tint. -->
     <style name="KeyboardButtonShift" parent="KeyboardButtonIcon">
-        <item name="android:layout_weight">1.15</item>
+        <item name="android:layout_weight">1.0</item>
         <item name="android:drawableTint">@null</item>
     </style>
 
@@ -77,12 +79,13 @@
          ENTER key: Google Blue accent
          ===================================================================== -->
     <style name="KeyboardButtonEnter" parent="KeyboardButton">
-        <item name="android:layout_weight">1.4</item>
+        <item name="android:layout_weight">0.95</item>
         <item name="android:background">@drawable/key_background_enter</item>
         <item name="android:textColor">@color/kb_enter_text</item>
-        <item name="android:textSize">13sp</item>
-        <item name="android:paddingTop">8dp</item>
-        <item name="android:paddingBottom">8dp</item>
+        <item name="android:textSize">0sp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:gravity">center</item>
         <item name="android:drawableTint">@color/kb_enter_text</item>
     </style>
 
@@ -103,8 +106,10 @@
     <!-- Mic key: icon only -->
     <style name="KeyboardButtonMic" parent="KeyboardButtonFunctional">
         <item name="android:layout_weight">0.9</item>
-        <item name="android:paddingTop">8dp</item>
-        <item name="android:paddingBottom">8dp</item>
+        <item name="android:paddingTop">5dp</item>
+        <item name="android:paddingBottom">5dp</item>
+        <item name="android:textSize">0sp</item>
+        <item name="android:gravity">center</item>
         <item name="android:drawableTint">@color/kb_icon_light</item>
     </style>
 

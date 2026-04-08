@@ -60,7 +60,7 @@ class KeyboardController(
     companion object {
         private const val TAG = "KeyboardController"
         // Extra bottom clearance so content clears the nav bar shadow.
-        private const val EXTRA_BOTTOM_GAP_DP = 12
+        private const val EXTRA_BOTTOM_GAP_DP = 8
         // Press-animation scale factor (subtle, Gboard-like)
         private const val PRESS_SCALE = 0.90f
         private const val ANIM_DURATION_MS = 55L
@@ -153,7 +153,7 @@ class KeyboardController(
 
     private fun applyBottomInsetPadding() {
         val extraGap = dpToPx(EXTRA_BOTTOM_GAP_DP)
-        val minBottom = dpToPx(6)
+        val minBottom = dpToPx(2)
         val baseLeft = keyboardView.paddingLeft
         val baseTop = keyboardView.paddingTop
         val baseRight = keyboardView.paddingRight
