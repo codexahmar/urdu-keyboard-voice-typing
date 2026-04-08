@@ -50,7 +50,7 @@
         android:gravity="center_vertical"
         android:layout_marginBottom="3dp"
         android:orientation="horizontal">
-        <Button android:id="@+id/key_shift" style="@style/KeyboardButtonShift" android:text="" android:drawableTop="@drawable/ic_shift_dark" android:drawablePadding="0dp" />
+        <Button android:id="@+id/key_shift" style="@style/KeyboardButtonShift" android:text="" android:drawableStart="@drawable/ic_shift_dark" android:drawablePadding="0dp" />
         <Button android:id="@+id/key_z" style="@style/KeyboardButton" android:text="z" />
         <Button android:id="@+id/key_x" style="@style/KeyboardButton" android:text="x" />
         <Button android:id="@+id/key_c" style="@style/KeyboardButton" android:text="c" />
@@ -58,20 +58,23 @@
         <Button android:id="@+id/key_b" style="@style/KeyboardButton" android:text="b" />
         <Button android:id="@+id/key_n" style="@style/KeyboardButton" android:text="n" />
         <Button android:id="@+id/key_m" style="@style/KeyboardButton" android:text="m" />
-        <Button android:id="@+id/key_backspace" style="@style/KeyboardButtonIcon" android:text="" android:drawableTop="@drawable/ic_backspace_dark" android:drawablePadding="0dp" />
+        <Button android:id="@+id/key_backspace" style="@style/KeyboardButtonIcon" android:text="" android:drawableStart="@drawable/ic_backspace_dark" android:drawablePadding="0dp" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
+        android:paddingBottom="2dp"
         android:orientation="horizontal">
         <Button android:id="@+id/key_symbols" style="@style/KeyboardButtonBottomSmall" android:text="123" />
         <Button android:id="@+id/key_language" style="@style/KeyboardButtonLanguage" android:text="EN" />
         <Button android:id="@+id/key_comma" style="@style/KeyboardButtonFunctional" android:layout_weight="0.68" android:text="," />
         <Button android:id="@+id/key_space" style="@style/KeyboardButtonSpace" android:text="English" />
         <Button android:id="@+id/key_dot" style="@style/KeyboardButtonFunctional" android:layout_weight="0.68" android:text="." />
-        <Button android:id="@+id/key_voice" style="@style/KeyboardButtonMic" android:text="" android:drawableTop="@drawable/ic_mic_dark" android:drawablePadding="0dp" />
-        <Button android:id="@+id/key_enter" style="@style/KeyboardButtonEnter" android:layout_weight="0.9" android:text="" android:drawableTop="@drawable/ic_enter" android:drawablePadding="0dp" />
+        <Button android:id="@+id/key_voice" style="@style/KeyboardButtonMic" android:text="" android:drawableStart="@drawable/ic_mic_dark" android:drawablePadding="0dp" />
+        <Button android:id="@+id/key_enter" style="@style/KeyboardButtonEnter" android:layout_weight="0.9" android:text="" android:drawableStart="@drawable/ic_enter" android:drawablePadding="0dp" />
     </LinearLayout>
 
 </LinearLayout>

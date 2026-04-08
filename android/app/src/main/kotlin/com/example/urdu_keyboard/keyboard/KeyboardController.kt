@@ -537,7 +537,7 @@ class KeyboardController(
         }
 
         val shiftButton = keyboardView.findViewById<Button>(R.id.key_shift)
-        shiftButton?.setCompoundDrawablesWithIntrinsicBounds(0, shiftIcon, 0, 0)
+        shiftButton?.setCompoundDrawablesRelativeWithIntrinsicBounds(shiftIcon, 0, 0, 0)
         shiftButton?.isActivated = (shiftState == ShiftState.CAPS_LOCK)
         shiftButton?.contentDescription = when (shiftState) {
             ShiftState.OFF -> "Shift off"
@@ -581,7 +581,7 @@ class KeyboardController(
 
     private fun updateKeyboardLayout() {
         val isUrdu = languageManager.getCurrentLanguage() == "ur"
-        val langText = if (isUrdu) "اردو" else "English"
+        val langText = "Space"
         val langShortText = if (isUrdu) "اردو" else "EN"
 
         val spaceButtonId = when {
