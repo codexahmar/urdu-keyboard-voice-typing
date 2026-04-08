@@ -25,7 +25,7 @@
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
         <item name="android:stateListAnimator">@null</item>
-        <item name="android:elevation">2dp</item>
+        <item name="android:elevation">0dp</item>
         <item name="android:includeFontPadding">false</item>
     </style>
 
@@ -37,14 +37,19 @@
     </style>
 
     <style name="KeyboardButtonIcon" parent="KeyboardButtonFunctional">
-        <item name="android:layout_weight">1.5</item>
+        <item name="android:layout_weight">1.3</item>
         <item name="android:paddingTop">8dp</item>
         <item name="android:paddingBottom">8dp</item>
         <item name="android:drawableTint">@color/kb_icon_dark</item>
     </style>
 
+    <style name="KeyboardButtonShift" parent="KeyboardButtonIcon">
+        <item name="android:layout_weight">1.15</item>
+        <item name="android:drawableTint">@null</item>
+    </style>
+
     <style name="KeyboardButtonSpace" parent="KeyboardButton">
-        <item name="android:layout_weight">4.5</item>
+        <item name="android:layout_weight">3.4</item>
         <item name="android:background">@drawable/key_background_space_dark</item>
         <item name="android:textSize">13sp</item>
         <item name="android:textColor">@color/kb_text_functional_dark</item>
@@ -52,7 +57,7 @@
     </style>
 
     <style name="KeyboardButtonEnter" parent="KeyboardButton">
-        <item name="android:layout_weight">2</item>
+        <item name="android:layout_weight">1.4</item>
         <item name="android:background">@drawable/key_background_enter</item>
         <item name="android:textColor">@color/kb_enter_text</item>
         <item name="android:textSize">13sp</item>
@@ -62,17 +67,17 @@
     </style>
 
     <style name="KeyboardButtonBottomSmall" parent="KeyboardButtonFunctional">
-        <item name="android:layout_weight">1.5</item>
+        <item name="android:layout_weight">1.35</item>
         <item name="android:textSize">13sp</item>
     </style>
 
     <style name="KeyboardButtonLanguage" parent="KeyboardButtonFunctional">
-        <item name="android:layout_weight">1</item>
+        <item name="android:layout_weight">1.05</item>
         <item name="android:textSize">13sp</item>
     </style>
 
     <style name="KeyboardButtonMic" parent="KeyboardButtonFunctional">
-        <item name="android:layout_weight">1</item>
+        <item name="android:layout_weight">0.9</item>
         <item name="android:paddingTop">8dp</item>
         <item name="android:paddingBottom">8dp</item>
         <item name="android:drawableTint">@color/kb_icon_dark</item>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shift caps-lock icon (light mode): blue arrow with lock bar -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp"
+    android:height="22dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#0B57D0"
+        android:pathData="M12,6L2,16h7v6h6v-6h7L12,6z" />
+    <path
+        android:fillColor="#0B57D0"
+        android:pathData="M8,3h8v2H8z" />
+</vector>

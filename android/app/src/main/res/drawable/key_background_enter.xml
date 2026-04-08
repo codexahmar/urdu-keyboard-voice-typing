@@ -1,27 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Enter key: Google Blue accent, used in both light and dark -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
-    android:color="#44FFFFFF">
+    android:color="#33FFFFFF">
+
     <item android:id="@android:id/mask">
         <shape android:shape="rectangle">
-            <corners android:radius="8dp" />
-            <solid android:color="#1A73E8" />
+            <corners android:radius="10dp" />
+            <solid android:color="@color/kb_accent" />
         </shape>
     </item>
+
     <item>
-        <layer-list>
-            <item android:top="1dp" android:bottom="-3dp">
-                <shape android:shape="rectangle">
-                    <solid android:color="#221558B6" />
-                    <corners android:radius="8dp" />
-                </shape>
-            </item>
-            <item android:bottom="2dp">
-                <shape android:shape="rectangle">
-                    <solid android:color="#1A73E8" />
-                    <corners android:radius="8dp" />
-                </shape>
-            </item>
-        </layer-list>
+        <shape android:shape="rectangle">
+            <corners android:radius="10dp" />
+            <solid android:color="@color/kb_accent" />
+        </shape>
     </item>
 </ripple>

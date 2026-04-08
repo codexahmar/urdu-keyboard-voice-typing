@@ -1,11 +1,15 @@
 package com.codexahmar.urdu_keyboard.keyboard
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.Button
@@ -36,21 +40,31 @@ class KeyboardController(
     private val languageManager = LanguageManager(context, preferenceHelper)
     private lateinit var voiceInputManager: VoiceInputManager
     private lateinit var backspaceHandler: BackspaceHandler
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     private var currentInputConnection: InputConnection? = null
     private var isUrduKeyboardLayout = false
-    private var isShiftEnabled = false
+    private var shiftState = ShiftState.OFF
+    private var lastShiftTapUptimeMs = 0L
     private var isAutoCapNext = true
     private var isSymbolMode = false
     private var lastKnownBottomInsetPx = 0
+    private var spaceLongPressRunnable: Runnable? = null
+
+    private enum class ShiftState {
+        OFF,
+        SHIFT_ONCE,
+        CAPS_LOCK
+    }
 
     companion object {
         private const val TAG = "KeyboardController"
         // Extra bottom clearance so content clears the nav bar shadow.
-        private const val EXTRA_BOTTOM_GAP_DP = 8
+        private const val EXTRA_BOTTOM_GAP_DP = 12
         // Press-animation scale factor (subtle, Gboard-like)
         private const val PRESS_SCALE = 0.90f
         private const val ANIM_DURATION_MS = 55L
+        private const val SPACE_SWIPE_SWITCH_THRESHOLD_DP = 24
     }
 
     /**
@@ -107,7 +121,7 @@ class KeyboardController(
     fun onStartInput(ic: InputConnection?, info: EditorInfo?) {
         currentInputConnection = ic
         isAutoCapNext = true
-        isShiftEnabled = false
+        shiftState = ShiftState.OFF
         Log.d(TAG, "onStartInput: IC=${if (ic != null) "valid" else "null"}")
         refreshEnglishKeyLabels()
     }
@@ -115,7 +129,7 @@ class KeyboardController(
     fun onFinishInput() {
         currentInputConnection = null
         isAutoCapNext = true
-        isShiftEnabled = false
+        shiftState = ShiftState.OFF
     }
 
     fun handleKeyPress(key: String, ic: InputConnection) {
@@ -127,6 +141,8 @@ class KeyboardController(
     fun startVoiceInput() = onVoiceInput()
 
     fun cleanup() {
+        spaceLongPressRunnable?.let(mainHandler::removeCallbacks)
+        spaceLongPressRunnable = null
         backspaceHandler.cleanup()
         if (::voiceInputManager.isInitialized) voiceInputManager.cleanup()
     }
@@ -137,7 +153,7 @@ class KeyboardController(
 
     private fun applyBottomInsetPadding() {
         val extraGap = dpToPx(EXTRA_BOTTOM_GAP_DP)
-        val minBottom = dpToPx(4)
+        val minBottom = dpToPx(6)
         val baseLeft = keyboardView.paddingLeft
         val baseTop = keyboardView.paddingTop
         val baseRight = keyboardView.paddingRight
@@ -156,7 +172,8 @@ class KeyboardController(
         // Register the reliable callback — fires whenever insets change.
         ViewCompat.setOnApplyWindowInsetsListener(keyboardView) { _, insets ->
             val navBottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
-            applyInset(navBottom)
+            val systemBarsBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
+            applyInset(max(navBottom, systemBarsBottom))
             insets
         }
 
@@ -281,7 +298,7 @@ class KeyboardController(
 
         // Space
         val spaceId = context.resources.getIdentifier("${prefix}space", "id", context.packageName)
-        setFastTapListener(keyboardView.findViewById(spaceId)) { onSpacePressed() }
+        setupSpaceButton(keyboardView.findViewById(spaceId))
 
         // Backspace — long-press handled by BackspaceHandler
         val bsId = context.resources.getIdentifier("${backPrefix}backspace", "id", context.packageName)
@@ -306,13 +323,13 @@ class KeyboardController(
         val enterId = context.resources.getIdentifier("${prefix}enter", "id", context.packageName)
         setFastTapListener(keyboardView.findViewById(enterId)) { onEnterPressed() }
 
-        // Language switch
-        val langId = context.resources.getIdentifier("${prefix}language", "id", context.packageName)
-        keyboardView.findViewById<Button>(langId)?.setOnClickListener { onLanguageSwitch() }
-
         // Voice / Mic
         val voiceId = context.resources.getIdentifier("${prefix}voice", "id", context.packageName)
         keyboardView.findViewById<Button>(voiceId)?.setOnClickListener { onVoiceInput() }
+
+        // Language switch
+        val langId = context.resources.getIdentifier("${prefix}language", "id", context.packageName)
+        keyboardView.findViewById<Button>(langId)?.setOnClickListener { onLanguageSwitch() }
 
         // 123 ↔ ABC toggle
         val toggleIdName = if (isSymbolMode) "sym_key_abc" else "${prefix}symbols"
@@ -323,6 +340,69 @@ class KeyboardController(
         if (!isSymbolMode && !isUrduKeyboardLayout) {
             val shiftId = context.resources.getIdentifier("key_shift", "id", context.packageName)
             keyboardView.findViewById<Button>(shiftId)?.setOnClickListener { onShiftPressed() }
+        }
+    }
+
+    private fun setupSpaceButton(spaceButton: Button?) {
+        spaceButton ?: return
+
+        val longPressTimeoutMs = ViewConfiguration.getLongPressTimeout().toLong()
+        val swipeThresholdPx = dpToPx(SPACE_SWIPE_SWITCH_THRESHOLD_DP).toFloat()
+
+        var isLongPressHandled = false
+        var isSwipeSwitchHandled = false
+        var downX = 0f
+        var downY = 0f
+
+        spaceButton.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    animateKeyPress(view)
+                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    isLongPressHandled = false
+                    isSwipeSwitchHandled = false
+                    downX = event.x
+                    downY = event.y
+
+                    spaceLongPressRunnable?.let(mainHandler::removeCallbacks)
+                    spaceLongPressRunnable = Runnable {
+                        isLongPressHandled = true
+                        onSpaceLongPressed(view)
+                    }
+                    mainHandler.postDelayed(spaceLongPressRunnable!!, longPressTimeoutMs)
+                    true
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    if (!isLongPressHandled && !isSwipeSwitchHandled) {
+                        val dx = event.x - downX
+                        val dy = event.y - downY
+                        if (kotlin.math.abs(dx) >= swipeThresholdPx && kotlin.math.abs(dx) > kotlin.math.abs(dy)) {
+                            spaceLongPressRunnable?.let(mainHandler::removeCallbacks)
+                            isSwipeSwitchHandled = true
+                            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                            onLanguageSwitch()
+                        }
+                    }
+                    true
+                }
+
+                MotionEvent.ACTION_UP -> {
+                    spaceLongPressRunnable?.let(mainHandler::removeCallbacks)
+                    if (!isLongPressHandled && !isSwipeSwitchHandled) {
+                        onSpacePressed()
+                    }
+                    view.performClick()
+                    true
+                }
+
+                MotionEvent.ACTION_CANCEL -> {
+                    spaceLongPressRunnable?.let(mainHandler::removeCallbacks)
+                    true
+                }
+
+                else -> false
+            }
         }
     }
 
@@ -377,8 +457,8 @@ class KeyboardController(
         val output = if (shouldUseUppercase()) key.uppercase() else key.lowercase()
         commitText(output)
         isAutoCapNext = false
-        if (isShiftEnabled) {
-            isShiftEnabled = false
+        if (shiftState == ShiftState.SHIFT_ONCE) {
+            shiftState = ShiftState.OFF
             refreshEnglishKeyLabels()
         }
     }
@@ -391,10 +471,6 @@ class KeyboardController(
     private fun onPunctuationPressed(symbol: String) {
         commitText(symbol)
         isAutoCapNext = symbol == "." || symbol == "?" || symbol == "؟" || symbol == "!"
-        if (isShiftEnabled) {
-            isShiftEnabled = false
-            refreshEnglishKeyLabels()
-        }
     }
 
     private fun onSpacePressed() {
@@ -404,19 +480,32 @@ class KeyboardController(
     private fun onEnterPressed() {
         commitText("\n")
         isAutoCapNext = true
-        if (isShiftEnabled) {
-            isShiftEnabled = false
-            refreshEnglishKeyLabels()
-        }
     }
 
     private fun onShiftPressed() {
         if (isUrduKeyboardLayout) return
-        isShiftEnabled = !isShiftEnabled
+
+        if (shiftState == ShiftState.CAPS_LOCK) {
+            shiftState = ShiftState.OFF
+            refreshEnglishKeyLabels()
+            return
+        }
+
+        val now = SystemClock.uptimeMillis()
+        val doubleTapTimeoutMs = ViewConfiguration.getDoubleTapTimeout().toLong()
+        shiftState = if (
+            shiftState == ShiftState.SHIFT_ONCE &&
+            (now - lastShiftTapUptimeMs) <= doubleTapTimeoutMs
+        ) {
+            ShiftState.CAPS_LOCK
+        } else {
+            ShiftState.SHIFT_ONCE
+        }
+        lastShiftTapUptimeMs = now
         refreshEnglishKeyLabels()
     }
 
-    private fun shouldUseUppercase() = isShiftEnabled || isAutoCapNext
+    private fun shouldUseUppercase() = shiftState != ShiftState.OFF || isAutoCapNext
 
     /**
      * Refresh English key labels AND shift icon drawable when shift state changes.
@@ -441,15 +530,20 @@ class KeyboardController(
             android.content.res.Configuration.UI_MODE_NIGHT_MASK
         val isNight = nightModeBits == android.content.res.Configuration.UI_MODE_NIGHT_YES
 
-        val shiftIcon = when {
-            isShiftEnabled && isNight -> R.drawable.ic_shift_active_dark
-            isShiftEnabled           -> R.drawable.ic_shift_active
-            isNight                  -> R.drawable.ic_shift_dark
-            else                     -> R.drawable.ic_shift
+        val shiftIcon = when (shiftState) {
+            ShiftState.OFF -> if (isNight) R.drawable.ic_shift_dark else R.drawable.ic_shift
+            ShiftState.SHIFT_ONCE -> if (isNight) R.drawable.ic_shift_active_dark else R.drawable.ic_shift_active
+            ShiftState.CAPS_LOCK -> if (isNight) R.drawable.ic_shift_caps_dark else R.drawable.ic_shift_caps
         }
 
         val shiftButton = keyboardView.findViewById<Button>(R.id.key_shift)
         shiftButton?.setCompoundDrawablesWithIntrinsicBounds(0, shiftIcon, 0, 0)
+        shiftButton?.isActivated = (shiftState == ShiftState.CAPS_LOCK)
+        shiftButton?.contentDescription = when (shiftState) {
+            ShiftState.OFF -> "Shift off"
+            ShiftState.SHIFT_ONCE -> "Shift on for next letter"
+            ShiftState.CAPS_LOCK -> "Caps lock on"
+        }
     }
 
     private fun onLanguageSwitch() {
@@ -467,7 +561,7 @@ class KeyboardController(
             updateKeyboardLayout()
         }
         isAutoCapNext = true
-        isShiftEnabled = false
+        shiftState = ShiftState.OFF
 
         val langName = if (newLang == "ur") "اردو" else "English"
         Toast.makeText(context, "Keyboard: $langName", Toast.LENGTH_SHORT).show()
@@ -486,13 +580,28 @@ class KeyboardController(
     }
 
     private fun updateKeyboardLayout() {
-        val langText = if (languageManager.getCurrentLanguage() == "ur") "اردو" else "EN"
-        val langButtonId = when {
+        val isUrdu = languageManager.getCurrentLanguage() == "ur"
+        val langText = if (isUrdu) "اردو" else "English"
+        val langShortText = if (isUrdu) "اردو" else "EN"
+
+        val spaceButtonId = when {
+            isSymbolMode -> R.id.sym_key_space
+            isUrduKeyboardLayout -> R.id.urdu_key_space
+            else -> R.id.key_space
+        }
+        keyboardView.findViewById<Button>(spaceButtonId)?.text = langText
+
+        val languageButtonId = when {
             isSymbolMode -> R.id.sym_key_language
             isUrduKeyboardLayout -> R.id.urdu_key_language
             else -> R.id.key_language
         }
-        keyboardView.findViewById<Button>(langButtonId)?.text = langText
+        keyboardView.findViewById<Button>(languageButtonId)?.text = langShortText
+    }
+
+    private fun onSpaceLongPressed(view: View) {
+        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        (context as? UrduKeyboardService)?.showSystemKeyboardPicker()
     }
 
     private fun commitText(text: String) {

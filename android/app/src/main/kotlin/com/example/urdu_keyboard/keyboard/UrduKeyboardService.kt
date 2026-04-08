@@ -6,6 +6,7 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.content.Intent
 import android.provider.Settings
+import android.view.inputmethod.InputMethodManager
 import com.codexahmar.urdu_keyboard.utils.PreferenceHelper
 
 /**
@@ -122,6 +123,14 @@ class UrduKeyboardService : InputMethodService() {
         val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         startActivity(intent)
+    }
+
+    /**
+     * Open the system input method picker (list of installed keyboards).
+     */
+    fun showSystemKeyboardPicker() {
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager
+        imm?.showInputMethodPicker()
     }
 
     override fun onDestroy() {
