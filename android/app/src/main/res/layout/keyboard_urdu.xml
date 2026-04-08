@@ -1,37 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Urdu keyboard — Gboard Phonetic layout (Pakistan standard)
+  All 38 unique characters, ZERO duplicates.
+
+  Row 1 (10): ض ص ث ق ف غ ع ہ خ ح
+  Row 2 (10): ج چ ظ ط ز ر ذ د ڈ ب   (slightly indented)
+  Row 3 (10): پ ت ٹ ش س ک گ ل م ن
+  Row 4 (shift+8+bs): [⇧] و ے ی ئ ؤ ا آ ژ [⌫]
+  Row 5 (bottom): [123] [EN/اردو] [Space] [Mic] [↵]
+
+  Controller maps urdu_key_1..38 to urduLetters[0..37].
+  layoutDirection=ltr keeps physical key positions fixed regardless of RTL locale.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="280dp"
-    android:background="#E8EAF6"
+    android:background="@color/kb_bg_light"
     android:clipToPadding="false"
-    android:fitsSystemWindows="true"
-    android:gravity="bottom"
+    android:layoutDirection="ltr"
     android:orientation="vertical"
-    android:padding="4dp">
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
+    android:paddingTop="6dp">
 
+    <!-- ── ROW 1 : ض ص ث ق ف غ ع ہ خ ح ──────────────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
-
-        <Button android:id="@+id/urdu_key_1" style="@style/KeyboardButton" android:text="ض" />
-        <Button android:id="@+id/urdu_key_2" style="@style/KeyboardButton" android:text="ص" />
-        <Button android:id="@+id/urdu_key_3" style="@style/KeyboardButton" android:text="ث" />
-        <Button android:id="@+id/urdu_key_4" style="@style/KeyboardButton" android:text="ق" />
-        <Button android:id="@+id/urdu_key_5" style="@style/KeyboardButton" android:text="ف" />
-        <Button android:id="@+id/urdu_key_6" style="@style/KeyboardButton" android:text="غ" />
-        <Button android:id="@+id/urdu_key_7" style="@style/KeyboardButton" android:text="ع" />
-        <Button android:id="@+id/urdu_key_8" style="@style/KeyboardButton" android:text="ہ" />
-        <Button android:id="@+id/urdu_key_9" style="@style/KeyboardButton" android:text="خ" />
+        <Button android:id="@+id/urdu_key_1"  style="@style/KeyboardButton" android:text="ض" />
+        <Button android:id="@+id/urdu_key_2"  style="@style/KeyboardButton" android:text="ص" />
+        <Button android:id="@+id/urdu_key_3"  style="@style/KeyboardButton" android:text="ث" />
+        <Button android:id="@+id/urdu_key_4"  style="@style/KeyboardButton" android:text="ق" />
+        <Button android:id="@+id/urdu_key_5"  style="@style/KeyboardButton" android:text="ف" />
+        <Button android:id="@+id/urdu_key_6"  style="@style/KeyboardButton" android:text="غ" />
+        <Button android:id="@+id/urdu_key_7"  style="@style/KeyboardButton" android:text="ع" />
+        <Button android:id="@+id/urdu_key_8"  style="@style/KeyboardButton" android:text="ہ" />
+        <Button android:id="@+id/urdu_key_9"  style="@style/KeyboardButton" android:text="خ" />
         <Button android:id="@+id/urdu_key_10" style="@style/KeyboardButton" android:text="ح" />
     </LinearLayout>
 
+    <!-- ── ROW 2 : ج چ ظ ط ز ر ذ د ڈ ب ────────────────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
-
+        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="0.5" />
         <Button android:id="@+id/urdu_key_11" style="@style/KeyboardButton" android:text="ج" />
         <Button android:id="@+id/urdu_key_12" style="@style/KeyboardButton" android:text="چ" />
         <Button android:id="@+id/urdu_key_13" style="@style/KeyboardButton" android:text="ظ" />
@@ -41,53 +55,91 @@
         <Button android:id="@+id/urdu_key_17" style="@style/KeyboardButton" android:text="ذ" />
         <Button android:id="@+id/urdu_key_18" style="@style/KeyboardButton" android:text="د" />
         <Button android:id="@+id/urdu_key_19" style="@style/KeyboardButton" android:text="ڈ" />
-        <Button android:id="@+id/urdu_key_20" style="@style/KeyboardButton" android:text="خ" />
+        <Button android:id="@+id/urdu_key_20" style="@style/KeyboardButton" android:text="ب" />
+        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="0.5" />
     </LinearLayout>
 
+    <!-- ── ROW 3 : پ ت ٹ ش س ک گ ل م ن ─────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button android:id="@+id/urdu_key_21" style="@style/KeyboardButton" android:text="پ" />
+        <Button android:id="@+id/urdu_key_22" style="@style/KeyboardButton" android:text="ت" />
+        <Button android:id="@+id/urdu_key_23" style="@style/KeyboardButton" android:text="ٹ" />
+        <Button android:id="@+id/urdu_key_24" style="@style/KeyboardButton" android:text="ش" />
+        <Button android:id="@+id/urdu_key_25" style="@style/KeyboardButton" android:text="س" />
+        <Button android:id="@+id/urdu_key_26" style="@style/KeyboardButton" android:text="ک" />
+        <Button android:id="@+id/urdu_key_27" style="@style/KeyboardButton" android:text="گ" />
+        <Button android:id="@+id/urdu_key_28" style="@style/KeyboardButton" android:text="ل" />
+        <Button android:id="@+id/urdu_key_29" style="@style/KeyboardButton" android:text="م" />
+        <Button android:id="@+id/urdu_key_30" style="@style/KeyboardButton" android:text="ن" />
+    </LinearLayout>
+
+    <!-- ── ROW 4 : [⇧] و ے ی ئ ؤ ا آ ژ [⌫] ──────────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <Button android:id="@+id/urdu_key_21" style="@style/KeyboardButton" android:text="ح" />
-        <Button android:id="@+id/urdu_key_22" style="@style/KeyboardButton" android:text="ش" />
-        <Button android:id="@+id/urdu_key_23" style="@style/KeyboardButton" android:text="س" />
-        <Button android:id="@+id/urdu_key_24" style="@style/KeyboardButton" android:text="ژ" />
-        <Button android:id="@+id/urdu_key_25" style="@style/KeyboardButton" android:text="ز" />
-        <Button android:id="@+id/urdu_key_26" style="@style/KeyboardButton" android:text="ص" />
-        <Button android:id="@+id/urdu_key_27" style="@style/KeyboardButton" android:text="ط" />
-        <Button android:id="@+id/urdu_key_28" style="@style/KeyboardButton" android:text="ض" />
-        <Button android:id="@+id/urdu_key_29" style="@style/KeyboardButton" android:text="ظ" />
-        <Button android:id="@+id/urdu_key_30" style="@style/KeyboardButton" android:text="ف" />
+        <Button
+            android:id="@+id/urdu_key_shift"
+            style="@style/KeyboardButtonIcon"
+            android:text=""
+            android:drawableTop="@drawable/ic_shift"
+            android:drawablePadding="0dp" />
+
+        <Button android:id="@+id/urdu_key_31" style="@style/KeyboardButton" android:text="و" />
+        <Button android:id="@+id/urdu_key_32" style="@style/KeyboardButton" android:text="ے" />
+        <Button android:id="@+id/urdu_key_33" style="@style/KeyboardButton" android:text="ی" />
+        <Button android:id="@+id/urdu_key_34" style="@style/KeyboardButton" android:text="ئ" />
+        <Button android:id="@+id/urdu_key_35" style="@style/KeyboardButton" android:text="ؤ" />
+        <Button android:id="@+id/urdu_key_36" style="@style/KeyboardButton" android:text="ا" />
+        <Button android:id="@+id/urdu_key_37" style="@style/KeyboardButton" android:text="آ" />
+        <Button android:id="@+id/urdu_key_38" style="@style/KeyboardButton" android:text="ژ" />
+
+        <Button
+            android:id="@+id/urdu_backspace"
+            style="@style/KeyboardButtonIcon"
+            android:text=""
+            android:drawableTop="@drawable/ic_backspace"
+            android:drawablePadding="0dp" />
     </LinearLayout>
 
+    <!-- ── ROW 5 (bottom) : [123] [اردو] [Space] [Mic] [↵] ──────────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <Button android:id="@+id/urdu_key_shift" style="@style/KeyboardButton" android:text="⇧" />
-        <Button android:id="@+id/urdu_key_31" style="@style/KeyboardButton" android:text="ق" />
-        <Button android:id="@+id/urdu_key_32" style="@style/KeyboardButton" android:text="ک" />
-        <Button android:id="@+id/urdu_key_33" style="@style/KeyboardButton" android:text="گ" />
-        <Button android:id="@+id/urdu_key_34" style="@style/KeyboardButton" android:text="ل" />
-        <Button android:id="@+id/urdu_key_35" style="@style/KeyboardButton" android:text="م" />
-        <Button android:id="@+id/urdu_key_36" style="@style/KeyboardButton" android:text="ن" />
-        <Button android:id="@+id/urdu_key_37" style="@style/KeyboardButton" android:text="و" />
-        <Button android:id="@+id/urdu_key_38" style="@style/KeyboardButton" android:text="ہ" />
-        <Button android:id="@+id/urdu_backspace" style="@style/KeyboardButton" android:text="⌫" />
-    </LinearLayout>
+        <Button
+            android:id="@+id/urdu_key_symbols"
+            style="@style/KeyboardButtonBottomSmall"
+            android:text="123" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        <Button
+            android:id="@+id/urdu_key_language"
+            style="@style/KeyboardButtonLanguage"
+            android:text="اردو" />
 
-        <Button android:id="@+id/urdu_key_symbols" style="@style/KeyboardButtonBottomSmall" android:text="123" />
-        <Button android:id="@+id/urdu_key_language" style="@style/KeyboardButtonBottomSmall" android:text="اردو" />
-        <Button android:id="@+id/urdu_key_space" style="@style/KeyboardButtonBottomSpace" android:text="Space" />
-        <Button android:id="@+id/urdu_key_voice" style="@style/KeyboardButtonBottomSmall" android:text="🎤" />
-        <Button android:id="@+id/urdu_key_enter" style="@style/KeyboardButtonBottomEnter" android:text="↵" />
+        <Button
+            android:id="@+id/urdu_key_space"
+            style="@style/KeyboardButtonSpace"
+            android:text="اردو" />
+
+        <Button
+            android:id="@+id/urdu_key_voice"
+            style="@style/KeyboardButtonMic"
+            android:text=""
+            android:drawableTop="@drawable/ic_mic"
+            android:drawablePadding="0dp" />
+
+        <Button
+            android:id="@+id/urdu_key_enter"
+            style="@style/KeyboardButtonEnter"
+            android:text=""
+            android:drawableTop="@drawable/ic_enter"
+            android:drawablePadding="0dp" />
     </LinearLayout>
 
 </LinearLayout>

@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  English QWERTY keyboard — Gboard-accurate layout
+  Row 1 : Q W E R T Y U I O P        (10 equal keys)
+  Row 2 : A S D F G H J K L ,        (9 letters + comma, slightly indented)
+  Row 3 : [Shift] Z X C V B N M [.] [⌫]
+  Row 4 : [123] [Lang] [     Space     ] [Mic] [↵]
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="280dp"
-    android:background="#E8EAF6"
+    android:background="@color/kb_bg_light"
     android:clipToPadding="false"
-    android:fitsSystemWindows="true"
-    android:gravity="bottom"
     android:orientation="vertical"
-    android:padding="4dp">
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
+    android:paddingTop="6dp">
 
+    <!-- ── ROW 1 : Q W E R T Y U I O P ─────────────────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -27,10 +34,18 @@
         <Button android:id="@+id/key_p" style="@style/KeyboardButton" android:text="p" />
     </LinearLayout>
 
+    <!-- ── ROW 2 : A S D F G H J K L , ─────────────────────────────── -->
+    <!-- Half-key spacers on each side to visually center row 2 (Gboard style) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
+
+        <!-- ~half-key left spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="0.5" />
 
         <Button android:id="@+id/key_a" style="@style/KeyboardButton" android:text="a" />
         <Button android:id="@+id/key_s" style="@style/KeyboardButton" android:text="s" />
@@ -41,15 +56,29 @@
         <Button android:id="@+id/key_j" style="@style/KeyboardButton" android:text="j" />
         <Button android:id="@+id/key_k" style="@style/KeyboardButton" android:text="k" />
         <Button android:id="@+id/key_l" style="@style/KeyboardButton" android:text="l" />
-        <Button android:id="@+id/key_comma" style="@style/KeyboardButton" android:text="," />
+
+        <!-- Comma: functional-style, slightly narrower -->
+        <Button
+            android:id="@+id/key_comma"
+            style="@style/KeyboardButtonFunctional"
+            android:layout_weight="0.5"
+            android:text="," />
     </LinearLayout>
 
+    <!-- ── ROW 3 : [⇧] Z X C V B N M [.] [⌫] ───────────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <Button android:id="@+id/key_shift" style="@style/KeyboardButton" android:text="⇧" />
+        <!-- Shift — icon button -->
+        <Button
+            android:id="@+id/key_shift"
+            style="@style/KeyboardButtonIcon"
+            android:text=""
+            android:drawableTop="@drawable/ic_shift"
+            android:drawablePadding="0dp" />
+
         <Button android:id="@+id/key_z" style="@style/KeyboardButton" android:text="z" />
         <Button android:id="@+id/key_x" style="@style/KeyboardButton" android:text="x" />
         <Button android:id="@+id/key_c" style="@style/KeyboardButton" android:text="c" />
@@ -57,20 +86,60 @@
         <Button android:id="@+id/key_b" style="@style/KeyboardButton" android:text="b" />
         <Button android:id="@+id/key_n" style="@style/KeyboardButton" android:text="n" />
         <Button android:id="@+id/key_m" style="@style/KeyboardButton" android:text="m" />
-        <Button android:id="@+id/key_dot" style="@style/KeyboardButton" android:text="." />
-        <Button android:id="@+id/key_backspace" style="@style/KeyboardButton" android:text="⌫" />
+
+        <!-- Period: smaller functional key -->
+        <Button
+            android:id="@+id/key_dot"
+            style="@style/KeyboardButtonFunctional"
+            android:layout_weight="0.75"
+            android:text="." />
+
+        <!-- Backspace — icon button -->
+        <Button
+            android:id="@+id/key_backspace"
+            style="@style/KeyboardButtonIcon"
+            android:text=""
+            android:drawableTop="@drawable/ic_backspace"
+            android:drawablePadding="0dp" />
     </LinearLayout>
 
+    <!-- ── ROW 4 (bottom): [123] [Lang] [    Space    ] [Mic] [↵] ───── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingBottom="0dp">
 
-        <Button android:id="@+id/key_symbols" style="@style/KeyboardButtonBottomSmall" android:text="123" />
-        <Button android:id="@+id/key_language" style="@style/KeyboardButtonBottomSmall" android:text="EN" />
-        <Button android:id="@+id/key_space" style="@style/KeyboardButtonBottomSpace" android:text="Space" />
-        <Button android:id="@+id/key_voice" style="@style/KeyboardButtonBottomSmall" android:text="🎤" />
-        <Button android:id="@+id/key_enter" style="@style/KeyboardButtonBottomEnter" android:text="↵" />
+        <Button
+            android:id="@+id/key_symbols"
+            style="@style/KeyboardButtonBottomSmall"
+            android:text="123" />
+
+        <Button
+            android:id="@+id/key_language"
+            style="@style/KeyboardButtonLanguage"
+            android:text="EN" />
+
+        <Button
+            android:id="@+id/key_space"
+            style="@style/KeyboardButtonSpace"
+            android:text="English" />
+
+        <!-- Mic — icon -->
+        <Button
+            android:id="@+id/key_voice"
+            style="@style/KeyboardButtonMic"
+            android:text=""
+            android:drawableTop="@drawable/ic_mic"
+            android:drawablePadding="0dp" />
+
+        <!-- Enter — blue icon -->
+        <Button
+            android:id="@+id/key_enter"
+            style="@style/KeyboardButtonEnter"
+            android:text=""
+            android:drawableTop="@drawable/ic_enter"
+            android:drawablePadding="0dp" />
     </LinearLayout>
 
 </LinearLayout>

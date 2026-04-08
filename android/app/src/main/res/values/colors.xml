@@ -1,4 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#00000000</color>
+
+    <!-- ===== Keyboard Light Mode ===== -->
+    <!-- Overall keyboard surface (Gboard light: #F0F0F0) -->
+    <color name="kb_bg_light">#EFF0F3</color>
+    <!-- Regular character key face -->
+    <color name="kb_key_light">#FFFFFF</color>
+    <!-- Functional keys: shift, backspace, 123, language -->
+    <color name="kb_key_functional_light">#B0B8C4</color>
+    <!-- Primary text on character keys -->
+    <color name="kb_text_primary_light">#1F1F1F</color>
+    <!-- Text on functional/action keys -->
+    <color name="kb_text_functional_light">#2D2D2D</color>
+    <!-- Ripple on light keys -->
+    <color name="kb_ripple_light">#33000000</color>
+
+    <!-- ===== Keyboard Dark Mode ===== -->
+    <color name="kb_bg_dark">#1B1B1D</color>
+    <color name="kb_key_dark">#3D3D40</color>
+    <color name="kb_key_functional_dark">#1C1C1E</color>
+    <color name="kb_text_primary_dark">#E8E8EA</color>
+    <color name="kb_text_functional_dark">#AFAFB3</color>
+    <color name="kb_ripple_dark">#55FFFFFF</color>
+
+    <!-- ===== Shared / Accent ===== -->
+    <!-- Google Blue — enter key, active shift -->
+    <color name="kb_accent">#1A73E8</color>
+    <!-- Text on the blue enter key -->
+    <color name="kb_enter_text">#FFFFFF</color>
+    <!-- Mic icon on light background -->
+    <color name="kb_icon_light">#444444</color>
+    <!-- Mic/backspace icon on dark background -->
+    <color name="kb_icon_dark">#CCCCCC</color>
 </resources>

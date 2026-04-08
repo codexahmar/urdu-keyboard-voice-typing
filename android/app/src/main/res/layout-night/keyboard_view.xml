@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Dark mode: identical to layout/keyboard_view.xml — styles auto-switch via values-night -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="280dp"
-    android:background="#1C1C1E"
+    android:background="@color/kb_bg_dark"
     android:clipToPadding="false"
-    android:fitsSystemWindows="true"
-    android:gravity="bottom"
     android:orientation="vertical"
-    android:padding="4dp">
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
+    android:paddingTop="6dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
-
         <Button android:id="@+id/key_q" style="@style/KeyboardButton" android:text="q" />
         <Button android:id="@+id/key_w" style="@style/KeyboardButton" android:text="w" />
         <Button android:id="@+id/key_e" style="@style/KeyboardButton" android:text="e" />
@@ -31,7 +30,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
-
+        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="0.5" />
         <Button android:id="@+id/key_a" style="@style/KeyboardButton" android:text="a" />
         <Button android:id="@+id/key_s" style="@style/KeyboardButton" android:text="s" />
         <Button android:id="@+id/key_d" style="@style/KeyboardButton" android:text="d" />
@@ -41,15 +40,14 @@
         <Button android:id="@+id/key_j" style="@style/KeyboardButton" android:text="j" />
         <Button android:id="@+id/key_k" style="@style/KeyboardButton" android:text="k" />
         <Button android:id="@+id/key_l" style="@style/KeyboardButton" android:text="l" />
-        <Button android:id="@+id/key_comma" style="@style/KeyboardButton" android:text="," />
+        <Button android:id="@+id/key_comma" style="@style/KeyboardButtonFunctional" android:layout_weight="0.5" android:text="," />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
-
-        <Button android:id="@+id/key_shift" style="@style/KeyboardButton" android:text="⇧" />
+        <Button android:id="@+id/key_shift" style="@style/KeyboardButtonIcon" android:text="" android:drawableTop="@drawable/ic_shift_dark" android:drawablePadding="0dp" />
         <Button android:id="@+id/key_z" style="@style/KeyboardButton" android:text="z" />
         <Button android:id="@+id/key_x" style="@style/KeyboardButton" android:text="x" />
         <Button android:id="@+id/key_c" style="@style/KeyboardButton" android:text="c" />
@@ -57,20 +55,19 @@
         <Button android:id="@+id/key_b" style="@style/KeyboardButton" android:text="b" />
         <Button android:id="@+id/key_n" style="@style/KeyboardButton" android:text="n" />
         <Button android:id="@+id/key_m" style="@style/KeyboardButton" android:text="m" />
-        <Button android:id="@+id/key_dot" style="@style/KeyboardButton" android:text="." />
-        <Button android:id="@+id/key_backspace" style="@style/KeyboardButton" android:text="⌫" />
+        <Button android:id="@+id/key_dot" style="@style/KeyboardButtonFunctional" android:layout_weight="0.75" android:text="." />
+        <Button android:id="@+id/key_backspace" style="@style/KeyboardButtonIcon" android:text="" android:drawableTop="@drawable/ic_backspace_dark" android:drawablePadding="0dp" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
-
         <Button android:id="@+id/key_symbols" style="@style/KeyboardButtonBottomSmall" android:text="123" />
-        <Button android:id="@+id/key_language" style="@style/KeyboardButtonBottomSmall" android:text="EN" />
-        <Button android:id="@+id/key_space" style="@style/KeyboardButtonBottomSpace" android:text="Space" />
-        <Button android:id="@+id/key_voice" style="@style/KeyboardButtonBottomSmall" android:text="🎤" />
-        <Button android:id="@+id/key_enter" style="@style/KeyboardButtonBottomEnter" android:text="↵" />
+        <Button android:id="@+id/key_language" style="@style/KeyboardButtonLanguage" android:text="EN" />
+        <Button android:id="@+id/key_space" style="@style/KeyboardButtonSpace" android:text="English" />
+        <Button android:id="@+id/key_voice" style="@style/KeyboardButtonMic" android:text="" android:drawableTop="@drawable/ic_mic_dark" android:drawablePadding="0dp" />
+        <Button android:id="@+id/key_enter" style="@style/KeyboardButtonEnter" android:text="" android:drawableTop="@drawable/ic_enter" android:drawablePadding="0dp" />
     </LinearLayout>
 
 </LinearLayout>
