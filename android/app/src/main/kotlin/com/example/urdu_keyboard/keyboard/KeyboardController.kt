@@ -537,7 +537,7 @@ class KeyboardController(
         }
 
         val shiftButton = keyboardView.findViewById<Button>(R.id.key_shift)
-        shiftButton?.setCompoundDrawablesRelativeWithIntrinsicBounds(shiftIcon, 0, 0, 0)
+        shiftButton?.setCompoundDrawablesWithIntrinsicBounds(0, shiftIcon, 0, 0)
         shiftButton?.isActivated = (shiftState == ShiftState.CAPS_LOCK)
         shiftButton?.contentDescription = when (shiftState) {
             ShiftState.OFF -> "Shift off"
