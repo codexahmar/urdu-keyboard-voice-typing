@@ -50,6 +50,7 @@ class KeyboardController(
     private var isSymbolMode = false
     private var lastKnownBottomInsetPx = 0
     private var spaceLongPressRunnable: Runnable? = null
+    private var lastFeedbackUptimeMs = 0L
 
     private enum class ShiftState {
         OFF,
@@ -63,8 +64,9 @@ class KeyboardController(
         private const val EXTRA_BOTTOM_GAP_DP = 8
         // Press-animation scale factor (subtle, Gboard-like)
         private const val PRESS_SCALE = 0.90f
-        private const val ANIM_DURATION_MS = 55L
+        private const val ANIM_DURATION_MS = 40L
         private const val SPACE_SWIPE_SWITCH_THRESHOLD_DP = 24
+        private const val FEEDBACK_THROTTLE_MS = 55L
     }
 
     /**
@@ -305,8 +307,7 @@ class KeyboardController(
         keyboardView.findViewById<Button>(bsId)?.setOnTouchListener { view, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    animateKeyPress(view)
-                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    applyTapFeedback(view)
                     backspaceHandler.onBackspaceDown()
                     true
                 }
@@ -357,8 +358,7 @@ class KeyboardController(
         spaceButton.setOnTouchListener { view, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    animateKeyPress(view)
-                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    applyTapFeedback(view)
                     isLongPressHandled = false
                     isSwipeSwitchHandled = false
                     downX = event.x
@@ -414,8 +414,7 @@ class KeyboardController(
         button?.setOnTouchListener { view, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    animateKeyPress(view)
-                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    applyTapFeedback(view)
                     onTap()
                     true
                 }
@@ -447,6 +446,19 @@ class KeyboardController(
                     .start()
             }
             .start()
+    }
+
+    private fun applyTapFeedback(view: View) {
+        if (!shouldEmitVisualFeedback()) return
+        animateKeyPress(view)
+        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+    }
+
+    private fun shouldEmitVisualFeedback(): Boolean {
+        val now = SystemClock.uptimeMillis()
+        val allow = (now - lastFeedbackUptimeMs) >= FEEDBACK_THROTTLE_MS
+        if (allow) lastFeedbackUptimeMs = now
+        return allow
     }
 
     // ─────────────────────────────────────────────────────────────────────────
