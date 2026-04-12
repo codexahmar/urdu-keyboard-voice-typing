@@ -2,7 +2,7 @@ name: urdu_keyboard
 description: "Urdu Smart Keyboard - A simple, ad-free keyboard app for Urdu typing"
 publish_to: 'none'
 
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ^3.10.4
