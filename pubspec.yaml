@@ -42,6 +42,6 @@ flutter_launcher_icons:
   image_path: assets/icons/app_icon.png
 
   # Android adaptive icon settings
-  adaptive_icon_background: "#00000000" # fully transparent
+  adaptive_icon_background: "#00000000" 
   adaptive_icon_foreground: assets/icons/app_icon.png
 
