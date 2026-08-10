@@ -17,7 +17,7 @@ void main() async {
   // Initialize app state
   final appState = AppState();
   await appState.init();
-     
+
   runApp(
     ChangeNotifierProvider.value(
       value: appState,
@@ -38,7 +38,7 @@ class UrduSmartKeyboardApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
 
       // Theme configuration
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.darkTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: appState.themeMode,
 

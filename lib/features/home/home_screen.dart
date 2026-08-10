@@ -57,10 +57,16 @@ class _HomeScreenState extends State<HomeScreen> {
           context: context,
           builder: (context) => AlertDialog(
             backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
             title: Row(
               children: [
-                Icon(Icons.mic_none_rounded, color: isDark ? AppColors.primaryLight : AppColors.primary, size: 28),
+                Icon(
+                  Icons.mic_none_rounded,
+                  color: isDark ? AppColors.primaryLight : AppColors.primary,
+                  size: 28,
+                ),
                 const SizedBox(width: 12),
                 const Text('Microphone Permission'),
               ],
@@ -76,17 +82,28 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () => Navigator.pop(context, false),
                 child: Text(
                   'Later',
-                  style: TextStyle(color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary),
+                  style: TextStyle(
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondary,
+                  ),
                 ),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark ? AppColors.primaryLight : AppColors.primary,
+                  backgroundColor: isDark
+                      ? AppColors.primaryLight
+                      : AppColors.primary,
                   foregroundColor: isDark ? Colors.black : Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   minimumSize: const Size(100, 44),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: const Text('Grant'),
               ),
@@ -101,7 +118,9 @@ class _HomeScreenState extends State<HomeScreen> {
               context: context,
               builder: (context) => AlertDialog(
                 backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
                 title: const Text('Permission Required'),
                 content: const Text(
                   'Microphone permission is permanently denied. '
@@ -113,7 +132,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () => Navigator.pop(context),
                     child: Text(
                       'Cancel',
-                      style: TextStyle(color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary),
+                      style: TextStyle(
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondary,
+                      ),
                     ),
                   ),
                   ElevatedButton(
@@ -122,9 +145,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       openAppSettings();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark ? AppColors.primaryLight : AppColors.primary,
+                      backgroundColor: isDark
+                          ? AppColors.primaryLight
+                          : AppColors.primary,
                       foregroundColor: isDark ? Colors.black : Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text('Open Settings'),
                   ),
@@ -149,10 +176,16 @@ class _HomeScreenState extends State<HomeScreen> {
           barrierDismissible: false,
           builder: (context) => AlertDialog(
             backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
             title: Row(
               children: [
-                Icon(Icons.keyboard_alt_outlined, color: isDark ? AppColors.primaryLight : AppColors.primary, size: 28),
+                Icon(
+                  Icons.keyboard_alt_outlined,
+                  color: isDark ? AppColors.primaryLight : AppColors.primary,
+                  size: 28,
+                ),
                 const SizedBox(width: 12),
                 const Text('Enable Keyboard'),
               ],
@@ -172,7 +205,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 child: Text(
                   'Later',
-                  style: TextStyle(color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary),
+                  style: TextStyle(
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondary,
+                  ),
                 ),
               ),
               ElevatedButton(
@@ -181,9 +218,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   await _platformService.openKeyboardSettings();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark ? AppColors.primaryLight : AppColors.primary,
+                  backgroundColor: isDark
+                      ? AppColors.primaryLight
+                      : AppColors.primary,
                   foregroundColor: isDark ? Colors.black : Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: const Text('Open Settings'),
               ),
@@ -223,9 +264,9 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Text(
           AppStrings.splashTitle,
           style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-              ),
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+          ),
         ),
         actions: [
           Container(
@@ -266,55 +307,35 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Text(
                             _getGreeting(),
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: isDark
+                                      ? AppColors.textSecondaryDark
+                                      : AppColors.textSecondary,
                                   fontWeight: FontWeight.w500,
                                 ),
                           ),
                           const SizedBox(width: 6),
-                          const Icon(Icons.wb_sunny_outlined, size: 16, color: Colors.amber),
+                          const Icon(
+                            Icons.wb_sunny_outlined,
+                            size: 16,
+                            color: Colors.amber,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'As-salamu alaykum',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
                               fontWeight: FontWeight.w900,
-                              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                              color: isDark
+                                  ? AppColors.textPrimaryDark
+                                  : AppColors.textPrimary,
                               letterSpacing: -0.5,
                             ),
                       ),
                     ],
-                  ),
-                  // Small animated-like profile placeholder or indicator
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: AppColors.primaryGradient,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.25),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        )
-                      ],
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'U',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),
@@ -325,7 +346,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: isUrdu ? AppColors.primaryGradient : AppColors.urduGradient,
+                    colors: isUrdu
+                        ? AppColors.primaryGradient
+                        : AppColors.urduGradient,
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -336,7 +359,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           .withOpacity(isDark ? 0.3 : 0.15),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
-                    )
+                    ),
                   ],
                 ),
                 child: ClipRRect(
@@ -403,10 +426,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                       const SizedBox(width: 8),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: Colors.white.withOpacity(0.24),
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                         child: const Text(
                                           'ACTIVE',
@@ -455,9 +483,11 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 'Tweak & Learn',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimary,
+                ),
               ),
               const SizedBox(height: 14),
 
@@ -486,7 +516,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     AppConstants.keyboardPreviewRoute,
                   );
                 },
-                iconColor: isDark ? AppColors.secondaryLight : AppColors.secondary,
+                iconColor: isDark
+                    ? AppColors.secondaryLight
+                    : AppColors.secondary,
               ),
               const SizedBox(height: 16),
 
@@ -500,7 +532,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     AppConstants.voiceTypingGuideRoute,
                   );
                 },
-                iconColor: isDark ? AppColors.urduAccentLight : AppColors.urduAccent,
+                iconColor: isDark
+                    ? AppColors.urduAccentLight
+                    : AppColors.urduAccent,
               ),
               const SizedBox(height: 28),
 
@@ -509,10 +543,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFEFF6FF), // soft light blue
+                  color: isDark
+                      ? AppColors.surfaceVariantDark
+                      : const Color(0xFFEFF6FF), // soft light blue
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isDark ? AppColors.dividerDark : const Color(0xFFBFDBFE),
+                    color: isDark
+                        ? AppColors.dividerDark
+                        : const Color(0xFFBFDBFE),
                     width: 1.5,
                   ),
                 ),
@@ -541,7 +579,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 16,
-                              color: isDark ? Colors.blue.shade300 : Colors.blue.shade900,
+                              color: isDark
+                                  ? Colors.blue.shade300
+                                  : Colors.blue.shade900,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -550,7 +590,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(
                               fontSize: 13,
                               height: 1.4,
-                              color: isDark ? AppColors.textSecondaryDark : Colors.blue.shade800,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : Colors.blue.shade800,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -566,7 +608,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.blue.shade300 : Colors.blue.shade900,
+                                    color: isDark
+                                        ? Colors.blue.shade300
+                                        : Colors.blue.shade900,
                                     decoration: TextDecoration.underline,
                                   ),
                                 ),
@@ -582,7 +626,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.blue.shade300 : Colors.blue.shade900,
+                                    color: isDark
+                                        ? Colors.blue.shade300
+                                        : Colors.blue.shade900,
                                     decoration: TextDecoration.underline,
                                   ),
                                 ),
