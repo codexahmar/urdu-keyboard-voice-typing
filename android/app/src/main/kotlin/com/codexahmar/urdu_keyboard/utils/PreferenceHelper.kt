@@ -83,4 +83,43 @@ class PreferenceHelper(context: Context) {
     fun saveRecentEmojis(emojis: List<String>) {
         prefs.edit().putString("recent_emojis", emojis.joinToString(",")).apply()
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Word frequency tracking — powers Gboard-style learned suggestions
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private val FREQ_PREFIX = "wf_"
+
+    /**
+     * Get how many times the user has committed this exact word.
+     */
+    fun getWordFrequency(word: String): Int {
+        return prefs.getInt(FREQ_PREFIX + word.lowercase(), 0)
+    }
+
+    /**
+     * Increment the usage counter for [word] by 1.
+     * Cap at 9999 to keep pref data sane.
+     */
+    fun incrementWordFrequency(word: String) {
+        val key = FREQ_PREFIX + word.lowercase()
+        val current = prefs.getInt(key, 0)
+        prefs.edit().putInt(key, minOf(current + 1, 9999)).apply()
+    }
+
+    /**
+     * Return the top-N words (Urdu or Roman) sorted by frequency desc.
+     * Used to pre-populate suggestion strip at the start of a word.
+     */
+    fun getTopFrequentWords(limit: Int = 30): List<Pair<String, Int>> {
+        return prefs.all
+            .filterKeys { it.startsWith(FREQ_PREFIX) }
+            .mapNotNull { (key, value) ->
+                val word = key.removePrefix(FREQ_PREFIX)
+                val count = value as? Int ?: 0
+                if (count > 0) word to count else null
+            }
+            .sortedByDescending { it.second }
+            .take(limit)
+    }
 }

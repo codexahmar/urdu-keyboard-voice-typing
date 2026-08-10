@@ -141,6 +141,8 @@ class KeyboardController(
     )
     private var spaceLongPressRunnable: Runnable? = null
     private var lastFeedbackUptimeMs = 0L
+    // Debounce runnable for suggestion updates — prevents flooding coroutines on fast typing
+    private var suggestionDebounceRunnable: Runnable? = null
 
     private enum class ShiftState {
         OFF,
@@ -152,11 +154,13 @@ class KeyboardController(
         private const val TAG = "KeyboardController"
         // Extra bottom clearance so content clears the nav bar shadow.
         private const val EXTRA_BOTTOM_GAP_DP = 8
-        // Press-animation scale factor (subtle, Gboard-like)
+        // Press-animation scale factor — only scale down, no scale-back chain for speed
         private const val PRESS_SCALE = 0.90f
-        private const val ANIM_DURATION_MS = 40L
+        private const val ANIM_DURATION_MS = 20L   // 20 ms single-phase flash
         private const val SPACE_SWIPE_SWITCH_THRESHOLD_DP = 24
-        private const val FEEDBACK_THROTTLE_MS = 55L
+        private const val FEEDBACK_THROTTLE_MS = 20L  // tighter throttle for fast typists
+        // How long to wait after the last keypress before querying suggestions
+        private const val SUGGESTION_DEBOUNCE_MS = 120L
     }
 
     /**
@@ -381,6 +385,8 @@ class KeyboardController(
                 setFastTapListener(btn) { onUrduKeyPressed(letter) }
             }
         }
+        // Wire ،  and  ۔ and any other punctuation present in the Urdu layout
+        setupPunctuationButtons()
     }
 
     private fun setupPunctuationButtons() {
@@ -594,23 +600,18 @@ class KeyboardController(
     }
 
     /**
-     * Subtle scale-down → scale-up animation on key press (Gboard-style "pop").
-     * Uses ViewPropertyAnimator — runs on the main thread via choreographer, no
-     * ObjectAnimator allocation overhead.
+     * Single-phase scale-down flash on key press (Gboard-style).
+     * Removed the scale-back chain — the view naturally resets via the next press.
+     * This halves animation overhead from ~80 ms to ~20 ms per key.
      */
     private fun animateKeyPress(view: View) {
         view.animate().cancel()
+        view.scaleX = PRESS_SCALE
+        view.scaleY = PRESS_SCALE
         view.animate()
-            .scaleX(PRESS_SCALE)
-            .scaleY(PRESS_SCALE)
+            .scaleX(1f)
+            .scaleY(1f)
             .setDuration(ANIM_DURATION_MS)
-            .withEndAction {
-                view.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(ANIM_DURATION_MS)
-                    .start()
-            }
             .start()
     }
 
@@ -829,8 +830,12 @@ class KeyboardController(
 
     private fun selectSuggestion(suggestion: String) {
         if (suggestion.isEmpty()) return
+        // Cancel any pending debounce before committing
+        suggestionDebounceRunnable?.let(mainHandler::removeCallbacks)
         currentInputConnection?.commitText(suggestion, 1)
         currentInputConnection?.commitText(" ", 1)
+        // Track frequency so this word bubbles up in future suggestions
+        ioScope.launch { preferenceHelper.incrementWordFrequency(suggestion) }
         clearComposingState()
     }
 
@@ -864,24 +869,34 @@ class KeyboardController(
         val input = composingText.toString()
         if (input.isEmpty()) {
             clearSuggestionsUI()
+            suggestionDebounceRunnable?.let(mainHandler::removeCallbacks)
             return
         }
 
-        ioScope.launch {
-            val suggestions = getSuggestionsForInput(input)
-            withContext(Dispatchers.Main) {
-                if (composingText.toString() == input) {
-                    displaySuggestions(suggestions, input)
+        // Debounce: cancel any pending lookup and schedule a fresh one
+        // after SUGGESTION_DEBOUNCE_MS of inactivity so fast typists don't
+        // flood the IO thread with coroutines on every single keypress.
+        suggestionDebounceRunnable?.let(mainHandler::removeCallbacks)
+        suggestionDebounceRunnable = Runnable {
+            val snapshot = composingText.toString()
+            if (snapshot.isEmpty()) return@Runnable
+            ioScope.launch {
+                val suggestions = getSuggestionsForInput(snapshot)
+                withContext(Dispatchers.Main) {
+                    if (composingText.toString() == snapshot) {
+                        displaySuggestions(suggestions, snapshot)
+                    }
                 }
             }
         }
+        mainHandler.postDelayed(suggestionDebounceRunnable!!, SUGGESTION_DEBOUNCE_MS)
     }
 
     private fun getSuggestionsForInput(input: String): List<String> {
-        return when {
-            isUrduKeyboardLayout -> phoneticMapper.getUrduSuggestions(input)
-            else -> phoneticMapper.getUrduSuggestions(input)
-        }
+        // Build a frequency map of all tracked Urdu words for ranked completions
+        val freqMap = preferenceHelper.getTopFrequentWords(50)
+            .associate { (word, count) -> word to count }
+        return phoneticMapper.getUrduSuggestions(input, freqMap)
     }
 
     private fun displaySuggestions(suggestions: List<String>, rawInput: String) {

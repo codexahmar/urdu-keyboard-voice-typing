@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Completed (Session 5 — Performance + UX Fixes)
+
+- [x] **Urdu punctuation fixed** — `setupUrduKeyboardButtons()` now calls `setupPunctuationButtons()` so `،` (comma) and `۔` (full stop) are properly wired with click listeners on the Urdu keyboard layout. Previously these keys had no listeners and did nothing.
+- [x] **Typing speed optimised** — Animation redesigned from a 2-phase 80 ms scale-down+up chain to a single-phase 20 ms flash (view instantly snapped to `PRESS_SCALE` then animated back), halving animation overhead per keypress. `FEEDBACK_THROTTLE_MS` reduced `55 ms → 20 ms` to allow rapid back-to-back keypresses without dropping feedback.
+- [x] **Suggestion debounce added** — `updateSuggestions()` now debounces with a 120 ms delay before launching a coroutine. During fast typing no coroutines are spawned; the lookup only fires after the user pauses. This removes the previous per-keypress coroutine flood.
+- [x] **Frequency-based suggestions** — Added `getWordFrequency()`, `incrementWordFrequency()`, and `getTopFrequentWords()` to `PreferenceHelper.kt`. Every suggestion tap now increments that word's counter. `PhoneticMapper.getUrduSuggestions()` extended to accept a `frequencyMap` and sort prefix completions by usage frequency, exactly like Gboard's learned words.
+- [x] **Symbol keyboard height fixed** — Removed the extra "extended symbols" row (`=`, `[`, `]`, `{`, `}`, `\`, `<`, `>`, `^`, `~`) from both `keyboard_symbols.xml` and `layout-night/keyboard_symbols.xml`. The symbol keyboard now has exactly the same row count as the Urdu/English keyboards (suggestion strip + 3 key rows + bottom bar), eliminating the safe-area clipping of the bottom row.
+- [x] **Emoji keyboard bottom bar redesigned** — Replaced the mismatched `KeyboardButtonBottomSmall` / `KeyboardButtonSpace` / `KeyboardButtonIcon` stack with a clean `layout_weight`-based `LinearLayout` (ABC `1.35` / Space `4` / Backspace `1`) inside a proper `48dp` bar. Matches the Gboard emoji panel aesthetic. Applied to both light and dark mode layouts.
+
 ### Completed
 
 - [x] Aligned Android Kotlin package directory structure to match namespace (`com/codexahmar/urdu_keyboard`)

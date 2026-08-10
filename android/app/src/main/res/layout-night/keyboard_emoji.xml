@@ -98,29 +98,42 @@
         android:padding="8dp"
         android:scrollbars="vertical" />
 
-    <!-- Bottom Actions Bar -->
+    <!-- Bottom Actions Bar — Gboard-style: ABC | Space | ⌫ -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="48dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingStart="4dp"
-        android:paddingEnd="4dp"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
         android:paddingBottom="4dp">
 
+        <!-- ABC / Back to keyboard -->
         <Button
             android:id="@+id/emoji_key_abc"
             style="@style/KeyboardButtonBottomSmall"
-            android:text="ABC" />
+            android:layout_width="0dp"
+            android:layout_weight="1.35"
+            android:layout_height="36dp"
+            android:text="ABC"
+            android:textSize="13sp" />
 
+        <!-- Space bar -->
         <Button
             android:id="@+id/emoji_key_space"
             style="@style/KeyboardButtonSpace"
+            android:layout_width="0dp"
+            android:layout_weight="4"
+            android:layout_height="36dp"
             android:text="Space" />
 
+        <!-- Backspace -->
         <Button
             android:id="@+id/emoji_key_backspace"
             style="@style/KeyboardButtonIcon"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="36dp"
             android:text=""
             android:drawableTop="@drawable/ic_backspace_dark"
             android:drawablePadding="0dp" />

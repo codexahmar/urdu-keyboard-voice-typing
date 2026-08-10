@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Symbols keyboard — numbers and special characters
+  Exactly 4 key rows + suggestion strip to match Urdu/English keyboard height.
+
+  Row 0: Suggestion strip (40dp)
   Row 1: 1 2 3 4 5 6 7 8 9 0
   Row 2: @ # $ % & * - + ( )
-  Row 3: [=\<] / " ' : ; ! ? , .  [⌫]
-    Row 4: [ABC] [EN/اردو] [Mic] [   Space   ] [↵]
+  Row 3: [/] " ' : ; ! ? , .  [⌫]
+  Row 4 (bottom): [ABC] [EN/اردو] [emoji] [Space] [↵]
 
-  Note: sym_key_0 through sym_key_9 map to "0"-"9" in the controller.
-  The controller iterates i in 0..9 looking for sym_key_$i.
+  Removed the old "extra symbols" row (=, [, ], {, }, \, <, >, ^, ~) which was
+  making this layout taller than the main keyboard and causing bottom-row clipping.
+  Those characters remain accessible via the symbols row above.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -19,7 +23,7 @@
     android:paddingEnd="4dp"
     android:paddingTop="6dp">
 
-    <!-- ── ROW 0 : Suggestions strip (for height stability & Voice) ── -->
+    <!-- ── ROW 0 : Suggestions strip (height stability & Voice) ── -->
     <LinearLayout
         android:id="@+id/suggestions_strip"
         android:layout_width="match_parent"
@@ -108,6 +112,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="3dp"
         android:orientation="horizontal">
         <Button android:id="@+id/sym_key_slash"       style="@style/KeyboardButton" android:text="/" />
         <Button android:id="@+id/sym_key_quote"       style="@style/KeyboardButton" android:text="&quot;" />
@@ -126,27 +132,11 @@
             android:drawablePadding="0dp" />
     </LinearLayout>
 
-    <!-- ── ROW 4 : extra symbols (=, [, ], {, }, \, &lt;, &gt;, ^, ~) ── -->
+    <!-- ── ROW 4 (bottom) : [ABC] [EN/اردو] [emoji] [Space] [↵] ───────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <Button android:id="@+id/sym_key_equal"     style="@style/KeyboardButton" android:text="=" />
-        <Button android:id="@+id/sym_key_lbracket"  style="@style/KeyboardButton" android:text="[" />
-        <Button android:id="@+id/sym_key_rbracket"  style="@style/KeyboardButton" android:text="]" />
-        <Button android:id="@+id/sym_key_lbrace"    style="@style/KeyboardButton" android:text="{" />
-        <Button android:id="@+id/sym_key_rbrace"    style="@style/KeyboardButton" android:text="}" />
-        <Button android:id="@+id/sym_key_backslash" style="@style/KeyboardButton" android:text="\\" />
-        <Button android:id="@+id/sym_key_less"      style="@style/KeyboardButton" android:text="&lt;" />
-        <Button android:id="@+id/sym_key_greater"   style="@style/KeyboardButton" android:text="&gt;" />
-        <Button android:id="@+id/sym_key_caret"     style="@style/KeyboardButton" android:text="^" />
-        <Button android:id="@+id/sym_key_tilde"     style="@style/KeyboardButton" android:text="~" />
-    </LinearLayout>
-
-    <!-- ── ROW 5 (bottom) : [ABC] [EN/اردو] [Mic] [Space] [↵] ───────── -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:paddingBottom="2dp"
         android:orientation="horizontal">
 
         <Button

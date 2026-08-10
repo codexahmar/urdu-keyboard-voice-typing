@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dark mode symbols keyboard -->
+<!-- Dark mode symbols keyboard — exactly 4 key rows + suggestion strip (no extra row) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -10,7 +10,7 @@
     android:paddingEnd="4dp"
     android:paddingTop="6dp">
 
-    <!-- ── ROW 0 : Suggestions strip (for height stability & Voice) ── -->
+    <!-- ── ROW 0 : Suggestions strip (for height stability &amp; Voice) ── -->
     <LinearLayout
         android:id="@+id/suggestions_strip"
         android:layout_width="match_parent"
@@ -61,6 +61,7 @@
             android:drawablePadding="0dp" />
     </LinearLayout>
 
+    <!-- ── ROW 1 : 1 2 3 4 5 6 7 8 9 0 ── -->
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
         <Button android:id="@+id/sym_key_1" style="@style/KeyboardButton" android:text="1" />
         <Button android:id="@+id/sym_key_2" style="@style/KeyboardButton" android:text="2" />
@@ -74,6 +75,7 @@
         <Button android:id="@+id/sym_key_0" style="@style/KeyboardButton" android:text="0" />
     </LinearLayout>
 
+    <!-- ── ROW 2 : @ # $ % &amp; * - + ( ) ── -->
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
         <Button android:id="@+id/sym_key_at"      style="@style/KeyboardButton" android:text="@" />
         <Button android:id="@+id/sym_key_hash"    style="@style/KeyboardButton" android:text="#" />
@@ -87,7 +89,13 @@
         <Button android:id="@+id/sym_key_rparen"  style="@style/KeyboardButton" android:text=")" />
     </LinearLayout>
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+    <!-- ── ROW 3 : / " ' : ; ! ? , . [⌫] ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="3dp"
+        android:orientation="horizontal">
         <Button android:id="@+id/sym_key_slash"       style="@style/KeyboardButton" android:text="/" />
         <Button android:id="@+id/sym_key_quote"       style="@style/KeyboardButton" android:text="&quot;" />
         <Button android:id="@+id/sym_key_apostrophe"  style="@style/KeyboardButton" android:text="'" />
@@ -100,20 +108,12 @@
         <Button android:id="@+id/sym_backspace" style="@style/KeyboardButtonIcon" android:text="" android:drawableTop="@drawable/ic_backspace_dark" android:drawablePadding="0dp" />
     </LinearLayout>
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-        <Button android:id="@+id/sym_key_equal"     style="@style/KeyboardButton" android:text="=" />
-        <Button android:id="@+id/sym_key_lbracket"  style="@style/KeyboardButton" android:text="[" />
-        <Button android:id="@+id/sym_key_rbracket"  style="@style/KeyboardButton" android:text="]" />
-        <Button android:id="@+id/sym_key_lbrace"    style="@style/KeyboardButton" android:text="{" />
-        <Button android:id="@+id/sym_key_rbrace"    style="@style/KeyboardButton" android:text="}" />
-        <Button android:id="@+id/sym_key_backslash" style="@style/KeyboardButton" android:text="\\" />
-        <Button android:id="@+id/sym_key_less"      style="@style/KeyboardButton" android:text="&lt;" />
-        <Button android:id="@+id/sym_key_greater"   style="@style/KeyboardButton" android:text="&gt;" />
-        <Button android:id="@+id/sym_key_caret"     style="@style/KeyboardButton" android:text="^" />
-        <Button android:id="@+id/sym_key_tilde"     style="@style/KeyboardButton" android:text="~" />
-    </LinearLayout>
-
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+    <!-- ── ROW 4 (bottom) : [ABC] [EN/اردو] [emoji] [Space] [↵] ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="2dp"
+        android:orientation="horizontal">
         <Button android:id="@+id/sym_key_abc" style="@style/KeyboardButtonBottomSmall" android:text="ABC" />
         <Button android:id="@+id/sym_key_language" style="@style/KeyboardButtonLanguage" android:text="EN" />
         <Button android:id="@+id/sym_key_emoji" style="@style/KeyboardButtonIcon" android:text="" android:drawableTop="@drawable/ic_emoji_dark" android:drawablePadding="0dp" />

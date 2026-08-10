@@ -223,31 +223,49 @@ class PhoneticMapper {
     )
 
     /**
-     * Get Urdu suggestions for a given Roman input
-     * Returns list of possible Urdu words, prioritizing direct matches
+     * Get Urdu suggestions for a given Roman input.
+     * [frequencyMap] keys are the *Urdu* words (lowercase) and values are usage counts.
+     * Prefix completions are sorted by frequency so frequently used words bubble to top.
      */
-    fun getUrduSuggestions(input: String): List<String> {
+    fun getUrduSuggestions(
+        input: String,
+        frequencyMap: Map<String, Int> = emptyMap()
+    ): List<String> {
         val lowerInput = input.lowercase().trim()
         if (lowerInput.isEmpty()) return emptyList()
 
         val suggestions = LinkedHashSet<String>()
 
-        // 1. Exact match
+        // 1. Exact match — highest priority
         phoneticMap[lowerInput]?.let { suggestions.add(it) }
 
-        // 2. Fallback phonetic spelling
+        // 2. Prefix matches from dictionary — sorted by user frequency desc
+        val prefixMatches = phoneticMap.entries
+            .filter { it.key.startsWith(lowerInput) && it.key != lowerInput }
+            .sortedByDescending { frequencyMap[it.value] ?: 0 }
+            .take(4)
+        prefixMatches.forEach { suggestions.add(it.value) }
+
+        // 3. Frequency-based: if we have fewer than 3 suggestions, add the user's
+        //    most-typed Urdu words that start with the phonetic fallback prefix
+        if (suggestions.size < 3 && frequencyMap.isNotEmpty()) {
+            val fallbackPrefix = getPhoneticFallback(lowerInput)
+            if (fallbackPrefix.isNotEmpty()) {
+                frequencyMap.entries
+                    .filter { (word, _) -> word.startsWith(fallbackPrefix) }
+                    .sortedByDescending { it.value }
+                    .take(3 - suggestions.size)
+                    .forEach { suggestions.add(it.key) }
+            }
+        }
+
+        // 4. Fallback phonetic spelling (always show something)
         val fallback = getPhoneticFallback(lowerInput)
         if (fallback.isNotEmpty()) {
             suggestions.add(fallback)
         }
 
-        // 3. Prefix matches from dictionary (auto-completions)
-        phoneticMap.entries
-            .filter { it.key.startsWith(lowerInput) && it.key != lowerInput }
-            .take(5)
-            .forEach { suggestions.add(it.value) }
-
-        return suggestions.toList()
+        return suggestions.take(3).toList()
     }
 
     /**
