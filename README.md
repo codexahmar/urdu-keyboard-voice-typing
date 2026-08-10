@@ -6,6 +6,15 @@ This project demonstrates advanced mobile engineering capabilities, including **
 
 > **Live on Google Play** — The application is publicly available and actively deployed.
 
+
+## 📱 App Screenshots
+
+<p align="center">
+  <img src="screenshots/splash.png" width="220" alt="Splash Screen"/>
+  <img src="screenshots/home.png" width="220" alt="Home Screen"/>
+  <img src="screenshots/keyboard_preview.png" width="220" alt="Keyboard Preview"/>
+</p>
+
 ---
 
 ## Project Overview
