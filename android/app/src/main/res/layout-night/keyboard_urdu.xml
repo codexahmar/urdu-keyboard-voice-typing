@@ -11,6 +11,57 @@
     android:paddingEnd="4dp"
     android:paddingTop="6dp">
 
+    <!-- ── ROW 0 : Suggestions strip ──────────────────────────── -->
+    <LinearLayout
+        android:id="@+id/suggestions_strip"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp">
+
+        <Button
+            android:id="@+id/suggestion_left"
+            style="@style/SuggestionButton"
+            android:text="" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="22dp"
+            android:background="#1AFFFFFF" />
+
+        <Button
+            android:id="@+id/suggestion_center"
+            style="@style/SuggestionButton"
+            android:text="" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="22dp"
+            android:background="#1AFFFFFF" />
+
+        <Button
+            android:id="@+id/suggestion_right"
+            style="@style/SuggestionButton"
+            android:text="" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="22dp"
+            android:background="#1AFFFFFF" />
+
+        <Button
+            android:id="@+id/urdu_key_voice"
+            style="@style/KeyboardButtonIcon"
+            android:layout_width="44dp"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:text=""
+            android:drawableTop="@drawable/ic_mic_dark"
+            android:drawablePadding="0dp" />
+    </LinearLayout>
+
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
         <Button android:id="@+id/urdu_key_1"  style="@style/KeyboardButton" android:text="ض" />
         <Button android:id="@+id/urdu_key_2"  style="@style/KeyboardButton" android:text="ص" />
@@ -68,8 +119,10 @@
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:baselineAligned="false" android:gravity="center_vertical" android:paddingBottom="2dp" android:orientation="horizontal">
         <Button android:id="@+id/urdu_key_symbols" style="@style/KeyboardButtonBottomSmall" android:text="123" />
         <Button android:id="@+id/urdu_key_language" style="@style/KeyboardButtonLanguage" android:text="اردو" />
-        <Button android:id="@+id/urdu_key_voice" style="@style/KeyboardButtonMic" android:text="" android:drawableTop="@drawable/ic_mic_dark" android:drawablePadding="0dp" />
-        <Button android:id="@+id/urdu_key_space" style="@style/KeyboardButtonSpace" android:text="اردو" />
+        <Button android:id="@+id/urdu_key_comma" style="@style/KeyboardButtonFunctional" android:layout_weight="0.68" android:text="،" />
+        <Button android:id="@+id/urdu_key_space" style="@style/KeyboardButtonSpace" android:text="Space" />
+        <Button android:id="@+id/urdu_key_dot" style="@style/KeyboardButtonFunctional" android:layout_weight="0.68" android:text="۔" />
+        <Button android:id="@+id/urdu_key_emoji" style="@style/KeyboardButtonIcon" android:text="" android:drawableTop="@drawable/ic_emoji_dark" android:drawablePadding="0dp" />
         <Button android:id="@+id/urdu_key_enter" style="@style/KeyboardButtonEnter" android:layout_weight="0.9" android:text="" android:drawableTop="@drawable/ic_enter" android:drawablePadding="0dp" />
     </LinearLayout>
 

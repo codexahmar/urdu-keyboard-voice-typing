@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Emoji Keyboard — light mode -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/kb_bg_light"
+    android:orientation="vertical"
+    android:paddingTop="4dp"
+    android:layoutDirection="ltr">
+
+    <!-- Category Selector Tabs -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:scrollbars="none"
+        android:background="#0A000000"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp">
+
+            <Button
+                android:id="@+id/emoji_tab_recents"
+                style="@style/SuggestionButton"
+                android:layout_width="48dp"
+                android:text="🕒" />
+
+            <Button
+                android:id="@+id/emoji_tab_smileys"
+                style="@style/SuggestionButton"
+                android:layout_width="48dp"
+                android:text="😀" />
+
+            <Button
+                android:id="@+id/emoji_tab_people"
+                style="@style/SuggestionButton"
+                android:layout_width="48dp"
+                android:text="👋" />
+
+            <Button
+                android:id="@+id/emoji_tab_animals"
+                style="@style/SuggestionButton"
+                android:layout_width="48dp"
+                android:text="🐶" />
+
+            <Button
+                android:id="@+id/emoji_tab_food"
+                style="@style/SuggestionButton"
+                android:layout_width="48dp"
+                android:text="🍏" />
+
+            <Button
+                android:id="@+id/emoji_tab_travel"
+                style="@style/SuggestionButton"
+                android:layout_width="48dp"
+                android:text="🚗" />
+
+            <Button
+                android:id="@+id/emoji_tab_activities"
+                style="@style/SuggestionButton"
+                android:layout_width="48dp"
+                android:text="⚽" />
+
+            <Button
+                android:id="@+id/emoji_tab_objects"
+                style="@style/SuggestionButton"
+                android:layout_width="48dp"
+                android:text="⌚" />
+
+            <Button
+                android:id="@+id/emoji_tab_symbols"
+                style="@style/SuggestionButton"
+                android:layout_width="48dp"
+                android:text="❤️" />
+
+            <Button
+                android:id="@+id/emoji_tab_flags"
+                style="@style/SuggestionButton"
+                android:layout_width="48dp"
+                android:text="🏁" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- Grid of Emojis -->
+    <GridView
+        android:id="@+id/emoji_grid"
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:numColumns="8"
+        android:gravity="center"
+        android:horizontalSpacing="8dp"
+        android:verticalSpacing="12dp"
+        android:padding="8dp"
+        android:scrollbars="vertical" />
+
+    <!-- Bottom Actions Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:paddingBottom="4dp">
+
+        <Button
+            android:id="@+id/emoji_key_abc"
+            style="@style/KeyboardButtonBottomSmall"
+            android:text="ABC" />
+
+        <Button
+            android:id="@+id/emoji_key_space"
+            style="@style/KeyboardButtonSpace"
+            android:text="Space" />
+
+        <Button
+            android:id="@+id/emoji_key_backspace"
+            style="@style/KeyboardButtonIcon"
+            android:text=""
+            android:drawableTop="@drawable/ic_backspace"
+            android:drawablePadding="0dp" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -19,6 +19,57 @@
     android:paddingEnd="4dp"
     android:paddingTop="6dp">
 
+    <!-- ── ROW 0 : Suggestions strip (for height stability & Voice) ── -->
+    <LinearLayout
+        android:id="@+id/suggestions_strip"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp">
+
+        <Button
+            android:id="@+id/suggestion_left"
+            style="@style/SuggestionButton"
+            android:text="" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="22dp"
+            android:background="#1A000000" />
+
+        <Button
+            android:id="@+id/suggestion_center"
+            style="@style/SuggestionButton"
+            android:text="" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="22dp"
+            android:background="#1A000000" />
+
+        <Button
+            android:id="@+id/suggestion_right"
+            style="@style/SuggestionButton"
+            android:text="" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="22dp"
+            android:background="#1A000000" />
+
+        <Button
+            android:id="@+id/sym_key_voice"
+            style="@style/KeyboardButtonIcon"
+            android:layout_width="44dp"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:text=""
+            android:drawableTop="@drawable/ic_mic"
+            android:drawablePadding="0dp" />
+    </LinearLayout>
+
     <!-- ── ROW 1 : 1 2 3 4 5 6 7 8 9 0 ────────────────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -109,10 +160,10 @@
             android:text="EN" />
 
         <Button
-            android:id="@+id/sym_key_voice"
-            style="@style/KeyboardButtonMic"
+            android:id="@+id/sym_key_emoji"
+            style="@style/KeyboardButtonIcon"
             android:text=""
-            android:drawableTop="@drawable/ic_mic"
+            android:drawableTop="@drawable/ic_emoji"
             android:drawablePadding="0dp" />
 
         <Button

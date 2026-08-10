@@ -12,7 +12,8 @@ import android.util.Log
  */
 class BackspaceHandler(
     private val context: Context,
-    private val getInputConnection: () -> InputConnection?
+    private val getInputConnection: () -> InputConnection?,
+    private val onDelete: (() -> Boolean)? = null
 ) {
     private var backspaceHandler: Handler = Handler(Looper.getMainLooper())
     private var isBackspacePressed = false
@@ -53,6 +54,10 @@ class BackspaceHandler(
      * Perform actual deletion
      */
     private fun performDeletion() {
+        if (onDelete?.invoke() == true) {
+            return
+        }
+
         val ic = getInputConnection()
         if (ic == null) {
             Log.e(TAG, "InputConnection is null, cannot delete")
@@ -93,6 +98,8 @@ class BackspaceHandler(
         backspaceRunnable?.let {
             backspaceHandler.removeCallbacks(it)
         }
+        backspaceHandler.removeCallbacksAndMessages(null)
+        backspaceRunnable = null
         isBackspacePressed = false
     }
 }

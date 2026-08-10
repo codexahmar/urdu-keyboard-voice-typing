@@ -17,7 +17,7 @@ void main() async {
   // Initialize app state
   final appState = AppState();
   await appState.init();
-
+     
   runApp(
     ChangeNotifierProvider.value(
       value: appState,

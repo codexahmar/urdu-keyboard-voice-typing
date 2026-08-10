@@ -23,6 +23,57 @@
     android:paddingEnd="4dp"
     android:paddingTop="6dp">
 
+    <!-- ── ROW 0 : Suggestions strip ──────────────────────────── -->
+    <LinearLayout
+        android:id="@+id/suggestions_strip"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp">
+
+        <Button
+            android:id="@+id/suggestion_left"
+            style="@style/SuggestionButton"
+            android:text="" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="22dp"
+            android:background="#1A000000" />
+
+        <Button
+            android:id="@+id/suggestion_center"
+            style="@style/SuggestionButton"
+            android:text="" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="22dp"
+            android:background="#1A000000" />
+
+        <Button
+            android:id="@+id/suggestion_right"
+            style="@style/SuggestionButton"
+            android:text="" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="22dp"
+            android:background="#1A000000" />
+
+        <Button
+            android:id="@+id/urdu_key_voice"
+            style="@style/KeyboardButtonIcon"
+            android:layout_width="44dp"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:text=""
+            android:drawableTop="@drawable/ic_mic"
+            android:drawablePadding="0dp" />
+    </LinearLayout>
+
     <!-- ── ROW 1 : ض ص ث ق ف غ ع ہ خ ح ──────────────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -109,7 +160,7 @@
             android:drawablePadding="0dp" />
     </LinearLayout>
 
-    <!-- ── ROW 5 (bottom) : [123] [EN/اردو] [Mic] [Space] [↵] ──────── -->
+    <!-- ── ROW 5 (bottom) : [123] [EN/اردو] [،] [Space] [۔] [Mic] [↵] ──────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -129,16 +180,28 @@
             android:text="اردو" />
 
         <Button
-            android:id="@+id/urdu_key_voice"
-            style="@style/KeyboardButtonMic"
-            android:text=""
-            android:drawableTop="@drawable/ic_mic"
-            android:drawablePadding="0dp" />
+            android:id="@+id/urdu_key_comma"
+            style="@style/KeyboardButtonFunctional"
+            android:layout_weight="0.68"
+            android:text="،" />
 
         <Button
             android:id="@+id/urdu_key_space"
             style="@style/KeyboardButtonSpace"
-            android:text="اردو" />
+            android:text="Space" />
+
+        <Button
+            android:id="@+id/urdu_key_dot"
+            style="@style/KeyboardButtonFunctional"
+            android:layout_weight="0.68"
+            android:text="۔" />
+
+        <Button
+            android:id="@+id/urdu_key_emoji"
+            style="@style/KeyboardButtonIcon"
+            android:text=""
+            android:drawableTop="@drawable/ic_emoji"
+            android:drawablePadding="0dp" />
 
         <Button
             android:id="@+id/urdu_key_enter"

@@ -68,4 +68,19 @@ class PreferenceHelper(context: Context) {
     fun clearAll() {
         prefs.edit().clear().apply()
     }
+
+    /**
+     * Get list of recently used emojis
+     */
+    fun getRecentEmojis(): List<String>? {
+        val raw = prefs.getString("recent_emojis", null) ?: return null
+        return raw.split(",")
+    }
+
+    /**
+     * Save list of recently used emojis
+     */
+    fun saveRecentEmojis(emojis: List<String>) {
+        prefs.edit().putString("recent_emojis", emojis.joinToString(",")).apply()
+    }
 }

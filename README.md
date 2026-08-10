@@ -220,7 +220,7 @@ dependencies:
 ### Setup
 
 ```bash
-git clone https://github.com/codexahmar/Urdu-Keyboard
+git clone https://github.com/codexahmar/urdu-keyboard-voice-typing
 flutter pub get
 flutter run
 ```

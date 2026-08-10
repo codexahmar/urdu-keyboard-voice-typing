@@ -1,30 +1,36 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:provider/provider.dart';
 import 'package:urdu_keyboard/main.dart';
+import 'package:urdu_keyboard/state/app_state.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const UrduSmartKeyboardApp());
+  testWidgets('Urdu Smart Keyboard app smoke test', (WidgetTester tester) async {
+    // Set a realistic phone screen size to prevent layout overflows in the test
+    tester.view.physicalSize = const Size(1080, 1920);
+    tester.view.devicePixelRatio = 1.0;
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Reset view size at the end of the test
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Initialize app state
+    final appState = AppState();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Build app with Provider wrapper
+    await tester.pumpWidget(
+      ChangeNotifierProvider<AppState>.value(
+        value: appState,
+        child: const UrduSmartKeyboardApp(),
+      ),
+    );
+
+    // Verify splash screen or title presence
+    expect(find.text('Urdu Smart Keyboard'), findsOneWidget);
+
+    // Let the splash screen timer complete to avoid pending timer exception
+    await tester.pumpAndSettle(const Duration(seconds: 3));
   });
 }
