@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # State management
   provider: ^6.1.1
@@ -22,6 +24,9 @@ dependencies:
 
   # UI
   cupertino_icons: ^1.0.8
+  google_fonts: ^8.2.1
+  url_launcher: ^6.3.3
+  share_plus: ^13.3.1
 
 dev_dependencies:
   flutter_test:
