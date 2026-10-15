@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_constants.dart';
+import 'core/localization/app_localizations.dart';
 import 'core/theme/app_theme.dart';
-import 'state/app_state.dart';
-import 'features/splash/splash_screen.dart';
-import 'features/onboarding/onboarding_screen.dart';
 import 'features/home/home_screen.dart';
-import 'features/language_selection/language_selection_screen.dart';
 import 'features/keyboard_preview/keyboard_preview_screen.dart';
-import 'features/voice_typing/voice_typing_guide_screen.dart';
+import 'features/language_selection/language_selection_screen.dart';
+import 'features/onboarding/onboarding_screen.dart';
 import 'features/settings/settings_screen.dart';
+import 'features/splash/splash_screen.dart';
+import 'features/voice_typing/voice_typing_guide_screen.dart';
+import 'state/app_state.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +20,7 @@ void main() async {
   await appState.init();
 
   runApp(
-    ChangeNotifierProvider.value(
+    ChangeNotifierProvider<AppState>.value(
       value: appState,
       child: const UrduSmartKeyboardApp(),
     ),
@@ -27,7 +28,7 @@ void main() async {
 }
 
 class UrduSmartKeyboardApp extends StatelessWidget {
-  const UrduSmartKeyboardApp({Key? key}) : super(key: key);
+  const UrduSmartKeyboardApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -37,33 +38,34 @@ class UrduSmartKeyboardApp extends StatelessWidget {
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
 
-      // Theme configuration
-      theme: AppTheme.darkTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: appState.themeMode,
+      // Single Pakistan Flag Green & White Theme
+      theme: AppTheme.theme,
 
-      // Text scale factor
+      // Localization configuration
+      locale: Locale(appState.selectedLanguage),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+
+      // Enforce uniform LTR direction across English and Urdu
       builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(appState.textSizeScale)),
+        return Directionality(
+          textDirection: TextDirection.ltr,
           child: child!,
         );
       },
 
-      // Initial route based on onboarding status
+      // Initial route
       initialRoute: AppConstants.splashRoute,
 
       // Routes
       routes: {
         AppConstants.splashRoute: (context) => const SplashWrapper(),
         AppConstants.onboardingRoute: (context) => OnboardingScreen(
-          onComplete: () {
-            appState.completeOnboarding();
-            Navigator.pushReplacementNamed(context, AppConstants.homeRoute);
-          },
-        ),
+              onComplete: () {
+                appState.completeOnboarding();
+                Navigator.pushReplacementNamed(context, AppConstants.homeRoute);
+              },
+            ),
         AppConstants.homeRoute: (context) => const HomeScreen(),
         AppConstants.languageSelectionRoute: (context) =>
             const LanguageSelectionScreen(),
@@ -79,7 +81,7 @@ class UrduSmartKeyboardApp extends StatelessWidget {
 
 /// Wrapper for splash screen with automatic navigation
 class SplashWrapper extends StatefulWidget {
-  const SplashWrapper({Key? key}) : super(key: key);
+  const SplashWrapper({super.key});
 
   @override
   State<SplashWrapper> createState() => _SplashWrapperState();
@@ -99,7 +101,6 @@ class _SplashWrapperState extends State<SplashWrapper> {
 
     final appState = context.read<AppState>();
 
-    // Navigate based on onboarding status
     if (appState.onboardingComplete) {
       Navigator.pushReplacementNamed(context, AppConstants.homeRoute);
     } else {
