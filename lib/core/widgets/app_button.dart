@@ -7,8 +7,7 @@ enum AppButtonVariant {
   text,
 }
 
-/// Global reusable button widget adhering to Pakistan Green & White aesthetic.
-/// Supports primary filled, outlined, text, icons, and loading states.
+/// Reusable button widget supporting filled, outlined, and text variants.
 class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;

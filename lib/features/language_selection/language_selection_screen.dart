@@ -7,7 +7,7 @@ import '../../core/widgets/app_button.dart';
 import '../../core/widgets/language_tile.dart';
 import '../../state/app_state.dart';
 
-/// Clean, professional LanguageSelectionScreen in Pakistan Green & White theme
+/// Screen for selecting the application language.
 class LanguageSelectionScreen extends StatefulWidget {
   const LanguageSelectionScreen({super.key});
 

@@ -7,12 +7,7 @@ import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_permission_dialog.dart';
 import '../../core/widgets/guide_timeline_card.dart';
 
-/// Clean, high-quality professional VoiceTypingGuideScreen.
-/// Features:
-/// 1. Subtitle outside container on the left
-/// 2. Global GuideTimelineCard (steps without left icons)
-/// 3. Global GuideTipsCard with pure white background
-/// 4. Direct 1-tap microphone permission button
+/// Screen guiding users on Urdu voice typing setup and usage.
 class VoiceTypingGuideScreen extends StatefulWidget {
   const VoiceTypingGuideScreen({super.key});
 
@@ -44,6 +39,7 @@ class _VoiceTypingGuideScreenState extends State<VoiceTypingGuideScreen>
     }
   }
 
+  /// Checks the current microphone permission status.
   Future<void> _checkPermissionStatus() async {
     final status = await Permission.microphone.status;
     if (mounted) {
@@ -53,6 +49,7 @@ class _VoiceTypingGuideScreenState extends State<VoiceTypingGuideScreen>
     }
   }
 
+  /// Handles user interaction for granting microphone permissions.
   Future<void> _handlePermissionAction(BuildContext context) async {
     final l10n = context.l10n;
     final status = await Permission.microphone.status;
@@ -121,7 +118,6 @@ class _VoiceTypingGuideScreenState extends State<VoiceTypingGuideScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Clean subtitle outside of any container on the left with bigger font size
               Text(
                 l10n.voiceGuideSubtitle,
                 style: const TextStyle(
@@ -133,8 +129,6 @@ class _VoiceTypingGuideScreenState extends State<VoiceTypingGuideScreen>
                 ),
               ),
               const SizedBox(height: 20),
-
-              // Step-by-Step Connected Timeline Guide (No left icons)
               GuideTimelineCard(
                 title: l10n.homeStatusTitle,
                 steps: [
@@ -161,8 +155,6 @@ class _VoiceTypingGuideScreenState extends State<VoiceTypingGuideScreen>
                 ],
               ),
               const SizedBox(height: 20),
-
-              // Accuracy Tips Card with Pure White Background
               GuideTipsCard(
                 title: l10n.voiceGuideTipsTitle,
                 tips: [
@@ -172,8 +164,6 @@ class _VoiceTypingGuideScreenState extends State<VoiceTypingGuideScreen>
                 ],
               ),
               const SizedBox(height: 24),
-
-              // Direct 1-Tap Microphone Permission Button
               if (!_isPermissionGranted)
                 AppButton.primary(
                   label: l10n.voiceGuidePermissionPrompt,

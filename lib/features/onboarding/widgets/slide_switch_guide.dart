@@ -5,7 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../state/app_state.dart';
 
-/// Slide 4: Teaches users how to switch/select the active keyboard and tips for use
+/// Onboarding slide explaining how to switch the active keyboard.
 class SlideSwitchGuide extends StatelessWidget {
   final AppState appState;
 

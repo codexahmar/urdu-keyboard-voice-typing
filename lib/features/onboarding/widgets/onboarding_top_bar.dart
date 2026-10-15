@@ -4,7 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../state/app_state.dart';
 
-/// Sleek top bar with 1-tap segmented language switcher and skip button
+/// Top app bar for the onboarding flow.
 class OnboardingTopBar extends StatelessWidget {
   final AppState appState;
   final int currentPage;

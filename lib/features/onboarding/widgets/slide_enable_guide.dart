@@ -5,7 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../state/app_state.dart';
 
-/// Slide 3: Teaches users how to enable the keyboard in Android Settings
+/// Onboarding slide explaining how to enable the keyboard.
 class SlideEnableGuide extends StatelessWidget {
   final AppState appState;
 

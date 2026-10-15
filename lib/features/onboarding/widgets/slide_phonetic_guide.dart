@@ -3,7 +3,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 
-/// Slide 1: Teaches users how phonetic Roman-to-Urdu typing works
+/// Onboarding slide explaining phonetic typing.
 class SlidePhoneticGuide extends StatelessWidget {
   const SlidePhoneticGuide({super.key});
 

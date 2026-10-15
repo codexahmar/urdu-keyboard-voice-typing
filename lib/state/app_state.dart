@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/platform_channel_service.dart';
 import '../services/preferences_service.dart';
 
-/// Clean state management provider for Urdu Smart Keyboard.
-/// Encapsulates all application state, preferences, and platform interactions.
+/// State management provider for application preferences and keyboard status.
 class AppState extends ChangeNotifier {
   final PreferencesService _prefsService = PreferencesService();
   final PlatformChannelService _platformService = PlatformChannelService();

@@ -8,9 +8,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../state/app_state.dart';
 
-/// Clean SettingsScreen in Pakistan Green & White theme.
-/// Excludes text size functionality & version tile;
-/// Features inline language dropdown, real Play Store rating, Share Plus, and developer apps link.
+/// Application settings and preferences screen.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 

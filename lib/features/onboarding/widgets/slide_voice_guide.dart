@@ -4,7 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_button.dart';
 
-/// Slide 2: Teaches voice typing step-by-step and requests microphone permission
+/// Onboarding slide explaining voice typing.
 class SlideVoiceGuide extends StatelessWidget {
   final bool micGranted;
   final VoidCallback onRequestPermission;

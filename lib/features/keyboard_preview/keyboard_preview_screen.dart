@@ -7,11 +7,7 @@ import '../../core/widgets/app_button.dart';
 import '../../core/widgets/guide_timeline_card.dart';
 import '../../state/app_state.dart';
 
-/// Clean, simple KeyboardPreviewScreen.
-/// 1. Subtitle outside container on the left
-/// 2. Standalone TextField without wrapping container
-/// 3. Global GuideTimelineCard (steps without left icons)
-/// 4. 1-Tap Switch Keyboard action button
+/// Screen for previewing and testing keyboard input.
 class KeyboardPreviewScreen extends StatefulWidget {
   const KeyboardPreviewScreen({super.key});
 
@@ -36,6 +32,7 @@ class _KeyboardPreviewScreenState extends State<KeyboardPreviewScreen> {
     super.dispose();
   }
 
+  /// Clears the current input text.
   void _clearText() {
     _testInputController.clear();
     setState(() {});
@@ -61,7 +58,6 @@ class _KeyboardPreviewScreenState extends State<KeyboardPreviewScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Clean subtitle outside container on the left
               Text(
                 l10n.keyboardPreviewSubtitle,
                 style: const TextStyle(
@@ -73,12 +69,8 @@ class _KeyboardPreviewScreenState extends State<KeyboardPreviewScreen> {
                 ),
               ),
               const SizedBox(height: 18),
-
-              // Standalone, clean TextField (no wrapping Container)
               _buildTypingField(l10n),
               const SizedBox(height: 20),
-
-              // The One Guide Card Container (global common widget, no left icons)
               GuideTimelineCard(
                 title: l10n.keyboardPreviewTitle,
                 steps: [
@@ -105,8 +97,6 @@ class _KeyboardPreviewScreenState extends State<KeyboardPreviewScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-
-              // Switch Keyboard Action Button
               AppButton.primary(
                 label: l10n.onboardingSelectKeyboard,
                 icon: Icons.keyboard_alt_outlined,
@@ -122,6 +112,7 @@ class _KeyboardPreviewScreenState extends State<KeyboardPreviewScreen> {
     );
   }
 
+  /// Builds the text input field for keyboard testing.
   Widget _buildTypingField(AppLocalizations l10n) {
     return TextField(
       controller: _testInputController,

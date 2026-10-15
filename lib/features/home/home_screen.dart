@@ -10,11 +10,7 @@ import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_permission_dialog.dart';
 import '../../state/app_state.dart';
 
-/// Clean, production-grade Home screen for Urdu Smart Keyboard.
-/// Clear layout hierarchy:
-/// 1. Top Bar with title & prominent Settings button
-/// 2. Hero Keyboard Activation Status Card with direct 1-tap actions
-/// 3. Core Feature & Tool Cards (Voice Typing Guide, Keyboard Preview, Settings)
+/// Main home screen displaying keyboard activation status and quick actions.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 

@@ -15,9 +15,7 @@ class GuideTimelineStep {
   });
 }
 
-/// Global reusable timeline guide card.
-/// Features clean vertical connecting line, numbered badges, and clean typography
-/// with no icons on the left of step titles.
+/// Reusable timeline guide card displaying sequential steps.
 class GuideTimelineCard extends StatelessWidget {
   final String title;
   final List<GuideTimelineStep> steps;
@@ -48,7 +46,6 @@ class GuideTimelineCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header without icon
           Text(
             title,
             style: const TextStyle(
@@ -59,8 +56,6 @@ class GuideTimelineCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-
-          // Connected Timeline Steps
           for (int i = 0; i < steps.length; i++)
             _buildTimelineStep(
               step: steps[i],
@@ -71,6 +66,7 @@ class GuideTimelineCard extends StatelessWidget {
     );
   }
 
+  /// Builds an individual step row with number badge and description.
   Widget _buildTimelineStep({
     required GuideTimelineStep step,
     required bool isLast,
@@ -79,7 +75,6 @@ class GuideTimelineCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Step Number Circle & Connecting Vertical Line
           Column(
             children: [
               Container(
@@ -110,8 +105,6 @@ class GuideTimelineCard extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 14),
-
-          // Content - NO icon next to title
           Expanded(
             child: Padding(
               padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
@@ -147,7 +140,7 @@ class GuideTimelineCard extends StatelessWidget {
   }
 }
 
-/// Global reusable tips card with pure white background and clear checkmark badges.
+/// Reusable card displaying helpful tips.
 class GuideTipsCard extends StatelessWidget {
   final String title;
   final List<String> tips;
@@ -164,7 +157,7 @@ class GuideTipsCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.white, // Pure white background for maximum visibility
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.border, width: 1.2),
         boxShadow: const [

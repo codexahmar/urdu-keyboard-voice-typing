@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import 'app_button.dart';
 
-/// Sleek, professional global permission dialog adhering strictly to
-/// the Pakistan Green and White design language.
+/// Modal dialog for requesting runtime permissions.
 class AppPermissionDialog extends StatelessWidget {
   final IconData icon;
   final String title;

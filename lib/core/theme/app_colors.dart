@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Single unified Pakistan Flag Green & White color palette.
-/// No dark/light duality - strictly pure white and authentic Pakistani flag green (#01411C).
+/// Application color palette constants.
 class AppColors {
   // Official Pakistan Flag Green & Accents
   static const Color primary = Color(0xFF01411C); // Authentic Pakistan Flag Green

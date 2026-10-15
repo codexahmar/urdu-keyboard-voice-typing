@@ -4,8 +4,7 @@ import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Clean SplashScreen in Pakistan Green & White theme.
-/// Displays raw app icon without enclosing container/background, with smooth entrance.
+/// Initial splash screen with entrance animation.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 

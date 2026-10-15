@@ -13,12 +13,7 @@ import 'widgets/slide_phonetic_guide.dart';
 import 'widgets/slide_switch_guide.dart';
 import 'widgets/slide_voice_guide.dart';
 
-/// Clean, modular OnboardingScreen tailored for Pakistani users.
-/// Guides users through:
-/// 1. Phonetic Roman-to-Urdu typing & 1-tap language switch
-/// 2. Urdu voice typing & microphone permission grant
-/// 3. Step 1: Enabling the keyboard in Android Settings
-/// 4. Step 2: Selecting Urdu Smart Keyboard as active input & practice
+/// Onboarding flow guiding users through setup and key features.
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onComplete;
 

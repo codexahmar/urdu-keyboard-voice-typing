@@ -4,7 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/step_indicator.dart';
 
-/// Standard mobile onboarding bottom bar with Back, Dot Indicators, and Next/Start button
+/// Bottom navigation bar for the onboarding flow.
 class OnboardingBottomBar extends StatelessWidget {
   final int currentPage;
   final int totalPages;
