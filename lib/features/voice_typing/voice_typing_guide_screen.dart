@@ -5,13 +5,14 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_permission_dialog.dart';
+import '../../core/widgets/guide_timeline_card.dart';
 
 /// Clean, high-quality professional VoiceTypingGuideScreen.
 /// Features:
-/// 1. Hero Microphone header card with live permission status badge
-/// 2. Clean connected visual timeline walkthrough (Steps 1 to 4)
-/// 3. Best practices & accuracy tips card
-/// 4. Direct 1-tap microphone permission tester button
+/// 1. Subtitle outside container on the left
+/// 2. Global GuideTimelineCard (steps without left icons)
+/// 3. Global GuideTipsCard with pure white background
+/// 4. Direct 1-tap microphone permission button
 class VoiceTypingGuideScreen extends StatefulWidget {
   const VoiceTypingGuideScreen({super.key});
 
@@ -133,15 +134,46 @@ class _VoiceTypingGuideScreenState extends State<VoiceTypingGuideScreen>
               ),
               const SizedBox(height: 20),
 
-              // Step-by-Step Connected Timeline Guide
-              _buildTimelineGuideCard(l10n),
+              // Step-by-Step Connected Timeline Guide (No left icons)
+              GuideTimelineCard(
+                title: l10n.homeStatusTitle,
+                steps: [
+                  GuideTimelineStep(
+                    stepNumber: 1,
+                    title: l10n.voiceGuideStep1Title,
+                    description: l10n.voiceGuideStep1Desc,
+                  ),
+                  GuideTimelineStep(
+                    stepNumber: 2,
+                    title: l10n.voiceGuideStep2Title,
+                    description: l10n.voiceGuideStep2Desc,
+                  ),
+                  GuideTimelineStep(
+                    stepNumber: 3,
+                    title: l10n.voiceGuideStep3Title,
+                    description: l10n.voiceGuideStep3Desc,
+                  ),
+                  GuideTimelineStep(
+                    stepNumber: 4,
+                    title: l10n.voiceGuideStep4Title,
+                    description: l10n.voiceGuideStep4Desc,
+                  ),
+                ],
+              ),
               const SizedBox(height: 20),
 
-              // Accuracy Tips Card
-              _buildTipsCard(l10n),
+              // Accuracy Tips Card with Pure White Background
+              GuideTipsCard(
+                title: l10n.voiceGuideTipsTitle,
+                tips: [
+                  l10n.voiceGuideTip1,
+                  l10n.voiceGuideTip2,
+                  l10n.voiceGuideTip3,
+                ],
+              ),
               const SizedBox(height: 24),
 
-              // Direct 1-Tap Microphone Permission Button (only shown when needed to avoid repetition)
+              // Direct 1-Tap Microphone Permission Button
               if (!_isPermissionGranted)
                 AppButton.primary(
                   label: l10n.voiceGuidePermissionPrompt,
@@ -178,240 +210,6 @@ class _VoiceTypingGuideScreenState extends State<VoiceTypingGuideScreen>
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildTimelineGuideCard(AppLocalizations l10n) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border, width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A01411C),
-            blurRadius: 12,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header without icon
-          Text(
-            l10n.homeStatusTitle,
-            style: const TextStyle(
-              fontSize: 15.5,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-              fontFamilyFallback: AppTheme.urduFontFallbacks,
-            ),
-          ),
-          const SizedBox(height: 18),
-
-          // Steps 1 to 4
-          _buildTimelineStep(
-            stepNumber: 1,
-            icon: Icons.chat_bubble_outline_rounded,
-            title: l10n.voiceGuideStep1Title,
-            description: l10n.voiceGuideStep1Desc,
-            isLast: false,
-          ),
-          _buildTimelineStep(
-            stepNumber: 2,
-            icon: Icons.mic_rounded,
-            title: l10n.voiceGuideStep2Title,
-            description: l10n.voiceGuideStep2Desc,
-            isLast: false,
-          ),
-          _buildTimelineStep(
-            stepNumber: 3,
-            icon: Icons.record_voice_over_rounded,
-            title: l10n.voiceGuideStep3Title,
-            description: l10n.voiceGuideStep3Desc,
-            isLast: false,
-          ),
-          _buildTimelineStep(
-            stepNumber: 4,
-            icon: Icons.check_circle_outline_rounded,
-            title: l10n.voiceGuideStep4Title,
-            description: l10n.voiceGuideStep4Desc,
-            isLast: true,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimelineStep({
-    required int stepNumber,
-    required IconData icon,
-    required String title,
-    required String description,
-    required bool isLast,
-  }) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Step Indicator & Connecting Line
-          Column(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '$stepNumber',
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-              if (!isLast)
-                Expanded(
-                  child: Container(
-                    width: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    color: const Color(0xFFE2E8F0),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(width: 14),
-
-          // Content
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(icon, size: 16, color: AppColors.primary),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: const TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                            fontFamilyFallback: AppTheme.urduFontFallbacks,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                      height: 1.4,
-                      fontFamilyFallback: AppTheme.urduFontFallbacks,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTipsCard(AppLocalizations l10n) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FCFA),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE0EFE2), width: 1.2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.lightbulb_outline_rounded,
-                  size: 18,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                l10n.voiceGuideTipsTitle,
-                style: const TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                  fontFamilyFallback: AppTheme.urduFontFallbacks,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          _buildTipItem(l10n.voiceGuideTip1),
-          const SizedBox(height: 10),
-          _buildTipItem(l10n.voiceGuideTip2),
-          const SizedBox(height: 10),
-          _buildTipItem(l10n.voiceGuideTip3),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTipItem(String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.only(top: 3),
-          width: 16,
-          height: 16,
-          decoration: const BoxDecoration(
-            color: Color(0xFFE8F5E9),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.check_rounded,
-            size: 11,
-            color: AppColors.primary,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.textPrimary,
-              height: 1.4,
-              fontFamilyFallback: AppTheme.urduFontFallbacks,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
