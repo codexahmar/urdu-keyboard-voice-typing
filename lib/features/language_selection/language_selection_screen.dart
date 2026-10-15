@@ -1,178 +1,108 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/constants/app_strings.dart';
-import '../../core/constants/app_constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_button.dart';
 import '../../core/widgets/language_tile.dart';
 import '../../state/app_state.dart';
-import '../../services/platform_channel_service.dart';
 
-/// Language selection screen
-/// Redesigned with modern Material 3 layout, feedback toasts, and persistent storage synchronization
+/// Clean, professional LanguageSelectionScreen in Pakistan Green & White theme
 class LanguageSelectionScreen extends StatefulWidget {
-  const LanguageSelectionScreen({Key? key}) : super(key: key);
+  const LanguageSelectionScreen({super.key});
 
   @override
-  State<LanguageSelectionScreen> createState() =>
-      _LanguageSelectionScreenState();
+  State<LanguageSelectionScreen> createState() => _LanguageSelectionScreenState();
 }
 
 class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
-  final PlatformChannelService _platformService = PlatformChannelService();
-  String? _selectedLanguage;
+  late String _selectedCode;
 
   @override
   void initState() {
     super.initState();
-    // Initialize app state language value
-    _selectedLanguage = context.read<AppState>().selectedLanguage;
+    _selectedCode = context.read<AppState>().selectedLanguage;
   }
 
-  void _selectLanguage(String code) {
-    setState(() {
-      _selectedLanguage = code;
-    });
-  }
-
-  Future<void> _saveLanguage() async {
-    if (_selectedLanguage == null) return;
-
+  Future<void> _applyLanguage() async {
     final appState = context.read<AppState>();
-    await appState.setSelectedLanguage(_selectedLanguage!);
-
-    // Attempt to communicate with native keyboard channel
-    await _platformService.setKeyboardLanguage(_selectedLanguage!);
-
+    await appState.setSelectedLanguage(_selectedCode);
     if (mounted) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.white, size: 20),
-              const SizedBox(width: 12),
-              Text(
-                'Language set to ${appState.getLanguageName(_selectedLanguage!)}',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          backgroundColor: isDark ? AppColors.primaryLight : AppColors.primary,
-          duration: const Duration(seconds: 2),
-        ),
-      );
       Navigator.pop(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(AppStrings.languageSelectionTitle),
+        title: Text(l10n.languageSelectionTitle),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Top Header Card
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: (isDark ? AppColors.primaryLight : AppColors.primary).withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: (isDark ? AppColors.primaryLight : AppColors.primary).withOpacity(0.2),
-                    width: 1,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header description
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                child: Text(
+                  l10n.languageSelectionSubtitle,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                    fontFamilyFallback: AppTheme.urduFontFallbacks,
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.translate_rounded,
-                      color: isDark ? AppColors.primaryLight : AppColors.primary,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(
-                        AppStrings.languageSelectionDescription,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w500,
-                              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
-                            ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
-            ),
+              const SizedBox(height: 16),
 
-            // Language Options List
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                physics: const BouncingScrollPhysics(),
-                itemCount: AppConstants.supportedLanguages.length,
-                itemBuilder: (context, index) {
-                  final lang = AppConstants.supportedLanguages[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: LanguageTile(
-                      name: lang['name'],
-                      nativeName: lang['nativeName'],
-                      description: lang['description'],
-                      isSelected: _selectedLanguage == lang['code'],
-                      isRecommended: lang['isRecommended'],
-                      onTap: () => _selectLanguage(lang['code']),
-                    ),
-                  );
+              // Urdu Tile
+              LanguageTile(
+                name: 'Urdu',
+                nativeName: l10n.languageUrduTitle,
+                description: l10n.languageUrduSubtitle,
+                isSelected: _selectedCode == 'ur',
+                isRecommended: true,
+                recommendedLabel: l10n.recommended,
+                onTap: () {
+                  setState(() {
+                    _selectedCode = 'ur';
+                  });
                 },
               ),
-            ),
+              const SizedBox(height: 14),
 
-            // Save Action Button Area
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceDark : Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
+              // English Tile
+              LanguageTile(
+                name: 'English',
+                nativeName: l10n.languageEnglishTitle,
+                description: l10n.languageEnglishSubtitle,
+                isSelected: _selectedCode == 'en',
+                isRecommended: false,
+                onTap: () {
+                  setState(() {
+                    _selectedCode = 'en';
+                  });
+                },
               ),
-              child: SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: _selectedLanguage != null ? _saveLanguage : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark ? AppColors.primaryLight : AppColors.primary,
-                    foregroundColor: isDark ? Colors.black : Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    AppStrings.save,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ),
+
+              const Spacer(),
+
+              // Save / Apply Button
+              AppButton.primary(
+                label: l10n.save,
+                icon: Icons.check_circle_outline_rounded,
+                onPressed: _applyLanguage,
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
       ),
     );
