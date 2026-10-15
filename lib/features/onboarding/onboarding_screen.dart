@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/widgets/app_permission_dialog.dart';
 import '../../state/app_state.dart';
+import 'controller/onboarding_controller.dart';
 import 'widgets/onboarding_bottom_bar.dart';
 import 'widgets/onboarding_top_bar.dart';
 import 'widgets/slide_enable_guide.dart';
@@ -13,7 +11,7 @@ import 'widgets/slide_phonetic_guide.dart';
 import 'widgets/slide_switch_guide.dart';
 import 'widgets/slide_voice_guide.dart';
 
-/// Onboarding flow guiding users through setup and key features.
+/// Onboarding flow screen presenting educational guides.
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onComplete;
 
@@ -25,16 +23,14 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen>
     with WidgetsBindingObserver {
-  final PageController _pageController = PageController();
-
-  int _currentPage = 0;
-  bool _micGranted = false;
+  late final OnboardingController _controller;
 
   @override
   void initState() {
     super.initState();
+    _controller = OnboardingController();
     WidgetsBinding.instance.addObserver(this);
-    _checkMicPermission();
+    _controller.checkMicPermission();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AppState>().checkKeyboardStatus();
     });
@@ -43,69 +39,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _pageController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _checkMicPermission();
-      context.read<AppState>().checkKeyboardStatus();
-    }
-  }
-
-  Future<void> _checkMicPermission() async {
-    try {
-      final status = await Permission.microphone.status;
-      if (mounted) {
-        setState(() {
-          _micGranted = status.isGranted;
-        });
-      }
-    } catch (_) {}
-  }
-
-  Future<void> _requestMicPermission() async {
-    final l10n = context.l10n;
-    await AppPermissionDialog.show(
-      context,
-      icon: Icons.mic_rounded,
-      title: l10n.permissionMicTitle,
-      description: l10n.permissionMicDesc,
-      allowText: l10n.permissionAllow,
-      cancelText: l10n.permissionNotNow,
-      onAllow: () async {
-        final result = await Permission.microphone.request();
-        if (mounted) {
-          setState(() {
-            _micGranted = result.isGranted;
-          });
-          if (result.isPermanentlyDenied) {
-            await openAppSettings();
-          }
-        }
-      },
-    );
-  }
-
-  void _nextPage() {
-    if (_currentPage < AppConstants.onboardingSteps - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      widget.onComplete();
-    }
-  }
-
-  void _previousPage() {
-    if (_currentPage > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      _controller.handleResume(context.read<AppState>());
     }
   }
 
@@ -113,54 +54,51 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
 
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Standard Top Bar with Language Dropdown & Skip button
-              OnboardingTopBar(
-                appState: appState,
-                currentPage: _currentPage,
-                totalPages: AppConstants.onboardingSteps,
-                onSkip: widget.onComplete,
-              ),
-
-              // Main PageView with 4 educational slides
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const ClampingScrollPhysics(),
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentPage = index;
-                    });
-                  },
-                  children: [
-                    const SlidePhoneticGuide(),
-                    SlideVoiceGuide(
-                      micGranted: _micGranted,
-                      onRequestPermission: _requestMicPermission,
+    return ListenableBuilder(
+      listenable: _controller,
+      builder: (context, _) {
+        return Directionality(
+          textDirection: TextDirection.ltr,
+          child: Scaffold(
+            backgroundColor: AppColors.background,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  OnboardingTopBar(
+                    appState: appState,
+                    currentPage: _controller.currentPage,
+                    totalPages: AppConstants.onboardingSteps,
+                    onSkip: widget.onComplete,
+                  ),
+                  Expanded(
+                    child: PageView(
+                      controller: _controller.pageController,
+                      physics: const ClampingScrollPhysics(),
+                      onPageChanged: _controller.setPage,
+                      children: [
+                        const SlidePhoneticGuide(),
+                        SlideVoiceGuide(
+                          micGranted: _controller.micGranted,
+                          onRequestPermission: () =>
+                              _controller.requestMicPermission(context),
+                        ),
+                        SlideEnableGuide(appState: appState),
+                        SlideSwitchGuide(appState: appState),
+                      ],
                     ),
-                    SlideEnableGuide(appState: appState),
-                    SlideSwitchGuide(appState: appState),
-                  ],
-                ),
+                  ),
+                  OnboardingBottomBar(
+                    currentPage: _controller.currentPage,
+                    totalPages: AppConstants.onboardingSteps,
+                    onPrevious: _controller.previousPage,
+                    onNext: () => _controller.nextPage(widget.onComplete),
+                  ),
+                ],
               ),
-
-              // Standard Bottom Bar with Back, Dots, and Next/Start button
-              OnboardingBottomBar(
-                currentPage: _currentPage,
-                totalPages: AppConstants.onboardingSteps,
-                onPrevious: _previousPage,
-                onNext: _nextPage,
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

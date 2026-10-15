@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../state/app_state.dart';
+import 'controller/splash_controller.dart';
 
 /// Initial splash screen with entrance animation.
 class SplashScreen extends StatefulWidget {
@@ -13,101 +15,176 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
+    with TickerProviderStateMixin {
+  late final SplashController _controller;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
-      ),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.88, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.8, curve: Curves.easeOutBack),
-      ),
-    );
-
-    _animationController.forward();
+    _controller = SplashController();
+    _controller.initAnimations(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final appState = context.read<AppState>();
+      _controller.handleSplashNavigation(
+        context,
+        isOnboardingComplete: appState.onboardingComplete,
+      );
+    });
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Exact app icon without any enclosing container or background
-                Image.asset(
-                  AppConstants.appIconPath,
-                  width: 110,
-                  height: 110,
-                  fit: BoxFit.contain,
-                ),
-                const SizedBox(height: 32),
+      body: Stack(
+        children: [
+          _buildBackgroundAura(),
+          Center(child: _buildAnimatedHeroContent()),
+          _buildAnimatedFooter(),
+        ],
+      ),
+    );
+  }
 
-                // English App Name
-                Text(
-                  l10n.splashTitle,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.3,
-                  ),
-                  textAlign: TextAlign.center,
+  /// Builds ambient background gradient and lighter corner bubbles.
+  Widget _buildBackgroundAura() {
+    return SizedBox.expand(
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [AppColors.white, Color(0xFFF7FAF8), Color(0xFFEDF5EF)],
+            stops: [0.0, 0.55, 1.0],
+          ),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              top: -100,
+              right: -80,
+              child: Container(
+                width: 260,
+                height: 260,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color.fromARGB(255, 94, 142, 103),
                 ),
-                const SizedBox(height: 8),
+              ),
+            ),
+            Positioned(
+              bottom: -90,
+              left: -80,
+              child: Container(
+                width: 240,
+                height: 240,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color.fromARGB(255, 94, 142, 103),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                // Urdu App Name
-                Text(
-                  l10n.splashSubtitle,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                    fontFamilyFallback: AppTheme.urduFontFallbacks,
-                  ),
-                  textAlign: TextAlign.center,
+  /// Builds the central hero brand content with icon, titles, and loader.
+  Widget _buildAnimatedHeroContent() {
+    return FadeTransition(
+      opacity: _controller.fadeAnimation,
+      child: ScaleTransition(
+        scale: _controller.scaleAnimation,
+        child: SlideTransition(
+          position: _controller.slideAnimation,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                AppConstants.appIconPath,
+                width: 110,
+                height: 110,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 28),
+              const Text(
+                AppConstants.appName,
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.5,
                 ),
-                const SizedBox(height: 48),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'اردو اسمارٹ کی بورڈ',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                  height: 1.5,
+                  fontFamilyFallback: AppTheme.urduFontFallbacks,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 36),
+              _buildLoadingBar(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-                // Loading Indicator
-                const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                  ),
-                ),
-              ],
+  /// Builds a smooth animated progress bar filling over the splash duration.
+  Widget _buildLoadingBar() {
+    return AnimatedBuilder(
+      animation: _controller.loadingAnimation,
+      builder: (context, child) {
+        return SizedBox(
+          width: 130,
+          height: 4,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: _controller.loadingAnimation.value,
+              backgroundColor: const Color(0xFFE2E8F0),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.primary,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Builds visible version tag anchored at the bottom.
+  Widget _buildAnimatedFooter() {
+    return SafeArea(
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 24),
+          child: FadeTransition(
+            opacity: _controller.footerFadeAnimation,
+            child: const Text(
+              'v${AppConstants.appVersion}',
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
         ),

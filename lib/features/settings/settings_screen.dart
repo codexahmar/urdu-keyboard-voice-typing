@@ -1,41 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../core/constants/app_constants.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../state/app_state.dart';
+import 'controller/settings_controller.dart';
 
 /// Application settings and preferences screen.
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+  final SettingsController _controller;
 
-  Future<void> _launchUrl(String urlString, {String? marketUrl}) async {
-    try {
-      if (marketUrl != null) {
-        final marketUri = Uri.parse(marketUrl);
-        if (await canLaunchUrl(marketUri)) {
-          await launchUrl(marketUri, mode: LaunchMode.externalApplication);
-          return;
-        }
-      }
-      final uri = Uri.parse(urlString);
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      try {
-        final uri = Uri.parse(urlString);
-        await launchUrl(uri, mode: LaunchMode.platformDefault);
-      } catch (_) {}
-    }
-  }
-
-  Future<void> _shareApp(String message) async {
-    try {
-      await SharePlus.instance.share(ShareParams(text: message));
-    } catch (_) {}
-  }
+  const SettingsScreen({super.key, SettingsController? controller})
+      : _controller = controller ?? const SettingsController();
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +28,6 @@ class SettingsScreen extends StatelessWidget {
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           children: [
-            // Section 1: General Preferences (Language Dropdown)
             _buildSectionHeader(l10n.settingsGeneralSection),
             _buildCard([
               _buildTile(
@@ -106,8 +81,8 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ],
                       onChanged: (String? newLang) {
-                        if (newLang != null && newLang != appState.selectedLanguage) {
-                          appState.setSelectedLanguage(newLang);
+                        if (newLang != null) {
+                          _controller.updateLanguage(appState, newLang);
                         }
                       },
                     ),
@@ -116,8 +91,6 @@ class SettingsScreen extends StatelessWidget {
               ),
             ]),
             const SizedBox(height: 24),
-
-            // Section 2: Guides & Typing Tools
             _buildSectionHeader(l10n.settingsHelpSection),
             _buildCard([
               _buildTile(
@@ -131,60 +104,45 @@ class SettingsScreen extends StatelessWidget {
                 icon: Icons.keyboard_alt_rounded,
                 title: l10n.homeCardPreviewTitle,
                 subtitle: l10n.homeCardPreviewSubtitle,
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppConstants.keyboardPreviewRoute,
-                  );
-                },
+                onTap: () => _controller.navigateToKeyboardPreview(context),
               ),
               const Divider(height: 1, indent: 70),
               _buildTile(
                 icon: Icons.mic_rounded,
                 title: l10n.settingsVoiceGuide,
                 subtitle: l10n.settingsVoiceGuideSubtitle,
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppConstants.voiceTypingGuideRoute,
-                  );
-                },
+                onTap: () => _controller.navigateToVoiceTypingGuide(context),
               ),
             ]),
             const SizedBox(height: 24),
-
-            // Section 3: About & Support
             _buildSectionHeader(l10n.settingsAboutSection),
             _buildCard([
               _buildTile(
                 icon: Icons.star_rate_rounded,
                 title: l10n.settingsRateApp,
                 subtitle: l10n.settingsRateAppSubtitle,
-                onTap: () => _launchUrl(
-                  AppConstants.playStoreAppUrl,
-                  marketUrl: AppConstants.playStoreMarketUrl,
-                ),
+                onTap: () => _controller.rateApp(),
               ),
               const Divider(height: 1, indent: 70),
               _buildTile(
                 icon: Icons.share_rounded,
                 title: l10n.settingsShareApp,
                 subtitle: l10n.settingsShareAppSubtitle,
-                onTap: () => _shareApp(l10n.settingsShareMessage),
+                onTap: () => _controller.shareApp(l10n.settingsShareMessage),
               ),
               const Divider(height: 1, indent: 70),
               _buildTile(
                 icon: Icons.apps_rounded,
                 title: l10n.settingsMoreApps,
                 subtitle: l10n.settingsMoreAppsSubtitle,
-                onTap: () => _launchUrl(AppConstants.developerAppsUrl),
+                onTap: () => _controller.openDeveloperApps(),
               ),
               const Divider(height: 1, indent: 70),
               _buildTile(
                 icon: Icons.verified_user_outlined,
                 title: l10n.settingsPrivacyPolicy,
                 subtitle: l10n.settingsPrivacyPolicySubtitle,
-                onTap: () => _launchUrl(AppConstants.privacyPolicyUrl),
+                onTap: () => _controller.openPrivacyPolicy(),
               ),
             ]),
             const SizedBox(height: 30),

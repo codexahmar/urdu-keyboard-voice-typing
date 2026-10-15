@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_button.dart';
 import '../../core/widgets/language_tile.dart';
 import '../../state/app_state.dart';
+import 'controller/language_selection_controller.dart';
 
 /// Screen for selecting the application language.
 class LanguageSelectionScreen extends StatefulWidget {
@@ -16,25 +17,26 @@ class LanguageSelectionScreen extends StatefulWidget {
 }
 
 class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
-  late String _selectedCode;
+  late final LanguageSelectionController _controller;
 
   @override
   void initState() {
     super.initState();
-    _selectedCode = context.read<AppState>().selectedLanguage;
+    _controller = LanguageSelectionController(
+      initialCode: context.read<AppState>().selectedLanguage,
+    );
   }
 
-  Future<void> _applyLanguage() async {
-    final appState = context.read<AppState>();
-    await appState.setSelectedLanguage(_selectedCode);
-    if (mounted) {
-      Navigator.pop(context);
-    }
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final appState = context.read<AppState>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -44,64 +46,53 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header description
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                child: Text(
-                  l10n.languageSelectionSubtitle,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                    height: 1.4,
-                    fontFamilyFallback: AppTheme.urduFontFallbacks,
+          child: ListenableBuilder(
+            listenable: _controller,
+            builder: (context, _) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                    child: Text(
+                      l10n.languageSelectionSubtitle,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                        height: 1.4,
+                        fontFamilyFallback: AppTheme.urduFontFallbacks,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Urdu Tile
-              LanguageTile(
-                name: 'Urdu',
-                nativeName: l10n.languageUrduTitle,
-                description: l10n.languageUrduSubtitle,
-                isSelected: _selectedCode == 'ur',
-                isRecommended: true,
-                recommendedLabel: l10n.recommended,
-                onTap: () {
-                  setState(() {
-                    _selectedCode = 'ur';
-                  });
-                },
-              ),
-              const SizedBox(height: 14),
-
-              // English Tile
-              LanguageTile(
-                name: 'English',
-                nativeName: l10n.languageEnglishTitle,
-                description: l10n.languageEnglishSubtitle,
-                isSelected: _selectedCode == 'en',
-                isRecommended: false,
-                onTap: () {
-                  setState(() {
-                    _selectedCode = 'en';
-                  });
-                },
-              ),
-
-              const Spacer(),
-
-              // Save / Apply Button
-              AppButton.primary(
-                label: l10n.save,
-                icon: Icons.check_circle_outline_rounded,
-                onPressed: _applyLanguage,
-              ),
-              const SizedBox(height: 12),
-            ],
+                  const SizedBox(height: 16),
+                  LanguageTile(
+                    name: 'Urdu',
+                    nativeName: l10n.languageUrduTitle,
+                    description: l10n.languageUrduSubtitle,
+                    isSelected: _controller.selectedCode == 'ur',
+                    isRecommended: true,
+                    recommendedLabel: l10n.recommended,
+                    onTap: () => _controller.selectLanguage('ur'),
+                  ),
+                  const SizedBox(height: 14),
+                  LanguageTile(
+                    name: 'English',
+                    nativeName: l10n.languageEnglishTitle,
+                    description: l10n.languageEnglishSubtitle,
+                    isSelected: _controller.selectedCode == 'en',
+                    isRecommended: false,
+                    onTap: () => _controller.selectLanguage('en'),
+                  ),
+                  const Spacer(),
+                  AppButton.primary(
+                    label: l10n.save,
+                    icon: Icons.check_circle_outline_rounded,
+                    onPressed: () => _controller.applyLanguage(context, appState),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              );
+            },
           ),
         ),
       ),

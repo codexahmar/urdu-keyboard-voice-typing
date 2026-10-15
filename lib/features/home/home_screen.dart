@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
-import '../../core/constants/app_constants.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/action_card.dart';
 import '../../core/widgets/app_button.dart';
-import '../../core/widgets/app_permission_dialog.dart';
 import '../../state/app_state.dart';
+import 'controller/home_controller.dart';
 
 /// Main home screen displaying keyboard activation status and quick actions.
 class HomeScreen extends StatefulWidget {
@@ -19,13 +17,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  final HomeController _controller = HomeController();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AppState>().checkKeyboardStatus();
-      _checkInitialPermissions();
+      _controller.refreshKeyboardStatus(context.read<AppState>());
+      _controller.checkInitialPermissions(context);
     });
   }
 
@@ -38,25 +38,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      context.read<AppState>().checkKeyboardStatus();
-    }
-  }
-
-  Future<void> _checkInitialPermissions() async {
-    final status = await Permission.microphone.status;
-    if (status.isDenied && mounted) {
-      final l10n = context.l10n;
-      await AppPermissionDialog.show(
-        context,
-        icon: Icons.mic_rounded,
-        title: l10n.permissionMicTitle,
-        description: l10n.permissionMicDesc,
-        allowText: l10n.permissionAllow,
-        cancelText: l10n.permissionNotNow,
-        onAllow: () async {
-          await Permission.microphone.request();
-        },
-      );
+      _controller.refreshKeyboardStatus(context.read<AppState>());
     }
   }
 
@@ -82,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
-                onTap: () => Navigator.pushNamed(context, AppConstants.settingsRoute),
+                onTap: () => _controller.openSettings(context),
                 child: const Padding(
                   padding: EdgeInsets.all(9),
                   child: Icon(
@@ -137,9 +119,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 icon: Icons.mic_rounded,
                 title: l10n.homeCardVoiceTitle,
                 subtitle: l10n.homeCardVoiceSubtitle,
-                onTap: () {
-                  Navigator.pushNamed(context, AppConstants.voiceTypingGuideRoute);
-                },
+                onTap: () => _controller.openVoiceTypingGuide(context),
               ),
               const SizedBox(height: 12),
 
@@ -148,9 +128,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 icon: Icons.keyboard_alt_rounded,
                 title: l10n.homeCardPreviewTitle,
                 subtitle: l10n.homeCardPreviewSubtitle,
-                onTap: () {
-                  Navigator.pushNamed(context, AppConstants.keyboardPreviewRoute);
-                },
+                onTap: () => _controller.openKeyboardPreview(context),
               ),
               const SizedBox(height: 12),
 
@@ -161,9 +139,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 subtitle: appState.selectedLanguage == 'ur'
                     ? 'اردو • سیٹنگز اور زبان تبدیل کریں'
                     : 'English • Settings, Language & Help',
-                onTap: () {
-                  Navigator.pushNamed(context, AppConstants.settingsRoute);
-                },
+                onTap: () => _controller.openSettings(context),
               ),
               const SizedBox(height: 24),
             ],
@@ -376,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 height: 48,
                 borderRadius: 14,
                 icon: Icons.tune_rounded,
-                onPressed: () => appState.openKeyboardSettings(),
+                onPressed: () => _controller.openKeyboardSettings(appState),
               )
             else
               AppButton.primary(
@@ -384,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 height: 48,
                 borderRadius: 14,
                 icon: Icons.keyboard_alt_rounded,
-                onPressed: () => appState.openInputMethodPicker(),
+                onPressed: () => _controller.openInputMethodPicker(appState),
               ),
           ],
         ],

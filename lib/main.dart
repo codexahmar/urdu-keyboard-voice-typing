@@ -48,10 +48,7 @@ class UrduSmartKeyboardApp extends StatelessWidget {
 
       // Enforce uniform LTR direction across English and Urdu
       builder: (context, child) {
-        return Directionality(
-          textDirection: TextDirection.ltr,
-          child: child!,
-        );
+        return Directionality(textDirection: TextDirection.ltr, child: child!);
       },
 
       // Initial route
@@ -59,13 +56,13 @@ class UrduSmartKeyboardApp extends StatelessWidget {
 
       // Routes
       routes: {
-        AppConstants.splashRoute: (context) => const SplashWrapper(),
+        AppConstants.splashRoute: (context) => const SplashScreen(),
         AppConstants.onboardingRoute: (context) => OnboardingScreen(
-              onComplete: () {
-                appState.completeOnboarding();
-                Navigator.pushReplacementNamed(context, AppConstants.homeRoute);
-              },
-            ),
+          onComplete: () {
+            appState.completeOnboarding();
+            Navigator.pushReplacementNamed(context, AppConstants.homeRoute);
+          },
+        ),
         AppConstants.homeRoute: (context) => const HomeScreen(),
         AppConstants.languageSelectionRoute: (context) =>
             const LanguageSelectionScreen(),
@@ -79,37 +76,3 @@ class UrduSmartKeyboardApp extends StatelessWidget {
   }
 }
 
-/// Wrapper for splash screen with automatic navigation
-class SplashWrapper extends StatefulWidget {
-  const SplashWrapper({super.key});
-
-  @override
-  State<SplashWrapper> createState() => _SplashWrapperState();
-}
-
-class _SplashWrapperState extends State<SplashWrapper> {
-  @override
-  void initState() {
-    super.initState();
-    _navigateAfterDelay();
-  }
-
-  Future<void> _navigateAfterDelay() async {
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return;
-
-    final appState = context.read<AppState>();
-
-    if (appState.onboardingComplete) {
-      Navigator.pushReplacementNamed(context, AppConstants.homeRoute);
-    } else {
-      Navigator.pushReplacementNamed(context, AppConstants.onboardingRoute);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return const SplashScreen();
-  }
-}
