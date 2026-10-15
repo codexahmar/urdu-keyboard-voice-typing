@@ -1,10 +1,9 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Service for managing app preferences and settings
+/// Service for managing local app preferences and settings
 class PreferencesService {
   static const String _onboardingKey = 'onboarding_complete';
   static const String _selectedLanguageKey = 'selected_language';
-  static const String _themeModeKey = 'theme_mode';
   static const String _textSizeKey = 'text_size_scale';
 
   late SharedPreferences _prefs;
@@ -36,16 +35,6 @@ class PreferencesService {
 
   String getSelectedLanguage() {
     return _prefs.getString(_selectedLanguageKey) ?? 'ur'; // Default to Urdu
-  }
-
-  /// Theme Mode
-  Future<bool> setThemeMode(String mode) async {
-    await init();
-    return await _prefs.setString(_themeModeKey, mode);
-  }
-
-  String getThemeMode() {
-    return _prefs.getString(_themeModeKey) ?? 'system';
   }
 
   /// Text Size

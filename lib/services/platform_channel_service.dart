@@ -1,21 +1,19 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Service to communicate with native Android keyboard implementation
-/// This is a STUB - actual implementation will be done via platform channels
 class PlatformChannelService {
   static const MethodChannel _channel = MethodChannel(
     'com.codexahmar.urdu_keyboard/keyboard',
   );
 
   /// Opens Android keyboard settings
-  /// In production, this will call native Android method
   Future<bool> openKeyboardSettings() async {
     try {
       final bool result = await _channel.invokeMethod('openKeyboardSettings');
       return result;
     } catch (e) {
-      print('Error opening keyboard settings: $e');
-      // For now, return false as this is a stub
+      debugPrint('Error opening keyboard settings: $e');
       return false;
     }
   }
@@ -26,7 +24,7 @@ class PlatformChannelService {
       final bool result = await _channel.invokeMethod('isKeyboardEnabled');
       return result;
     } catch (e) {
-      print('Error checking keyboard status: $e');
+      debugPrint('Error checking keyboard status: $e');
       return false;
     }
   }
@@ -37,7 +35,7 @@ class PlatformChannelService {
       final bool result = await _channel.invokeMethod('isDefaultKeyboard');
       return result;
     } catch (e) {
-      print('Error checking default keyboard: $e');
+      debugPrint('Error checking default keyboard: $e');
       return false;
     }
   }
@@ -47,7 +45,7 @@ class PlatformChannelService {
     try {
       await _channel.invokeMethod('openInputMethodPicker');
     } catch (e) {
-      print('Error opening input method picker: $e');
+      debugPrint('Error opening input method picker: $e');
     }
   }
 
@@ -59,7 +57,7 @@ class PlatformChannelService {
       });
       return result;
     } catch (e) {
-      print('Error setting keyboard language: $e');
+      debugPrint('Error setting keyboard language: $e');
       return false;
     }
   }
@@ -70,7 +68,7 @@ class PlatformChannelService {
       final String? result = await _channel.invokeMethod('getSelectedLanguage');
       return result;
     } catch (e) {
-      print('Error getting selected language: $e');
+      debugPrint('Error getting selected language: $e');
       return null;
     }
   }
@@ -81,7 +79,7 @@ class PlatformChannelService {
       final bool result = await _channel.invokeMethod('requestPermissions');
       return result;
     } catch (e) {
-      print('Error requesting permissions: $e');
+      debugPrint('Error requesting permissions: $e');
       return false;
     }
   }

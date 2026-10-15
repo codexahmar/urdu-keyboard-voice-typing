@@ -1,115 +1,104 @@
 import 'package:flutter/material.dart';
+import '../services/platform_channel_service.dart';
 import '../services/preferences_service.dart';
-import '../core/constants/app_constants.dart';
 
-/// Global app state using ChangeNotifier
-/// Manages theme, language, text size, and other app-wide settings
+/// Clean state management provider for Urdu Smart Keyboard.
+/// Encapsulates all application state, preferences, and platform interactions.
 class AppState extends ChangeNotifier {
   final PreferencesService _prefsService = PreferencesService();
+  final PlatformChannelService _platformService = PlatformChannelService();
 
-  // Theme Mode
-  ThemeMode _themeMode = ThemeMode.system;
-  ThemeMode get themeMode => _themeMode;
-
-  // Text Size Scale
-  double _textSizeScale = 1.0;
-  double get textSizeScale => _textSizeScale;
-
-  // Selected Language
+  // Selected Language (Default: 'ur')
   String _selectedLanguage = 'ur';
   String get selectedLanguage => _selectedLanguage;
+
+  // Text Size Scale (Default: 1.0)
+  double _textSizeScale = 1.0;
+  double get textSizeScale => _textSizeScale;
 
   // Onboarding Status
   bool _onboardingComplete = false;
   bool get onboardingComplete => _onboardingComplete;
 
-  /// Initialize app state from preferences
+  // Keyboard Status
+  bool _isKeyboardEnabled = false;
+  bool get isKeyboardEnabled => _isKeyboardEnabled;
+
+  bool _isKeyboardActive = false;
+  bool get isKeyboardActive => _isKeyboardActive;
+
+  bool _isLoadingStatus = false;
+  bool get isLoadingStatus => _isLoadingStatus;
+
+  /// Initialize app state from preferences and check system status
   Future<void> init() async {
     await _prefsService.init();
 
     _onboardingComplete = _prefsService.isOnboardingComplete();
     _selectedLanguage = _prefsService.getSelectedLanguage();
-    final supportedCodes = AppConstants.supportedLanguages
-        .map((lang) => lang['code'] as String)
-        .toSet();
-    if (!supportedCodes.contains(_selectedLanguage)) {
-      _selectedLanguage = 'ur';
-      await _prefsService.setSelectedLanguage(_selectedLanguage);
-    }
     _textSizeScale = _prefsService.getTextSize();
 
-    final themeModeString = _prefsService.getThemeMode();
-    _themeMode = _getThemeModeFromString(themeModeString);
-
+    await checkKeyboardStatus();
     notifyListeners();
   }
 
-  /// Set theme mode
-  Future<void> setThemeMode(ThemeMode mode) async {
-    _themeMode = mode;
-    await _prefsService.setThemeMode(_getStringFromThemeMode(mode));
+  /// Change selected language and persist
+  Future<void> setSelectedLanguage(String languageCode) async {
+    if (_selectedLanguage == languageCode) return;
+    _selectedLanguage = languageCode;
     notifyListeners();
+    await _prefsService.setSelectedLanguage(languageCode);
+    await _platformService.setKeyboardLanguage(languageCode);
   }
 
-  /// Set text size scale
+  /// Adjust text size scale
   Future<void> setTextSizeScale(double scale) async {
     _textSizeScale = scale;
     await _prefsService.setTextSize(scale);
     notifyListeners();
   }
 
-  /// Set selected language
-  Future<void> setSelectedLanguage(String languageCode) async {
-    _selectedLanguage = languageCode;
-    await _prefsService.setSelectedLanguage(languageCode);
-    notifyListeners();
-  }
-
-  /// Mark onboarding as complete
+  /// Mark onboarding as completed
   Future<void> completeOnboarding() async {
     _onboardingComplete = true;
     await _prefsService.setOnboardingComplete(true);
     notifyListeners();
   }
 
-  /// Get language name from code
-  String getLanguageName(String code) {
-    final lang = AppConstants.supportedLanguages.firstWhere(
-      (l) => l['code'] == code,
-      orElse: () => {'name': 'Unknown'},
-    );
-    return lang['name'];
-  }
+  /// Check keyboard status from Android system
+  Future<void> checkKeyboardStatus() async {
+    _isLoadingStatus = true;
+    notifyListeners();
 
-  /// Get language native name from code
-  String getLanguageNativeName(String code) {
-    final lang = AppConstants.supportedLanguages.firstWhere(
-      (l) => l['code'] == code,
-      orElse: () => {'nativeName': 'Unknown'},
-    );
-    return lang['nativeName'];
-  }
-
-  // Helper methods
-  ThemeMode _getThemeModeFromString(String mode) {
-    switch (mode) {
-      case 'light':
-        return ThemeMode.light;
-      case 'dark':
-        return ThemeMode.dark;
-      default:
-        return ThemeMode.system;
+    try {
+      _isKeyboardEnabled = await _platformService.isKeyboardEnabled();
+      _isKeyboardActive = await _platformService.isDefaultKeyboard();
+    } catch (_) {
+      _isKeyboardEnabled = false;
+      _isKeyboardActive = false;
+    } finally {
+      _isLoadingStatus = false;
+      notifyListeners();
     }
   }
 
-  String _getStringFromThemeMode(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.light:
-        return 'light';
-      case ThemeMode.dark:
-        return 'dark';
-      default:
-        return 'system';
-    }
+  /// Launch Android keyboard settings
+  Future<void> openKeyboardSettings() async {
+    await _platformService.openKeyboardSettings();
+    await checkKeyboardStatus();
+  }
+
+  /// Open Android input method picker dialog
+  Future<void> openInputMethodPicker() async {
+    await _platformService.openInputMethodPicker();
+    await checkKeyboardStatus();
+  }
+
+  /// Helper for testing keyboard status states
+  @visibleForTesting
+  void setKeyboardStatusForTesting({required bool enabled, required bool active}) {
+    _isKeyboardEnabled = enabled;
+    _isKeyboardActive = active;
+    notifyListeners();
   }
 }
