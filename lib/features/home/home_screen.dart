@@ -1,290 +1,101 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../../core/constants/app_strings.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/widgets/action_card.dart';
+import '../../core/widgets/app_button.dart';
+import '../../core/widgets/app_permission_dialog.dart';
 import '../../state/app_state.dart';
-import '../../services/platform_channel_service.dart';
 
-/// Home screen - main dashboard of Urdu Smart Keyboard
-/// Upgraded to modern Material 3 architecture with enhanced animations and layouts
+/// Clean, production-grade Home screen for Urdu Smart Keyboard.
+/// Clear layout hierarchy:
+/// 1. Top Bar with title & prominent Settings button
+/// 2. Hero Keyboard Activation Status Card with direct 1-tap actions
+/// 3. Core Feature & Tool Cards (Voice Typing Guide, Keyboard Preview, Settings)
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  final PlatformChannelService _platformService = PlatformChannelService();
-  bool _hasCheckedOnThisLaunch = false;
-
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    // Initialize app state and check settings automatically on first launch
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkPermissionsAndKeyboard();
+      context.read<AppState>().checkKeyboardStatus();
+      _checkInitialPermissions();
     });
   }
 
-  Future<void> _checkPermissionsAndKeyboard() async {
-    if (_hasCheckedOnThisLaunch) return;
-    _hasCheckedOnThisLaunch = true;
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
-    // First, request microphone permission
-    await _requestMicrophonePermission();
-
-    // Small delay to ensure permission dialog is dismissed before showing keyboard dialog
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    // Then check keyboard status
-    if (mounted) {
-      await _checkAndOpenKeyboardSettings();
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<AppState>().checkKeyboardStatus();
     }
   }
 
-  Future<void> _requestMicrophonePermission() async {
+  Future<void> _checkInitialPermissions() async {
     final status = await Permission.microphone.status;
-
-    if (status.isDenied || status.isPermanentlyDenied) {
-      if (mounted) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-
-        final shouldRequest = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            title: Row(
-              children: [
-                Icon(
-                  Icons.mic_none_rounded,
-                  color: isDark ? AppColors.primaryLight : AppColors.primary,
-                  size: 28,
-                ),
-                const SizedBox(width: 12),
-                const Text('Microphone Permission'),
-              ],
-            ),
-            content: const Text(
-              'This keyboard uses voice typing feature. '
-              'Please grant microphone permission to use voice input.\n\n'
-              'You can enable it now or later from settings.',
-              style: TextStyle(height: 1.4, fontSize: 15),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(
-                  'Later',
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondary,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark
-                      ? AppColors.primaryLight
-                      : AppColors.primary,
-                  foregroundColor: isDark ? Colors.black : Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  minimumSize: const Size(100, 44),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Grant'),
-              ),
-            ],
-          ),
-        );
-
-        if (shouldRequest == true) {
-          final result = await Permission.microphone.request();
-          if (result.isPermanentlyDenied && mounted) {
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                title: const Text('Permission Required'),
-                content: const Text(
-                  'Microphone permission is permanently denied. '
-                  'Please enable it from app settings to use voice typing.',
-                  style: TextStyle(height: 1.4, fontSize: 15),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Cancel',
-                      style: TextStyle(
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      openAppSettings();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark
-                          ? AppColors.primaryLight
-                          : AppColors.primary,
-                      foregroundColor: isDark ? Colors.black : Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('Open Settings'),
-                  ),
-                ],
-              ),
-            );
-          }
-        }
-      }
-    }
-  }
-
-  Future<void> _checkAndOpenKeyboardSettings() async {
-    try {
-      final isEnabled = await _platformService.isKeyboardEnabled();
-
-      if (!isEnabled && mounted) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            title: Row(
-              children: [
-                Icon(
-                  Icons.keyboard_alt_outlined,
-                  color: isDark ? AppColors.primaryLight : AppColors.primary,
-                  size: 28,
-                ),
-                const SizedBox(width: 12),
-                const Text('Enable Keyboard'),
-              ],
-            ),
-            content: const Text(
-              'To use the Urdu Smart Keyboard, you need to enable it in your system settings.\n\n'
-              'Tap OK to open settings, then:\n'
-              '1. Find "Urdu Smart Keyboard"\n'
-              '2. Toggle it ON\n'
-              '3. Return to this app',
-              style: TextStyle(height: 1.4, fontSize: 15),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text(
-                  'Later',
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondary,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.pop(context);
-                  await _platformService.openKeyboardSettings();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark
-                      ? AppColors.primaryLight
-                      : AppColors.primary,
-                  foregroundColor: isDark ? Colors.black : Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Open Settings'),
-              ),
-            ],
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error checking keyboard status: $e');
-    }
-  }
-
-  /// Helper to get greeting message based on local time
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 5) {
-      return 'Good night';
-    } else if (hour < 12) {
-      return 'Good morning';
-    } else if (hour < 17) {
-      return 'Good afternoon';
-    } else {
-      return 'Good evening';
+    if (status.isDenied && mounted) {
+      final l10n = context.l10n;
+      await AppPermissionDialog.show(
+        context,
+        icon: Icons.mic_rounded,
+        title: l10n.permissionMicTitle,
+        description: l10n.permissionMicDesc,
+        allowText: l10n.permissionAllow,
+        cancelText: l10n.permissionNotNow,
+        onAllow: () async {
+          await Permission.microphone.request();
+        },
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Initialize app state
+    final l10n = context.l10n;
     final appState = context.watch<AppState>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isUrdu = appState.selectedLanguage == 'ur';
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          AppStrings.splashTitle,
-          style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
-          ),
+          l10n.homeWelcome,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isDark ? AppColors.surfaceVariantDark : Colors.white,
-              border: Border.all(
-                color: isDark ? AppColors.dividerDark : AppColors.divider,
-                width: 1,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Material(
+              color: AppColors.white,
+              shape: const CircleBorder(
+                side: BorderSide(color: AppColors.border, width: 1.2),
               ),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.settings_outlined, size: 22),
-              onPressed: () {
-                Navigator.pushNamed(context, AppConstants.settingsRoute);
-              },
-              tooltip: AppStrings.settings,
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => Navigator.pushNamed(context, AppConstants.settingsRoute),
+                child: const Padding(
+                  padding: EdgeInsets.all(9),
+                  child: Icon(
+                    Icons.settings_outlined,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -296,355 +107,324 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Welcome Header Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            _getGreeting(),
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  color: isDark
-                                      ? AppColors.textSecondaryDark
-                                      : AppColors.textSecondary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(
-                            Icons.wb_sunny_outlined,
-                            size: 16,
-                            color: Colors.amber,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'As-salamu alaykum',
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              color: isDark
-                                  ? AppColors.textPrimaryDark
-                                  : AppColors.textPrimary,
-                              letterSpacing: -0.5,
-                            ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Modernised Current Language Card (Premium Emerald or Royal Purple Gradient)
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isUrdu
-                        ? AppColors.primaryGradient
-                        : AppColors.urduGradient,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (isUrdu ? AppColors.primary : AppColors.urduAccent)
-                          .withOpacity(isDark ? 0.3 : 0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Stack(
-                    children: [
-                      // Abstract decor circles in gradient card
-                      Positioned(
-                        right: -20,
-                        bottom: -20,
-                        child: Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.06),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: -40,
-                        top: -40,
-                        child: Container(
-                          width: 150,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.04),
-                          ),
-                        ),
-                      ),
-
-                      Padding(
-                        padding: const EdgeInsets.all(22),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.16),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: const Icon(
-                                Icons.language_rounded,
-                                size: 30,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 18),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        'ACTIVE LANGUAGE',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w900,
-                                          color: Colors.white.withOpacity(0.72),
-                                          letterSpacing: 1.2,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.24),
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'ACTIVE',
-                                          style: TextStyle(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    appState.getLanguageNativeName(
-                                      appState.selectedLanguage,
-                                    ),
-                                    style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      letterSpacing: 0.2,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${appState.getLanguageName(appState.selectedLanguage)} Mode Enabled',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.white.withOpacity(0.85),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 28),
-
-              // Action Options Grid Header
+              // Subtitle greeting
               Text(
-                'Tweak & Learn',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimary,
+                l10n.homeSubtitle,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                  fontFamilyFallback: AppTheme.urduFontFallbacks,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 18),
 
-              // Redesigned Action Cards
-              ActionCard(
-                icon: Icons.translate,
-                title: AppStrings.selectLanguage,
-                subtitle: AppStrings.selectLanguageUrdu,
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppConstants.languageSelectionRoute,
-                  );
-                },
-                iconColor: isDark ? AppColors.primaryLight : AppColors.primary,
+              // Hero Keyboard Status Card
+              _buildHeroStatusCard(context, l10n, appState),
+              const SizedBox(height: 26),
+
+              // Section Title: Quick Tools & Features
+              Text(
+                l10n.settingsHelpSection,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                  letterSpacing: 0.3,
+                  fontFamilyFallback: AppTheme.urduFontFallbacks,
+                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
-              ActionCard(
-                icon: Icons.keyboard_alt_outlined,
-                title: AppStrings.keyboardPreview,
-                subtitle: AppStrings.keyboardPreviewUrdu,
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppConstants.keyboardPreviewRoute,
-                  );
-                },
-                iconColor: isDark
-                    ? AppColors.secondaryLight
-                    : AppColors.secondary,
-              ),
-              const SizedBox(height: 16),
-
+              // Card 1: Voice Typing Guide
               ActionCard(
                 icon: Icons.mic_rounded,
-                title: AppStrings.voiceTyping,
-                subtitle: AppStrings.voiceTypingUrdu,
+                title: l10n.homeCardVoiceTitle,
+                subtitle: l10n.homeCardVoiceSubtitle,
                 onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppConstants.voiceTypingGuideRoute,
-                  );
+                  Navigator.pushNamed(context, AppConstants.voiceTypingGuideRoute);
                 },
-                iconColor: isDark
-                    ? AppColors.urduAccentLight
-                    : AppColors.urduAccent,
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 12),
 
-              // Help & Onboarding Replay Section
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceVariantDark
-                      : const Color(0xFFEFF6FF), // soft light blue
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.dividerDark
-                        : const Color(0xFFBFDBFE),
-                    width: 1.5,
-                  ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.live_help_outlined,
-                        color: Colors.blue,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Need Help?',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16,
-                              color: isDark
-                                  ? Colors.blue.shade300
-                                  : Colors.blue.shade900,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Make sure "Urdu Smart Keyboard" is selected under your system Virtual Keyboard settings.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              height: 1.4,
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : Colors.blue.shade800,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              InkWell(
-                                onTap: () {
-                                  // Re-launch Keyboard settings directly from platform helper
-                                  _platformService.openKeyboardSettings();
-                                },
-                                child: Text(
-                                  'Manage Keyboards',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark
-                                        ? Colors.blue.shade300
-                                        : Colors.blue.shade900,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              InkWell(
-                                onTap: () {
-                                  // Safely open the system input method picker directly
-                                  _platformService.openInputMethodPicker();
-                                },
-                                child: Text(
-                                  'Switch Keyboard',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark
-                                        ? Colors.blue.shade300
-                                        : Colors.blue.shade900,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              // Card 2: Keyboard Layout Preview
+              ActionCard(
+                icon: Icons.keyboard_alt_rounded,
+                title: l10n.homeCardPreviewTitle,
+                subtitle: l10n.homeCardPreviewSubtitle,
+                onTap: () {
+                  Navigator.pushNamed(context, AppConstants.keyboardPreviewRoute);
+                },
               ),
+              const SizedBox(height: 12),
+
+              // Card 3: App Settings & Language
+              ActionCard(
+                icon: Icons.tune_rounded,
+                title: l10n.settingsTitle,
+                subtitle: appState.selectedLanguage == 'ur'
+                    ? 'اردو • سیٹنگز اور زبان تبدیل کریں'
+                    : 'English • Settings, Language & Help',
+                onTap: () {
+                  Navigator.pushNamed(context, AppConstants.settingsRoute);
+                },
+              ),
+              const SizedBox(height: 24),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildHeroStatusCard(
+    BuildContext context,
+    AppLocalizations l10n,
+    AppState appState,
+  ) {
+    final isEnabled = appState.isKeyboardEnabled;
+    final isActive = appState.isKeyboardActive;
+    final isReady = isEnabled && isActive;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border, width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A01411C),
+            blurRadius: 12,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with status indicator dot and clean badge
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isReady ? AppColors.primary : AppColors.warning,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        l10n.homeStatusTitle,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                          fontFamilyFallback: AppTheme.urduFontFallbacks,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isReady) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        l10n.active,
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                          fontFamilyFallback: AppTheme.urduFontFallbacks,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          if (isReady) ...[
+            // Refined, clean active status box
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF6FAF7),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE0EFE2)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE8F5E9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_rounded,
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.onboardingKeyboardAlreadyActive,
+                          style: const TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                            fontFamilyFallback: AppTheme.urduFontFallbacks,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.homeActiveHint,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            color: AppColors.textSecondary,
+                            height: 1.35,
+                            fontFamilyFallback: AppTheme.urduFontFallbacks,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () => appState.openInputMethodPicker(),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.swap_horiz_rounded,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      l10n.onboardingSelectKeyboard,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                        fontFamilyFallback: AppTheme.urduFontFallbacks,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ] else ...[
+            _buildStatusItem(
+              isPositive: isEnabled,
+              label: isEnabled ? l10n.homeStatusEnabled : l10n.homeStatusDisabled,
+            ),
+            const SizedBox(height: 10),
+            _buildStatusItem(
+              isPositive: isActive,
+              label: isActive ? l10n.homeStatusActive : l10n.homeStatusNotActive,
+            ),
+            const SizedBox(height: 18),
+
+            // Action Button
+            if (!isEnabled)
+              AppButton.primary(
+                label: l10n.homeActionEnable,
+                height: 48,
+                borderRadius: 14,
+                icon: Icons.tune_rounded,
+                onPressed: () => appState.openKeyboardSettings(),
+              )
+            else
+              AppButton.primary(
+                label: l10n.homeActionSelect,
+                height: 48,
+                borderRadius: 14,
+                icon: Icons.keyboard_alt_rounded,
+                onPressed: () => appState.openInputMethodPicker(),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusItem({required bool isPositive, required String label}) {
+    return Row(
+      children: [
+        Container(
+          width: 22,
+          height: 22,
+          decoration: BoxDecoration(
+            color: isPositive ? AppColors.primary : const Color(0xFF888888),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            isPositive ? Icons.check_rounded : Icons.info_outline_rounded,
+            color: AppColors.white,
+            size: 14,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: isPositive ? AppColors.textPrimary : AppColors.textSecondary,
+              fontFamilyFallback: AppTheme.urduFontFallbacks,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
