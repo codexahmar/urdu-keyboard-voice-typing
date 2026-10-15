@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
-/// Reusable card widget for home screen actions
-/// Redesigned with premium Material 3 specs, micro-borders, and sophisticated hover/touch effects
+/// Reusable card widget for home screen actions in Pakistan Green & White theme
 class ActionCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -11,104 +10,107 @@ class ActionCard extends StatelessWidget {
   final Color? iconColor;
 
   const ActionCard({
-    Key? key,
+    super.key,
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
     this.iconColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = iconColor ?? (isDark ? AppColors.primaryLight : AppColors.primary);
+    final activeIconColor = iconColor ?? AppColors.white;
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border, width: 1.2),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.15 : 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Color(0x0801411C),
+            blurRadius: 8,
+            offset: Offset(0, 2),
           ),
         ],
       ),
-      child: Card(
-        elevation: 0,
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: isDark ? AppColors.dividerDark : AppColors.divider,
-            width: 1.5,
-          ),
-        ),
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          splashColor: primaryColor.withOpacity(0.08),
-          highlightColor: primaryColor.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(18),
+          splashColor: AppColors.primary.withValues(alpha: 0.08),
+          highlightColor: AppColors.primary.withValues(alpha: 0.04),
           child: Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
               children: [
-                // Icon wrapper with modern M3 geometry
+                // Icon Container
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x2201411C),
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Icon(
                     icon,
-                    size: 28,
-                    color: primaryColor,
+                    color: activeIconColor,
+                    size: 22,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
 
-                // Text definitions
+                // Text Content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 17,
-                              letterSpacing: -0.2,
-                              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
-                            ),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                          fontFamilyFallback: [
+                            'Noto Nastaliq Urdu',
+                            'Jameel Noori Nastaleeq',
+                            'sans-serif',
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(
                         subtitle,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
-                              fontSize: 13,
-                              height: 1.3,
-                            ),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                          height: 1.3,
+                          fontFamilyFallback: [
+                            'Noto Nastaliq Urdu',
+                            'Jameel Noori Nastaleeq',
+                            'sans-serif',
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
 
-                // Styled modern trailing chevron
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isDark ? AppColors.surfaceVariantDark : AppColors.surfaceVariant,
-                  ),
-                  child: Icon(
-                    Icons.chevron_right_rounded,
-                    size: 18,
-                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
-                  ),
+                const SizedBox(width: 10),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: AppColors.textMuted,
                 ),
               ],
             ),

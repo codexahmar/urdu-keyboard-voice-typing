@@ -5,6 +5,7 @@ class AppConstants {
   static const String appVersion = '1.0.0';
   static const String appDescription =
       'A simple, ad-free keyboard app for Urdu typing';
+  static const String appIconPath = 'assets/icons/app_icon.png';
 
   // Onboarding
   static const int onboardingSteps = 4;
@@ -12,7 +13,6 @@ class AppConstants {
 
   // Preferences Keys
   static const String selectedLanguageKey = 'selected_language';
-  static const String themeKey = 'theme_mode';
   static const String textSizeKey = 'text_size_scale';
 
   // Platform Channel
@@ -44,4 +44,14 @@ class AppConstants {
   static const String keyboardPreviewRoute = '/keyboard-preview';
   static const String voiceTypingGuideRoute = '/voice-typing-guide';
   static const String settingsRoute = '/settings';
+
+  // External URLs
+  static const String privacyPolicyUrl =
+      'https://docs.google.com/document/d/1EOQTHyivwPlFxWqvdioVhfL58DyCEcJX1BSH9psDhN4/edit?usp=sharing';
+  static const String playStoreAppUrl =
+      'https://play.google.com/store/apps/details?id=com.codexahmar.urdu_keyboard';
+  static const String playStoreMarketUrl =
+      'market://details?id=com.codexahmar.urdu_keyboard';
+  static const String developerAppsUrl =
+      'https://play.google.com/store/apps/developer?id=Ahmarix+Labs';
 }
