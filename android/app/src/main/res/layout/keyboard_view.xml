@@ -123,10 +123,11 @@
         android:layout_marginBottom="3dp"
         android:orientation="horizontal">
 
-        <!-- Shift — icon button -->
+        <!-- Shift — icon button (1.5 keys wide, Gboard standard) -->
         <Button
             android:id="@+id/key_shift"
             style="@style/KeyboardButtonShift"
+            android:layout_weight="1.5"
             android:text=""
             android:drawableTop="@drawable/ic_shift"
             android:drawablePadding="0dp" />
@@ -142,12 +143,13 @@
         <Button
             android:id="@+id/key_backspace"
             style="@style/KeyboardButtonIcon"
+            android:layout_weight="1.5"
             android:text=""
             android:drawableTop="@drawable/ic_backspace"
             android:drawablePadding="0dp" />
     </LinearLayout>
 
-    <!-- ── ROW 4 (bottom): [123] [EN/اردو] [Space] [,] [.] [Mic] [↵] ── -->
+    <!-- ── ROW 4 (bottom): [?123] [EN] [,] [Space] [.] [Emoji] [↵] ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -159,7 +161,7 @@
         <Button
             android:id="@+id/key_symbols"
             style="@style/KeyboardButtonBottomSmall"
-            android:text="123" />
+            android:text="\?123" />
 
         <Button
             android:id="@+id/key_language"
@@ -169,7 +171,7 @@
         <Button
             android:id="@+id/key_comma"
             style="@style/KeyboardButtonFunctional"
-            android:layout_weight="0.68"
+            android:layout_weight="0.8"
             android:text="," />
 
         <Button
@@ -180,7 +182,7 @@
         <Button
             android:id="@+id/key_dot"
             style="@style/KeyboardButtonFunctional"
-            android:layout_weight="0.68"
+            android:layout_weight="0.8"
             android:text="." />
 
         <Button
@@ -193,7 +195,6 @@
         <Button
             android:id="@+id/key_enter"
             style="@style/KeyboardButtonEnter"
-            android:layout_weight="0.9"
             android:text=""
             android:drawableTop="@drawable/ic_enter"
             android:drawablePadding="0dp" />

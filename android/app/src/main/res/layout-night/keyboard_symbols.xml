@@ -102,7 +102,7 @@
         <Button android:id="@+id/sym_key_colon"       style="@style/KeyboardButton" android:text=":" />
         <Button android:id="@+id/sym_key_semicolon"   style="@style/KeyboardButton" android:text=";" />
         <Button android:id="@+id/sym_key_exclamation" style="@style/KeyboardButton" android:text="!" />
-        <Button android:id="@+id/sym_key_question"    style="@style/KeyboardButton" android:text="?" />
+        <Button android:id="@+id/sym_key_question"    style="@style/KeyboardButton" android:text="\?" />
         <Button android:id="@+id/sym_key_comma"       style="@style/KeyboardButton" android:text="," />
         <Button android:id="@+id/sym_key_dot"         style="@style/KeyboardButton" android:text="." />
         <Button android:id="@+id/sym_backspace" style="@style/KeyboardButtonIcon" android:text="" android:drawableTop="@drawable/ic_backspace_dark" android:drawablePadding="0dp" />
@@ -116,9 +116,9 @@
         android:orientation="horizontal">
         <Button android:id="@+id/sym_key_abc" style="@style/KeyboardButtonBottomSmall" android:text="ABC" />
         <Button android:id="@+id/sym_key_language" style="@style/KeyboardButtonLanguage" android:text="EN" />
-        <Button android:id="@+id/sym_key_emoji" style="@style/KeyboardButtonIcon" android:text="" android:drawableTop="@drawable/ic_emoji_dark" android:drawablePadding="0dp" />
-        <Button android:id="@+id/sym_key_space" style="@style/KeyboardButtonSpace" android:text="Space" />
-        <Button android:id="@+id/sym_key_enter" style="@style/KeyboardButtonEnter" android:layout_weight="1.2" android:text="" android:drawableTop="@drawable/ic_enter" android:drawablePadding="0dp" />
+        <Button android:id="@+id/sym_key_emoji" style="@style/KeyboardButtonIcon" android:layout_weight="1.0" android:text="" android:drawableTop="@drawable/ic_emoji_dark" android:drawablePadding="0dp" />
+        <Button android:id="@+id/sym_key_space" style="@style/KeyboardButtonSpace" android:layout_weight="5.4" android:text="Space" />
+        <Button android:id="@+id/sym_key_enter" style="@style/KeyboardButtonEnter" android:text="" android:drawableTop="@drawable/ic_enter" android:drawablePadding="0dp" />
     </LinearLayout>
 
 </LinearLayout>

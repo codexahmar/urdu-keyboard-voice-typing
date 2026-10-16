@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
+import android.util.TypedValue
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -192,6 +193,10 @@ class KeyboardController(
             keyboardView = cachedView
             if (isEmojiMode) {
                 setupEmojiKeyboardButtons()
+            } else if (isSymbolMode) {
+                setupSymbolButtons()
+                setupCommonButtons()
+                setupSuggestionButtons()
             } else {
                 setupSuggestionButtons()
             }
@@ -456,23 +461,62 @@ class KeyboardController(
     }
 
     private fun setupSymbolButtons() {
-        // Number row: controller iterates sym_key_0 .. sym_key_9
+        val urduDigits = listOf("۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹")
+
+        // Number row: sym_key_0 .. sym_key_9 (sym_key_1..9, 0)
         for (i in 0..9) {
             val id = context.resources.getIdentifier("sym_key_$i", "id", context.packageName)
-            val symbol = i.toString()
-            setFastTapListener(keyboardView.findViewById(id)) { commitText(symbol) }
+            val btn = keyboardView.findViewById<Button?>(id) ?: continue
+            val symbol = if (isUrduKeyboardLayout) urduDigits[i] else i.toString()
+            btn.text = symbol
+            if (isUrduKeyboardLayout) {
+                btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
+            } else {
+                btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
+            }
+            setFastTapListener(btn) { commitText(symbol) }
         }
 
+        // Language-adaptive punctuation
+        val punctuationMap = if (isUrduKeyboardLayout) {
+            mapOf(
+                "sym_key_question" to "؟",
+                "sym_key_comma" to "،",
+                "sym_key_dot" to "۔",
+                "sym_key_semicolon" to "؛",
+                "sym_key_percent" to "٪"
+            )
+        } else {
+            mapOf(
+                "sym_key_question" to "?",
+                "sym_key_comma" to ",",
+                "sym_key_dot" to ".",
+                "sym_key_semicolon" to ";",
+                "sym_key_percent" to "%"
+            )
+        }
+
+        punctuationMap.forEach { (idName, symbol) ->
+            val id = context.resources.getIdentifier(idName, "id", context.packageName)
+            val btn = keyboardView.findViewById<Button?>(id) ?: return@forEach
+            btn.text = symbol
+            if (isUrduKeyboardLayout) {
+                btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
+            } else {
+                btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
+            }
+            setFastTapListener(btn) { commitText(symbol) }
+        }
+
+        // Standard symbols common across languages
         mapOf(
             "sym_key_at" to "@", "sym_key_hash" to "#", "sym_key_dollar" to "$",
-            "sym_key_percent" to "%", "sym_key_amp" to "&", "sym_key_star" to "*",
+            "sym_key_amp" to "&", "sym_key_star" to "*",
             "sym_key_minus" to "-", "sym_key_plus" to "+",
             "sym_key_lparen" to "(", "sym_key_rparen" to ")",
             "sym_key_slash" to "/", "sym_key_quote" to "\"",
             "sym_key_apostrophe" to "'", "sym_key_colon" to ":",
-            "sym_key_semicolon" to ";", "sym_key_exclamation" to "!",
-            "sym_key_question" to "?", "sym_key_comma" to ",",
-            "sym_key_dot" to ".", "sym_key_equal" to "=",
+            "sym_key_exclamation" to "!", "sym_key_equal" to "=",
             "sym_key_lbracket" to "[", "sym_key_rbracket" to "]",
             "sym_key_lbrace" to "{", "sym_key_rbrace" to "}",
             "sym_key_backslash" to "\\", "sym_key_less" to "<",
@@ -481,8 +525,14 @@ class KeyboardController(
         ).forEach { (idName, symbol) ->
             val id = context.resources.getIdentifier(idName, "id", context.packageName)
             val btn = keyboardView.findViewById<Button?>(id) ?: return@forEach
+            btn.text = symbol
+            btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
             setFastTapListener(btn) { commitText(symbol) }
         }
+
+        // Return key to letter mode: "اردو" for Urdu, "ABC" for English
+        val abcBtn = keyboardView.findViewById<Button?>(R.id.sym_key_abc)
+        abcBtn?.text = if (isUrduKeyboardLayout) "اردو" else "ABC"
     }
 
     private fun setupCommonButtons() {
@@ -804,6 +854,7 @@ class KeyboardController(
         if (isSymbolMode) isSymbolMode = false
         if (isEmojiMode) isEmojiMode = false
         isUrduShifted = false
+        symbolsView = null
 
         val needsRebuild = wasSymbol || wasEmoji || wasUrdu != isUrduKeyboardLayout
         if (needsRebuild) {
@@ -838,19 +889,15 @@ class KeyboardController(
     }
 
     private fun updateKeyboardLayout() {
-        val currentLang = languageManager.getCurrentLanguage()
-        val langText = "Space"
-        val langShortText = when (currentLang) {
-            "ur" -> "اردو"
-            else -> "EN"
-        }
+        val spaceText = if (isUrduKeyboardLayout) "اردو" else "English"
+        val langShortText = if (isUrduKeyboardLayout) "اردو" else "EN"
 
         val spaceButtonId = when {
             isSymbolMode -> R.id.sym_key_space
             isUrduKeyboardLayout -> R.id.urdu_key_space
             else -> R.id.key_space
         }
-        keyboardView.findViewById<Button>(spaceButtonId)?.text = langText
+        keyboardView.findViewById<Button>(spaceButtonId)?.text = spaceText
 
         val languageButtonId = when {
             isSymbolMode -> R.id.sym_key_language
@@ -858,6 +905,10 @@ class KeyboardController(
             else -> R.id.key_language
         }
         keyboardView.findViewById<Button>(languageButtonId)?.text = langShortText
+
+        if (isSymbolMode) {
+            keyboardView.findViewById<Button>(R.id.sym_key_abc)?.text = if (isUrduKeyboardLayout) "اردو" else "ABC"
+        }
     }
 
     private fun onSpaceLongPressed(view: View) {
