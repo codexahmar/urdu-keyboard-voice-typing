@@ -74,10 +74,11 @@ class KeyboardController(
     private var lastKnownBottomInsetPx = 0
 
     private var isEmojiMode = false
+    private var isUrduShifted = false
     private var emojiView: View? = null
     private var spaceLongPressRunnable: Runnable? = null
     private var lastFeedbackUptimeMs = 0L
-    // Debounce runnable for suggestion updates — prevents flooding coroutines on fast typing
+    // Debounce runnable for suggestion updates — ultra-fast 25ms response
     private var suggestionDebounceRunnable: Runnable? = null
 
     private enum class ShiftState {
@@ -95,27 +96,79 @@ class KeyboardController(
         private const val ANIM_DURATION_MS = 20L   // 20 ms single-phase flash
         private const val SPACE_SWIPE_SWITCH_THRESHOLD_DP = 24
         private const val FEEDBACK_THROTTLE_MS = 20L  // tighter throttle for fast typists
-        // How long to wait after the last keypress before querying suggestions
-        private const val SUGGESTION_DEBOUNCE_MS = 120L
+        // Rapid 25 ms debounce for instantaneous suggestion updates without lag
+        private const val SUGGESTION_DEBOUNCE_MS = 25L
     }
 
     /**
-     * Urdu letters — 38 unique characters mapped to urdu_key_1 … urdu_key_38.
+     * Complete Urdu Alphabets & Secondary Layers
      *
-     * Row 1  (keys 1–10):  ض ص ث ق ف غ ع ہ خ ح
-     * Row 2  (keys 11–20): ج چ ظ ط ز ر ذ د ڈ ب
-     * Row 3  (keys 21–30): پ ت ٹ ش س ک گ ل م ن
-     * Row 4  (keys 31–38): و ے ی ئ ؤ ا آ ژ
+     * Base Layer (38 keys):
+     * Row 1 (keys 1–10):  ض ص ث ق ف غ ع ہ خ ح
+     * Row 2 (keys 11–20): ج چ ظ ط ز ر ڑ د ڈ ب  (includes ڑ)
+     * Row 3 (keys 21–30): پ ت ٹ ش س ک گ ل م ن
+     * Row 4 (keys 31–38): و ے ی ں ھ ا آ ء     (includes ں, ھ, ء)
      */
-    private val urduLetters = arrayOf(
+    private val urduBaseLetters = arrayOf(
         // Row 1
         "ض", "ص", "ث", "ق", "ف", "غ", "ع", "ہ", "خ", "ح",
         // Row 2
-        "ج", "چ", "ظ", "ط", "ز", "ر", "ذ", "د", "ڈ", "ب",
+        "ج", "چ", "ظ", "ط", "ز", "ر", "ڑ", "د", "ڈ", "ب",
         // Row 3
         "پ", "ت", "ٹ", "ش", "س", "ک", "گ", "ل", "م", "ن",
         // Row 4
-        "و", "ے", "ی", "ئ", "ؤ", "ا", "آ", "ژ"
+        "و", "ے", "ی", "ں", "ھ", "ا", "آ", "ء"
+    )
+
+    /**
+     * Shift Layer (38 keys):
+     * Row 1: Diacritics / Aeraab (َ ِ ُ ً ٍ ٌ ّ ْ ٰ ٖ)
+     * Row 2: Secondary characters & honorifics (ذ ژ ئ ؤ ۂ ﷲ ﷺ ﷽ ؑ ؒ)
+     * Row 3: Punctuation & symbols (؛ ؟ ٪ « » ؓ ۖ ۗ ۘ ؞)
+     * Row 4: Urdu numerals (۰ ۱ ۲ ۳ ۴ ۵ ۶ ۷)
+     */
+    private val urduShiftLetters = arrayOf(
+        // Row 1 (Aeraab / Vowels)
+        "َ", "ِ", "ُ", "ً", "ٍ", "ٌ", "ّ", "ْ", "ٰ", "ٖ",
+        // Row 2 (Secondary Letters & Honorifics)
+        "ذ", "ژ", "ئ", "ؤ", "ۂ", "ﷲ", "ﷺ", "﷽", "ؑ", "ؒ",
+        // Row 3 (Urdu Punctuation & Quranic Signs)
+        "؛", "؟", "٪", "«", "»", "ؓ", "ۖ", "ۗ", "ۘ", "؞",
+        // Row 4 (Urdu Numerals)
+        "۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷"
+    )
+
+    /**
+     * Long-press alternate letter mappings for seamless fluid typing without switching layers.
+     */
+    private val urduLongPressAlternates = mapOf(
+        "ر" to "ڑ",
+        "ڑ" to "ر",
+        "ن" to "ں",
+        "ں" to "ن",
+        "ہ" to "ھ",
+        "ھ" to "ہ",
+        "ا" to "آ",
+        "آ" to "ا",
+        "و" to "ؤ",
+        "ؤ" to "و",
+        "ی" to "ئ",
+        "ئ" to "ی",
+        "ے" to "ۓ",
+        "ت" to "ٹ",
+        "ٹ" to "ت",
+        "د" to "ڈ",
+        "ڈ" to "د",
+        "ز" to "ژ",
+        "ژ" to "ز",
+        "ء" to "ئ",
+        "ح" to "خ",
+        "س" to "ش",
+        "ص" to "ض",
+        "ط" to "ظ",
+        "ع" to "غ",
+        "ک" to "گ",
+        "ب" to "پ"
     )
 
     init {
@@ -174,7 +227,7 @@ class KeyboardController(
             backspaceHandler = BackspaceHandler(
                 context = context,
                 getInputConnection = { currentInputConnection },
-                onDelete = { handleBackspaceAction() }
+                onDelete = { count -> handleBackspaceAction(count) }
             )
         }
 
@@ -315,18 +368,56 @@ class KeyboardController(
 
     private fun setupUrduKeyboardButtons() {
         urduButtonsMap.clear()
-        urduLetters.forEachIndexed { index, letter ->
+        for (index in 0 until 38) {
             val id = context.resources.getIdentifier(
                 "urdu_key_${index + 1}", "id", context.packageName
             )
-            val btn = keyboardView.findViewById<Button>(id)
-            if (btn != null) {
-                urduButtonsMap[letter] = btn
-                setFastTapListener(btn) { onUrduKeyPressed(letter) }
+            val btn = keyboardView.findViewById<Button>(id) ?: continue
+            val baseLetter = urduBaseLetters[index]
+            urduButtonsMap[baseLetter] = btn
+            setUrduKeyListener(btn, index)
+        }
+        setupPunctuationButtons()
+        refreshUrduKeyLabels()
+    }
+
+    private fun setUrduKeyListener(button: Button, index: Int) {
+        var longPressRunnable: Runnable? = null
+        var isLongPressed = false
+
+        button.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    applyTapFeedback(view)
+                    isLongPressed = false
+                    val currentLetter = if (isUrduShifted) urduShiftLetters[index] else urduBaseLetters[index]
+                    val alternate = urduLongPressAlternates[currentLetter]
+                    if (alternate != null) {
+                        longPressRunnable = Runnable {
+                            isLongPressed = true
+                            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                            onUrduKeyPressed(alternate)
+                        }
+                        mainHandler.postDelayed(longPressRunnable!!, ViewConfiguration.getLongPressTimeout().toLong())
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    longPressRunnable?.let(mainHandler::removeCallbacks)
+                    if (!isLongPressed) {
+                        val currentLetter = if (isUrduShifted) urduShiftLetters[index] else urduBaseLetters[index]
+                        onUrduKeyPressed(currentLetter)
+                    }
+                    view.performClick()
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    longPressRunnable?.let(mainHandler::removeCallbacks)
+                    true
+                }
+                else -> false
             }
         }
-        // Wire ،  and  ۔ and any other punctuation present in the Urdu layout
-        setupPunctuationButtons()
     }
 
     private fun setupPunctuationButtons() {
@@ -449,9 +540,10 @@ class KeyboardController(
         val toggleId = context.resources.getIdentifier(toggleIdName, "id", context.packageName)
         keyboardView.findViewById<Button>(toggleId)?.setOnClickListener { onSymbolsModeToggle() }
 
-        // Shift (English only)
-        if (!isSymbolMode && !isUrduKeyboardLayout) {
-            val shiftId = context.resources.getIdentifier("key_shift", "id", context.packageName)
+        // Shift (Urdu & English)
+        if (!isSymbolMode) {
+            val shiftIdName = if (isUrduKeyboardLayout) "urdu_key_shift" else "key_shift"
+            val shiftId = context.resources.getIdentifier(shiftIdName, "id", context.packageName)
             keyboardView.findViewById<Button>(shiftId)?.setOnClickListener { onShiftPressed() }
         }
     }
@@ -590,6 +682,10 @@ class KeyboardController(
         currentInputConnection?.setComposingText(composingText.toString(), 1)
         updateSuggestions()
         isAutoCapNext = false
+        if (isUrduShifted) {
+            isUrduShifted = false
+            refreshUrduKeyLabels()
+        }
     }
 
     private fun onPunctuationPressed(symbol: String) {
@@ -621,7 +717,11 @@ class KeyboardController(
     }
 
     private fun onShiftPressed() {
-        if (isUrduKeyboardLayout) return
+        if (isUrduKeyboardLayout) {
+            isUrduShifted = !isUrduShifted
+            refreshUrduKeyLabels()
+            return
+        }
 
         if (shiftState == ShiftState.CAPS_LOCK) {
             shiftState = ShiftState.OFF
@@ -644,6 +744,22 @@ class KeyboardController(
     }
 
     private fun shouldUseUppercase() = shiftState != ShiftState.OFF || isAutoCapNext
+
+    /**
+     * Refresh Urdu key labels when shift state changes.
+     */
+    private fun refreshUrduKeyLabels() {
+        if (!isUrduKeyboardLayout) return
+        val letters = if (isUrduShifted) urduShiftLetters else urduBaseLetters
+        for (i in 0 until 38) {
+            val id = context.resources.getIdentifier("urdu_key_${i + 1}", "id", context.packageName)
+            val btn = keyboardView.findViewById<Button>(id) ?: continue
+            btn.text = letters[i]
+        }
+        val shiftButton = keyboardView.findViewById<Button>(R.id.urdu_key_shift)
+        shiftButton?.isSelected = isUrduShifted
+        shiftButton?.alpha = if (isUrduShifted) 0.6f else 1.0f
+    }
 
     /**
      * Refresh English key labels AND shift icon drawable when shift state changes.
@@ -687,6 +803,7 @@ class KeyboardController(
         isUrduKeyboardLayout = (newLang == "ur")
         if (isSymbolMode) isSymbolMode = false
         if (isEmojiMode) isEmojiMode = false
+        isUrduShifted = false
 
         val needsRebuild = wasSymbol || wasEmoji || wasUrdu != isUrduKeyboardLayout
         if (needsRebuild) {
@@ -791,9 +908,10 @@ class KeyboardController(
         suggestionRightBtn?.text = ""
     }
 
-    fun handleBackspaceAction(): Boolean {
+    fun handleBackspaceAction(count: Int = 1): Boolean {
         if (composingText.isNotEmpty()) {
-            composingText.deleteCharAt(composingText.length - 1)
+            val toDelete = minOf(count, composingText.length)
+            composingText.delete(composingText.length - toDelete, composingText.length)
             if (composingText.isEmpty()) {
                 clearComposingState()
             } else {

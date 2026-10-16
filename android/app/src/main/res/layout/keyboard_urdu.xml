@@ -103,7 +103,7 @@
         <Button android:id="@+id/urdu_key_14" style="@style/KeyboardButton" android:text="ط" />
         <Button android:id="@+id/urdu_key_15" style="@style/KeyboardButton" android:text="ز" />
         <Button android:id="@+id/urdu_key_16" style="@style/KeyboardButton" android:text="ر" />
-        <Button android:id="@+id/urdu_key_17" style="@style/KeyboardButton" android:text="ذ" />
+        <Button android:id="@+id/urdu_key_17" style="@style/KeyboardButton" android:text="ڑ" />
         <Button android:id="@+id/urdu_key_18" style="@style/KeyboardButton" android:text="د" />
         <Button android:id="@+id/urdu_key_19" style="@style/KeyboardButton" android:text="ڈ" />
         <Button android:id="@+id/urdu_key_20" style="@style/KeyboardButton" android:text="ب" />
@@ -127,7 +127,7 @@
         <Button android:id="@+id/urdu_key_30" style="@style/KeyboardButton" android:text="ن" />
     </LinearLayout>
 
-    <!-- ── ROW 4 : [⇧] و ے ی ئ ؤ ا آ ژ [⌫] ──────────────────────── -->
+    <!-- ── ROW 4 : [⇧] و ے ی ں ھ ا آ ء [⌫] ──────────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -146,11 +146,11 @@
         <Button android:id="@+id/urdu_key_31" style="@style/KeyboardButton" android:text="و" />
         <Button android:id="@+id/urdu_key_32" style="@style/KeyboardButton" android:text="ے" />
         <Button android:id="@+id/urdu_key_33" style="@style/KeyboardButton" android:text="ی" />
-        <Button android:id="@+id/urdu_key_34" style="@style/KeyboardButton" android:text="ئ" />
-        <Button android:id="@+id/urdu_key_35" style="@style/KeyboardButton" android:text="ؤ" />
+        <Button android:id="@+id/urdu_key_34" style="@style/KeyboardButton" android:text="ں" />
+        <Button android:id="@+id/urdu_key_35" style="@style/KeyboardButton" android:text="ھ" />
         <Button android:id="@+id/urdu_key_36" style="@style/KeyboardButton" android:text="ا" />
         <Button android:id="@+id/urdu_key_37" style="@style/KeyboardButton" android:text="آ" />
-        <Button android:id="@+id/urdu_key_38" style="@style/KeyboardButton" android:text="ژ" />
+        <Button android:id="@+id/urdu_key_38" style="@style/KeyboardButton" android:text="ء" />
 
         <Button
             android:id="@+id/urdu_backspace"
