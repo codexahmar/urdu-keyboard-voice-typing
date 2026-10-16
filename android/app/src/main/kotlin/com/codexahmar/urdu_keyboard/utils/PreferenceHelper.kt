@@ -69,20 +69,6 @@ class PreferenceHelper(context: Context) {
         prefs.edit().clear().apply()
     }
 
-    /**
-     * Get list of recently used emojis
-     */
-    fun getRecentEmojis(): List<String>? {
-        val raw = prefs.getString("recent_emojis", null) ?: return null
-        return raw.split(",")
-    }
-
-    /**
-     * Save list of recently used emojis
-     */
-    fun saveRecentEmojis(emojis: List<String>) {
-        prefs.edit().putString("recent_emojis", emojis.joinToString(",")).apply()
-    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Word frequency tracking — powers Gboard-style learned suggestions

@@ -1,104 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Emoji Keyboard — dark mode -->
+<!-- Emoji Keyboard — dark mode using native AndroidX Jetpack EmojiPickerView -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/kb_bg_dark"
     android:orientation="vertical"
-    android:paddingTop="4dp"
+    android:paddingTop="2dp"
     android:layoutDirection="ltr">
 
-    <!-- Category Selector Tabs -->
-    <HorizontalScrollView
+    <!-- Native EmojiPickerView from androidx.emoji2:emoji2-emojipicker library -->
+    <androidx.emoji2.emojipicker.EmojiPickerView
+        android:id="@+id/emoji_picker_view"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:scrollbars="none"
-        android:background="#1AFFFFFF"
-        android:fillViewport="true">
+        android:layout_height="216dp"
+        app:emojiGridColumns="8" />
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp">
-
-            <Button
-                android:id="@+id/emoji_tab_recents"
-                style="@style/SuggestionButton"
-                android:layout_width="48dp"
-                android:text="🕒" />
-
-            <Button
-                android:id="@+id/emoji_tab_smileys"
-                style="@style/SuggestionButton"
-                android:layout_width="48dp"
-                android:text="😀" />
-
-            <Button
-                android:id="@+id/emoji_tab_people"
-                style="@style/SuggestionButton"
-                android:layout_width="48dp"
-                android:text="👋" />
-
-            <Button
-                android:id="@+id/emoji_tab_animals"
-                style="@style/SuggestionButton"
-                android:layout_width="48dp"
-                android:text="🐶" />
-
-            <Button
-                android:id="@+id/emoji_tab_food"
-                style="@style/SuggestionButton"
-                android:layout_width="48dp"
-                android:text="🍏" />
-
-            <Button
-                android:id="@+id/emoji_tab_travel"
-                style="@style/SuggestionButton"
-                android:layout_width="48dp"
-                android:text="🚗" />
-
-            <Button
-                android:id="@+id/emoji_tab_activities"
-                style="@style/SuggestionButton"
-                android:layout_width="48dp"
-                android:text="⚽" />
-
-            <Button
-                android:id="@+id/emoji_tab_objects"
-                style="@style/SuggestionButton"
-                android:layout_width="48dp"
-                android:text="⌚" />
-
-            <Button
-                android:id="@+id/emoji_tab_symbols"
-                style="@style/SuggestionButton"
-                android:layout_width="48dp"
-                android:text="❤️" />
-
-            <Button
-                android:id="@+id/emoji_tab_flags"
-                style="@style/SuggestionButton"
-                android:layout_width="48dp"
-                android:text="🏁" />
-        </LinearLayout>
-    </HorizontalScrollView>
-
-    <!-- Grid of Emojis -->
-    <GridView
-        android:id="@+id/emoji_grid"
-        android:layout_width="match_parent"
-        android:layout_height="160dp"
-        android:numColumns="8"
-        android:gravity="center"
-        android:horizontalSpacing="8dp"
-        android:verticalSpacing="12dp"
-        android:padding="8dp"
-        android:scrollbars="vertical" />
-
-    <!-- Bottom Actions Bar — Gboard-style: ABC | Space | ⌫ -->
+    <!-- Bottom Actions Bar: ABC | Space | ⌫ -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"

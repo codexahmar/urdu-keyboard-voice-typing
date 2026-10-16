@@ -59,4 +59,6 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     // Material Components — ensures ripple drawables, elevation rendering
     implementation("com.google.android.material:material:1.12.0")
+    // Native Emoji Picker Library from AndroidX Jetpack
+    implementation("androidx.emoji2:emoji2-emojipicker:1.5.0")
 }

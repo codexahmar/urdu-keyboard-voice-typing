@@ -16,6 +16,7 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.emoji2.emojipicker.EmojiPickerView
 import com.codexahmar.urdu_keyboard.R
 import com.codexahmar.urdu_keyboard.utils.PreferenceHelper
 import kotlin.math.max
@@ -74,71 +75,6 @@ class KeyboardController(
 
     private var isEmojiMode = false
     private var emojiView: View? = null
-    private var currentEmojiCategory = EmojiCategory.SMILEYS
-    private val recentEmojis = mutableListOf<String>()
-
-    private enum class EmojiCategory {
-        RECENTS, SMILEYS, PEOPLE, ANIMALS, FOOD, TRAVEL, ACTIVITIES, OBJECTS, SYMBOLS, FLAGS
-    }
-
-    private val smileysEmojis = listOf(
-        "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰",
-        "😘", "😗", "😙", "😚", "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🥸", "🥳", "😏",
-        "😒", "😞", "😔", "😟", "😕", "🙁", "☹️", "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠",
-        "😡", "🤬", "🤯", "😳", "🥵", "🥶", "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🫣", "🤭", "🫢",
-        "🫡", "🤫", "🫠", "🤥", "😶", "😐", "😑", "😬", "🫨", "😯", "😦", "😧", "😮", "😲", "🥱", "😴",
-        "🤤", "😪", "😵", "😵‍💫", "🤐", "🥴", "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤠", "😈", "👿"
-    )
-
-    private val peopleEmojis = listOf(
-        "👋", "🤚", "🖐️", "✋", "🖖", "👌", "🤌", "🤏", "✌️", "🤞", "🫰", "🤟", "🤘", "🤙", "👈", "👉",
-        "👆", "🖕", "👇", "☝️", "👍", "👎", "✊", "👊", "🤛", "🤜", "👏", "🙌", "👐", "🤲", "🤝", "🙏",
-        "✍️", "💅", "🤳", "💪", "🦾", "🦿", "🦵", "🦶", "👂", "🦻", "👃", "🧠", "🫀", "🫁", "🦷", "🦴",
-        "👀", "👁️", "👅", "👄", "💋", "🩸", "👶", "👧", "🧒", "👦", "👩", "🧑", "👨"
-    )
-
-    private val animalsEmojis = listOf(
-        "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐽", "🐸", "🐵",
-        "🙈", "🙉", "🙊", "🐒", "🐔", "🐧", "🐦", "🐤", "🐣", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴",
-        "🦄", "🐝", "🪱", "🐛", "🦋", "🐌", "🐞", "🐜", "🪰", "🪲", "🪳", "🦟", "🦗", "🕷️", "🕸️", "🦂",
-        "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳", "🐋", "🦈"
-    )
-
-    private val foodEmojis = listOf(
-        "🍏", "🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🫐", "🍒", "🍑", "🥭", "🍍", "🥥", "🥝",
-        "🍅", "🍆", "🌶️", "🫑", "🌽", "🥕", "🍠", "🥐", "🍞", "🥖", "🥨", "🥯", "🥞", "🧇", "🧀", "🍖",
-        "🍗", "🥩", "🥓", "🍔", "🍟", "🍕", "🌭", "🥪", "🌮", "burrito", "🍳", "🍲", "popcorn", "🍚", "🍛", "🍣",
-        "🍪", "🎂", "🍰", "🧁", "🍫", "🍬", "🍭", "🍩", "🍧", "🍨", "🍦", "🧉", "☕", "🍵", "🥤", "🧃"
-    )
-
-    private val travelEmojis = listOf(
-        "🚗", "🚕", "🚙", "🚌", "🚎", "🏎️", "🚓", "🚑", "🚒", "🚐", "🛻", "🚚", "🚛", "🚜", "🛵", "🚲",
-        "🛴", "🚏", "🛣️", "🛤️", "🚨", "✈️", "🛫", "🛬", "🛸", "🚁", "🚀", "🛰️", "⛵", "🛥️", "🛳️", "⛴️",
-        "🚢", "⚓", "🛟", "🌋", "🗻", "🏔️", "🏕️", "🏖️", "🏜️", "🏝️", "🏞️", "🏟️", "🏛️", "🏗️", "🧱", "🏠"
-    )
-
-    private val activitiesEmojis = listOf(
-        "⚽", "🏀", "🏈", "⚾", "🥎", "🎾", "🏐", "🏉", "🥏", "🎱", "🪀", "🏓", "🏸", "🏒", "🏑", "🥍",
-        "🏏", "🪃", "🥅", "⛳", "🪁", "🏹", "🎣", "🤿", "🥊", "🥋", "🎽", "🛹", "🛼", "🛷", "⛸️", "🥌",
-        "🎿", "⛷️", "🏂", "🏋️", "🤼", "🤸", "⛹️", "🤺", "🤾", "🏌️", "🏇", "🧘", "🏄", "🏊", "🤽", "🚣"
-    )
-
-    private val objectsEmojis = listOf(
-        "⌚", "📱", "📲", "💻", "⌨️", "🖱️", "🖲️", "🖥️", "🖨️", "📷", "📸", "📹", "🎥", "📽️", "🎞️", "📞",
-        "☎️", "📟", "📠", "📺", "📻", "🎙️", "🎚️", "🎛️", "🧭", "⏱️", "⏲️", "⏰", "⏳", "💡", "🔦", "🕯️",
-        "🏮", "🪔", "📔", "📕", "📖", "📗", "📘", "📙", "📚", "📓", "📒", "📝", "✉️", "📧", "📨", "📩"
-    )
-
-    private val symbolsEmojis = listOf(
-        "💘", "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❤️‍🔥", "❤️‍🩹", "❣️", "💕", "💞",
-        "💓", "💗", "💖", "🪞", "📿", "🧿", "💈", "🛎️", "🚪", "🛏️", "🛋️", "🛕", "🕌", "⛪", "🕍", "🕋",
-        "⚠️", "🚫", "🔞", "☢️", "☣️", "⬆️", "↗️", "➡️", "↘️", "⬇️", "↙️", "⬅️", "↖️", "↕️", "↔️", "↩️"
-    )
-
-    private val flagsEmojis = listOf(
-        "🏁", "🚩", "🎌", "🏴", "🏳️", "🏳️‍🌈", "🏳️‍⚧️", "🏴‍☠️", "🇵🇰", "🇦🇫", "🇸🇦", "🇦🇪", "🇹🇷", "🇮🇳", "🇺🇸", "🇬🇧",
-        "🇨🇦", "🇦🇺", "🇩🇪", "🇫🇷", "🇯🇵", "🇨🇳", "🇧🇷", "🇷🇺", "🇮🇹", "🇪🇸", "🇿🇦", "🇰🇷", "🇮🇩", "🇲🇾", "🇧🇩", "🇮🇷"
-    )
     private var spaceLongPressRunnable: Runnable? = null
     private var lastFeedbackUptimeMs = 0L
     // Debounce runnable for suggestion updates — prevents flooding coroutines on fast typing
@@ -243,7 +179,11 @@ class KeyboardController(
         }
 
         if (context is UrduKeyboardService && !::voiceInputManager.isInitialized) {
-            voiceInputManager = VoiceInputManager(context, context)
+            voiceInputManager = VoiceInputManager(context, context).apply {
+                onListeningStateChanged = { listening ->
+                    mainHandler.post { updateVoiceButtonState(listening) }
+                }
+            }
         }
 
         if (isEmojiMode) {
@@ -921,33 +861,20 @@ class KeyboardController(
     }
 
     private fun setupEmojiKeyboardButtons() {
-        val categories = mapOf(
-            R.id.emoji_tab_recents to EmojiCategory.RECENTS,
-            R.id.emoji_tab_smileys to EmojiCategory.SMILEYS,
-            R.id.emoji_tab_people to EmojiCategory.PEOPLE,
-            R.id.emoji_tab_animals to EmojiCategory.ANIMALS,
-            R.id.emoji_tab_food to EmojiCategory.FOOD,
-            R.id.emoji_tab_travel to EmojiCategory.TRAVEL,
-            R.id.emoji_tab_activities to EmojiCategory.ACTIVITIES,
-            R.id.emoji_tab_objects to EmojiCategory.OBJECTS,
-            R.id.emoji_tab_symbols to EmojiCategory.SYMBOLS,
-            R.id.emoji_tab_flags to EmojiCategory.FLAGS
-        )
-
-        categories.forEach { (id, category) ->
-            keyboardView.findViewById<Button>(id)?.setOnClickListener {
-                currentEmojiCategory = category
-                highlightActiveTab()
-                updateEmojiGrid()
-            }
+        val emojiPickerView = keyboardView.findViewById<EmojiPickerView>(R.id.emoji_picker_view)
+        emojiPickerView?.setOnEmojiPickedListener { emojiViewItem ->
+            applyTapFeedback(emojiPickerView)
+            commitText(emojiViewItem.emoji)
         }
 
         keyboardView.findViewById<Button>(R.id.emoji_key_abc)?.setOnClickListener {
+            applyTapFeedback(it)
             isEmojiMode = false
             (context as? UrduKeyboardService)?.recreateKeyboard()
         }
 
         keyboardView.findViewById<Button>(R.id.emoji_key_space)?.setOnClickListener {
+            applyTapFeedback(it)
             commitText(" ")
         }
 
@@ -966,94 +893,14 @@ class KeyboardController(
                 else -> false
             }
         }
-
-        loadRecentEmojis()
-        highlightActiveTab()
-        updateEmojiGrid()
     }
 
-    private fun highlightActiveTab() {
-        val categories = listOf(
-            R.id.emoji_tab_recents to EmojiCategory.RECENTS,
-            R.id.emoji_tab_smileys to EmojiCategory.SMILEYS,
-            R.id.emoji_tab_people to EmojiCategory.PEOPLE,
-            R.id.emoji_tab_animals to EmojiCategory.ANIMALS,
-            R.id.emoji_tab_food to EmojiCategory.FOOD,
-            R.id.emoji_tab_travel to EmojiCategory.TRAVEL,
-            R.id.emoji_tab_activities to EmojiCategory.ACTIVITIES,
-            R.id.emoji_tab_objects to EmojiCategory.OBJECTS,
-            R.id.emoji_tab_symbols to EmojiCategory.SYMBOLS,
-            R.id.emoji_tab_flags to EmojiCategory.FLAGS
-        )
-
-        categories.forEach { (id, category) ->
-            val btn = keyboardView.findViewById<Button>(id) ?: return@forEach
-            if (category == currentEmojiCategory) {
-                btn.setBackgroundColor(context.getColor(android.R.color.darker_gray))
-            } else {
-                btn.setBackgroundColor(context.getColor(android.R.color.transparent))
-            }
+    private fun updateVoiceButtonState(isListening: Boolean) {
+        val voiceBtnIds = listOf(R.id.key_voice, R.id.urdu_key_voice, R.id.sym_key_voice)
+        for (id in voiceBtnIds) {
+            val btn = keyboardView.findViewById<Button>(id) ?: continue
+            btn.isSelected = isListening
+            btn.alpha = if (isListening) 0.6f else 1.0f
         }
-    }
-
-    private fun updateEmojiGrid() {
-        val grid = keyboardView.findViewById<android.widget.GridView>(R.id.emoji_grid) ?: return
-        val list = when (currentEmojiCategory) {
-            EmojiCategory.RECENTS -> recentEmojis
-            EmojiCategory.SMILEYS -> smileysEmojis
-            EmojiCategory.PEOPLE -> peopleEmojis
-            EmojiCategory.ANIMALS -> animalsEmojis
-            EmojiCategory.FOOD -> foodEmojis
-            EmojiCategory.TRAVEL -> travelEmojis
-            EmojiCategory.ACTIVITIES -> activitiesEmojis
-            EmojiCategory.OBJECTS -> objectsEmojis
-            EmojiCategory.SYMBOLS -> symbolsEmojis
-            EmojiCategory.FLAGS -> flagsEmojis
-        }
-
-        grid.adapter = object : android.widget.BaseAdapter() {
-            override fun getCount(): Int = list.size
-            override fun getItem(position: Int): Any = list[position]
-            override fun getItemId(position: Int): Long = position.toLong()
-
-            override fun getView(position: Int, convertView: View?, parent: android.view.ViewGroup?): View {
-                val button = (convertView as? Button) ?: Button(context).apply {
-                    textSize = 24f
-                    gravity = android.view.Gravity.CENTER
-                    setBackgroundColor(context.getColor(android.R.color.transparent))
-                    setPadding(0, 0, 0, 0)
-                    setOnClickListener {
-                        val emoji = list[position]
-                        commitText(emoji)
-
-                        recentEmojis.remove(emoji)
-                        recentEmojis.add(0, emoji)
-                        if (recentEmojis.size > 24) {
-                            recentEmojis.removeAt(recentEmojis.size - 1)
-                        }
-                        saveRecentEmojis()
-                    }
-                }
-                button.text = list[position]
-                return button
-            }
-        }
-    }
-
-    private fun loadRecentEmojis() {
-        recentEmojis.clear()
-        val helper = PreferenceHelper(context)
-        val saved = helper.getRecentEmojis()
-        if (saved != null) {
-            recentEmojis.addAll(saved)
-        }
-        if (recentEmojis.isEmpty()) {
-            recentEmojis.addAll(listOf("❤️", "😂", "😊", "👍", "🔥", "🙏", "✨", "🎉"))
-        }
-    }
-
-    private fun saveRecentEmojis() {
-        val helper = PreferenceHelper(context)
-        helper.saveRecentEmojis(recentEmojis)
     }
 }

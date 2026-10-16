@@ -3,29 +3,52 @@ package com.codexahmar.urdu_keyboard.keyboard
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
-import android.widget.Toast
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
-import java.util.*
+import android.widget.Toast
+import java.util.Locale
 
 /**
  * Manages voice-to-text input using Android SpeechRecognizer.
- * Supports continuous dictation and automatic punctuation.
+ *
+ * Implements standard speech recognition behavior:
+ *  - Does NOT restart itself in loops.
+ *  - Supports single-tap toggle (tap to start, tap again to stop).
+ *  - Does not cut off mid-speech while the person is speaking.
+ *  - Automatically stops after silence/inactivity.
  */
 class VoiceInputManager(
     private val context: Context,
     private val keyboardService: UrduKeyboardService
 ) : RecognitionListener {
 
+    var onListeningStateChanged: ((Boolean) -> Unit)? = null
+
     private var speechRecognizer: SpeechRecognizer? = null
     private var isListening = false
-    private var shouldRestart = false
+    private var isSpeaking = false
     private var currentLanguageCode = "en-US"
     private val mainHandler = Handler(Looper.getMainLooper())
+
+    // Initial timeout if user presses mic but never speaks
+    private val initialSilenceRunnable = Runnable {
+        if (isListening && !isSpeaking) {
+            Log.d(TAG, "Initial silence timeout reached without speech. Stopping.")
+            stopListening(showToast = true, toastMessage = "No speech detected")
+        }
+    }
+
+    companion object {
+        private const val TAG = "VoiceInputManager"
+        private const val INITIAL_SILENCE_TIMEOUT_MS = 6000L
+        private const val COMPLETE_SILENCE_LENGTH_MS = 2500L
+        private const val POSSIBLY_COMPLETE_SILENCE_MS = 2000L
+        private const val MIN_SPEECH_LENGTH_MS = 2500L
+    }
 
     init {
         initializeRecognizer()
@@ -39,126 +62,171 @@ class VoiceInputManager(
     }
 
     /**
-     * Start listening for voice input
-     * @param languageCode Language code (e.g., "en-US", "ur-PK")
+     * Toggles or starts voice input.
+     * If already listening, stops immediately.
      */
     fun startListening(languageCode: String = "en-US") {
-        currentLanguageCode = languageCode
-        if (shouldRestart) {
-            stopListening()
+        if (isListening) {
+            stopListening(showToast = true, toastMessage = "Microphone off")
             return
         }
 
-        shouldRestart = true
+        currentLanguageCode = languageCode
         startListeningInternal()
     }
 
     private fun startListeningInternal() {
+        if (!SpeechRecognizer.isRecognitionAvailable(context)) {
+            Toast.makeText(context, "Speech recognition not available on this device", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         if (speechRecognizer == null) {
             initializeRecognizer()
         }
-        if (speechRecognizer == null) {
-            Toast.makeText(context, "Speech recognition not available", Toast.LENGTH_SHORT).show()
+
+        val recognizer = speechRecognizer
+        if (recognizer == null) {
+            Toast.makeText(context, "Speech recognition initialization failed", Toast.LENGTH_SHORT).show()
             return
         }
 
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, currentLanguageCode)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, currentLanguageCode)
+            putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, currentLanguageCode)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-            // Dictation mode request
+            putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
+
+            // Extended silence windows so the speaker is not cut off mid-sentence
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, COMPLETE_SILENCE_LENGTH_MS)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, POSSIBLY_COMPLETE_SILENCE_MS)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, MIN_SPEECH_LENGTH_MS)
+
             putExtra("android.speech.extra.DICTATION_MODE", true)
         }
 
         try {
-            speechRecognizer?.startListening(intent)
+            isSpeaking = false
             isListening = true
-            Toast.makeText(context, "🎤 Listening (${getLangDisplayName(currentLanguageCode)})...", Toast.LENGTH_SHORT).show()
+            onListeningStateChanged?.invoke(true)
+            recognizer.startListening(intent)
+
+            // Schedule fallback timeout in case user never starts speaking
+            mainHandler.removeCallbacks(initialSilenceRunnable)
+            mainHandler.postDelayed(initialSilenceRunnable, INITIAL_SILENCE_TIMEOUT_MS)
+
+            val langLabel = getLangDisplayName(currentLanguageCode)
+            Toast.makeText(context, "🎤 Listening ($langLabel)... Speak now", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Log.e("VoiceInputManager", "Error starting listening", e)
-            isListening = false
-            shouldRestart = false
+            Log.e(TAG, "Error starting voice recognition", e)
+            cleanupListeningState()
         }
     }
 
     /**
-     * Stop listening
+     * Stops listening session cleanly without restarting.
      */
-    fun stopListening() {
-        shouldRestart = false
-        speechRecognizer?.stopListening()
-        speechRecognizer?.cancel()
-        isListening = false
-        Toast.makeText(context, "🎤 Microphone Off", Toast.LENGTH_SHORT).show()
+    fun stopListening(showToast: Boolean = false, toastMessage: String? = null) {
+        mainHandler.removeCallbacks(initialSilenceRunnable)
+        try {
+            speechRecognizer?.stopListening()
+            speechRecognizer?.cancel()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error stopping recognizer", e)
+        }
+        cleanupListeningState()
+
+        if (showToast && toastMessage != null) {
+            Toast.makeText(context, toastMessage, Toast.LENGTH_SHORT).show()
+        }
     }
 
     /**
-     * Cleanup resources
+     * Cleans up all resources on keyboard destroy.
      */
     fun cleanup() {
-        shouldRestart = false
-        speechRecognizer?.destroy()
+        mainHandler.removeCallbacks(initialSilenceRunnable)
+        try {
+            speechRecognizer?.destroy()
+        } catch (_: Exception) {}
         speechRecognizer = null
+        cleanupListeningState()
+    }
+
+    private fun cleanupListeningState() {
+        isListening = false
+        isSpeaking = false
+        onListeningStateChanged?.invoke(false)
     }
 
     private fun getLangDisplayName(code: String): String {
         return if (code.startsWith("ur")) "Urdu" else "English"
     }
 
-    // RecognitionListener callbacks
+    // ─────────────────────────────────────────────────────────────────────────
+    // RecognitionListener Callbacks
+    // ─────────────────────────────────────────────────────────────────────────
 
     override fun onReadyForSpeech(params: Bundle?) {
+        Log.d(TAG, "onReadyForSpeech")
         isListening = true
+        onListeningStateChanged?.invoke(true)
     }
 
-    override fun onBeginningOfSpeech() {}
+    override fun onBeginningOfSpeech() {
+        Log.d(TAG, "onBeginningOfSpeech — User started talking")
+        isSpeaking = true
+        // Cancel initial silence timeout since user is actively speaking
+        mainHandler.removeCallbacks(initialSilenceRunnable)
+    }
 
-    override fun onRmsChanged(rmsdB: Float) {}
+    override fun onRmsChanged(rmsdB: Float) {
+        if (rmsdB > 2.0f && !isSpeaking) {
+            isSpeaking = true
+            mainHandler.removeCallbacks(initialSilenceRunnable)
+        }
+    }
 
     override fun onBufferReceived(buffer: ByteArray?) {}
 
     override fun onEndOfSpeech() {
-        isListening = false
+        Log.d(TAG, "onEndOfSpeech — User paused or finished utterance")
+        isSpeaking = false
     }
 
     override fun onError(error: Int) {
-        isListening = false
-        Log.d("VoiceInputManager", "onError: $error")
+        mainHandler.removeCallbacks(initialSilenceRunnable)
+        cleanupListeningState()
+        Log.d(TAG, "onError: code=$error")
 
-        // Fatal permissions or Client errors should stop listening loop
-        val isFatal = error == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS ||
-                      error == SpeechRecognizer.ERROR_CLIENT
-
-        if (shouldRestart && !isFatal) {
-            // Restart after a small delay to let speech recognition release resources
-            mainHandler.postDelayed({
-                if (shouldRestart) {
-                    startListeningInternal()
-                }
-            }, 300)
-        } else {
-            shouldRestart = false
-            val errorMessage = when (error) {
-                SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
-                SpeechRecognizer.ERROR_CLIENT -> "Client error"
-                SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Insufficient permissions"
-                SpeechRecognizer.ERROR_NETWORK -> "Network error"
-                SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Network timeout"
-                SpeechRecognizer.ERROR_NO_MATCH -> "No speech match"
-                SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Recognition service busy"
-                SpeechRecognizer.ERROR_SERVER -> "Server error"
-                SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech input"
-                else -> "Unknown error"
+        when (error) {
+            SpeechRecognizer.ERROR_SPEECH_TIMEOUT,
+            SpeechRecognizer.ERROR_NO_MATCH -> {
+                Log.d(TAG, "No speech matched or timeout reached. Microphone turned off.")
             }
-            if (error != SpeechRecognizer.ERROR_NO_MATCH && error != SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
-                Toast.makeText(context, "Voice input: $errorMessage", Toast.LENGTH_SHORT).show()
+            SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> {
+                Toast.makeText(context, "Microphone permission required for voice typing", Toast.LENGTH_LONG).show()
+            }
+            SpeechRecognizer.ERROR_NETWORK,
+            SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> {
+                Toast.makeText(context, "Voice typing requires active internet connection", Toast.LENGTH_SHORT).show()
+            }
+            SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> {
+                Toast.makeText(context, "Speech service busy, please try again", Toast.LENGTH_SHORT).show()
+            }
+            else -> {
+                Log.w(TAG, "Recognition error: $error")
             }
         }
     }
 
     override fun onResults(results: Bundle?) {
-        isListening = false
+        mainHandler.removeCallbacks(initialSilenceRunnable)
+        cleanupListeningState()
+
         val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
         if (!matches.isNullOrEmpty()) {
             var recognizedText = matches[0].trim()
@@ -167,17 +235,13 @@ class VoiceInputManager(
                 keyboardService.insertVoiceText(recognizedText + " ")
             }
         }
-
-        if (shouldRestart) {
-            mainHandler.postDelayed({
-                if (shouldRestart) {
-                    startListeningInternal()
-                }
-            }, 300)
-        }
     }
 
-    override fun onPartialResults(partialResults: Bundle?) {}
+    override fun onPartialResults(partialResults: Bundle?) {
+        // While partial results are arriving, speech is actively ongoing
+        isSpeaking = true
+        mainHandler.removeCallbacks(initialSilenceRunnable)
+    }
 
     override fun onEvent(eventType: Int, params: Bundle?) {}
 
@@ -198,7 +262,9 @@ class VoiceInputManager(
                 text
             }
         } else {
-            val capitalized = text.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+            val capitalized = text.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+            }
             "$capitalized."
         }
     }
