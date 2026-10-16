@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../routes/app_routes.dart';
 
 /// Controller managing splash screen animations and navigation lifecycle.
 class SplashController {
@@ -72,9 +72,9 @@ class SplashController {
     if (!context.mounted) return;
 
     if (isOnboardingComplete) {
-      Navigator.pushReplacementNamed(context, AppConstants.homeRoute);
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
     } else {
-      Navigator.pushReplacementNamed(context, AppConstants.onboardingRoute);
+      Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
     }
   }
 

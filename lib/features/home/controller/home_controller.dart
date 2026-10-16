@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../routes/app_routes.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/app_permission_dialog.dart';
 import '../../../state/app_state.dart';
@@ -43,16 +43,16 @@ class HomeController {
 
   /// Navigates to Settings screen.
   void openSettings(BuildContext context) {
-    Navigator.pushNamed(context, AppConstants.settingsRoute);
+    Navigator.pushNamed(context, AppRoutes.settings);
   }
 
   /// Navigates to Voice Typing Guide screen.
   void openVoiceTypingGuide(BuildContext context) {
-    Navigator.pushNamed(context, AppConstants.voiceTypingGuideRoute);
+    Navigator.pushNamed(context, AppRoutes.voiceTypingGuide);
   }
 
   /// Navigates to Keyboard Preview screen.
   void openKeyboardPreview(BuildContext context) {
-    Navigator.pushNamed(context, AppConstants.keyboardPreviewRoute);
+    Navigator.pushNamed(context, AppRoutes.keyboardPreview);
   }
 }

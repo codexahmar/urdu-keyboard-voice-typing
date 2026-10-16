@@ -65,24 +65,25 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  LanguageTile(
-                    name: 'Urdu',
-                    nativeName: l10n.languageUrduTitle,
-                    description: l10n.languageUrduSubtitle,
-                    isSelected: _controller.selectedCode == 'ur',
-                    isRecommended: true,
-                    recommendedLabel: l10n.recommended,
-                    onTap: () => _controller.selectLanguage('ur'),
-                  ),
-                  const SizedBox(height: 14),
-                  LanguageTile(
-                    name: 'English',
-                    nativeName: l10n.languageEnglishTitle,
-                    description: l10n.languageEnglishSubtitle,
-                    isSelected: _controller.selectedCode == 'en',
-                    isRecommended: false,
-                    onTap: () => _controller.selectLanguage('en'),
-                  ),
+                  ...AppLocalizations.supportedLanguages.map((lang) {
+                    final isUrdu = lang.code == 'ur';
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: LanguageTile(
+                        name: lang.name,
+                        nativeName: isUrdu
+                            ? l10n.languageUrduTitle
+                            : l10n.languageEnglishTitle,
+                        description: isUrdu
+                            ? l10n.languageUrduSubtitle
+                            : l10n.languageEnglishSubtitle,
+                        isSelected: _controller.selectedCode == lang.code,
+                        isRecommended: lang.isRecommended,
+                        recommendedLabel: l10n.recommended,
+                        onTap: () => _controller.selectLanguage(lang.code),
+                      ),
+                    );
+                  }),
                   const Spacer(),
                   AppButton.primary(
                     label: l10n.save,

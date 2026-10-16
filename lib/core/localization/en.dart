@@ -2,34 +2,16 @@ import '../constants/app_strings.dart';
 
 /// English translations mapped from AppStrings constant definitions
 const Map<String, String> enTranslations = {
+  // App & Common Actions
   'appName': AppStrings.appName,
-  'appTagline': AppStrings.appTagline,
-  'splashTitle': AppStrings.splashTitle,
-  'splashSubtitle': AppStrings.splashSubtitle,
-
-  // Common Actions
   'next': AppStrings.next,
   'back': AppStrings.back,
   'skip': AppStrings.skip,
-  'finish': AppStrings.finish,
   'getStarted': AppStrings.getStarted,
-  'cancel': AppStrings.cancel,
-  'done': AppStrings.done,
   'save': AppStrings.save,
-  'ok': AppStrings.ok,
-  'later': AppStrings.later,
-  'grant': AppStrings.grant,
-  'openSettings': AppStrings.openSettings,
-  'enable': AppStrings.enable,
-  'select': AppStrings.select,
-  'enabled': AppStrings.enabled,
-  'disabled': AppStrings.disabled,
   'active': AppStrings.active,
-  'notActive': AppStrings.notActive,
   'recommended': AppStrings.recommended,
-  'language': AppStrings.language,
   'english': AppStrings.english,
-  'urdu': AppStrings.urdu,
   'urduNative': AppStrings.urduNative,
 
   // Onboarding Page 1: Phonetic Typing
@@ -50,8 +32,6 @@ const Map<String, String> enTranslations = {
   'onboardingVoiceStep3': AppStrings.onboardingVoiceStep3,
   'onboardingSampleSpeech': AppStrings.onboardingSampleSpeech,
   'onboardingSpeechRecognized': AppStrings.onboardingSpeechRecognized,
-  'onboardingMicPermissionTitle': AppStrings.onboardingMicPermissionTitle,
-  'onboardingMicPermissionSubtitle': AppStrings.onboardingMicPermissionSubtitle,
   'onboardingGrantPermission': AppStrings.onboardingGrantPermission,
   'onboardingPermissionGranted': AppStrings.onboardingPermissionGranted,
 
@@ -61,14 +41,12 @@ const Map<String, String> enTranslations = {
   'onboardingEnableStep1': AppStrings.onboardingEnableStep1,
   'onboardingEnableStep2': AppStrings.onboardingEnableStep2,
   'onboardingOpenKeyboardSettings': AppStrings.onboardingOpenKeyboardSettings,
-  'onboardingKeyboardAlreadyEnabled': AppStrings.onboardingKeyboardAlreadyEnabled,
+  'onboardingKeyboardAlreadyEnabled':
+      AppStrings.onboardingKeyboardAlreadyEnabled,
   'onboardingKeyboardNotYetEnabled': AppStrings.onboardingKeyboardNotYetEnabled,
   'onboardingSimulatedToggleHint': AppStrings.onboardingSimulatedToggleHint,
-  'onboardingSimulatedPickerHint': AppStrings.onboardingSimulatedPickerHint,
-  'labelRomanEnglish': AppStrings.labelRomanEnglish,
-  'labelUrduScript': AppStrings.labelUrduScript,
 
-  // Onboarding Page 4: Select & Start
+  // Onboarding Page 4: Select Active Keyboard
   'onboardingPage4Title': AppStrings.onboardingPage4Title,
   'onboardingPage4Subtitle': AppStrings.onboardingPage4Subtitle,
   'onboardingSelectStep1': AppStrings.onboardingSelectStep1,
@@ -76,14 +54,11 @@ const Map<String, String> enTranslations = {
   'onboardingSelectKeyboard': AppStrings.onboardingSelectKeyboard,
   'onboardingKeyboardAlreadyActive': AppStrings.onboardingKeyboardAlreadyActive,
   'onboardingKeyboardNotYetActive': AppStrings.onboardingKeyboardNotYetActive,
+  'onboardingSimulatedPickerHint': AppStrings.onboardingSimulatedPickerHint,
   'onboardingSwitchTipTitle': AppStrings.onboardingSwitchTipTitle,
   'onboardingSwitchTipSubtitle': AppStrings.onboardingSwitchTipSubtitle,
-  'onboardingTestFieldHint': AppStrings.onboardingTestFieldHint,
-  'onboardingTestChip1': AppStrings.onboardingTestChip1,
-  'onboardingTestChip2': AppStrings.onboardingTestChip2,
-  'onboardingTestChip3': AppStrings.onboardingTestChip3,
 
-  // Home
+  // Home Screen
   'homeWelcome': AppStrings.homeWelcome,
   'homeSubtitle': AppStrings.homeSubtitle,
   'homeStatusTitle': AppStrings.homeStatusTitle,
@@ -93,28 +68,17 @@ const Map<String, String> enTranslations = {
   'homeStatusNotActive': AppStrings.homeStatusNotActive,
   'homeActionEnable': AppStrings.homeActionEnable,
   'homeActionSelect': AppStrings.homeActionSelect,
-  'homeActionTest': AppStrings.homeActionTest,
   'homeTestHint': AppStrings.homeTestHint,
   'homeActiveHint': AppStrings.homeActiveHint,
-
-  // Home Action Cards
-  'homeCardLanguageTitle': AppStrings.homeCardLanguageTitle,
-  'homeCardLanguageSubtitle': AppStrings.homeCardLanguageSubtitle,
   'homeCardPreviewTitle': AppStrings.homeCardPreviewTitle,
   'homeCardPreviewSubtitle': AppStrings.homeCardPreviewSubtitle,
   'homeCardVoiceTitle': AppStrings.homeCardVoiceTitle,
   'homeCardVoiceSubtitle': AppStrings.homeCardVoiceSubtitle,
-  'homeCardSettingsTitle': AppStrings.homeCardSettingsTitle,
-  'homeCardSettingsSubtitle': AppStrings.homeCardSettingsSubtitle,
 
   // Settings
   'settingsTitle': AppStrings.settingsTitle,
   'settingsGeneralSection': AppStrings.settingsGeneralSection,
   'settingsLanguage': AppStrings.settingsLanguage,
-  'settingsTextSize': AppStrings.settingsTextSize,
-  'settingsTextSizeSmall': AppStrings.settingsTextSizeSmall,
-  'settingsTextSizeMedium': AppStrings.settingsTextSizeMedium,
-  'settingsTextSizeLarge': AppStrings.settingsTextSizeLarge,
   'settingsHelpSection': AppStrings.settingsHelpSection,
   'settingsSetupGuide': AppStrings.settingsSetupGuide,
   'settingsSetupGuideSubtitle': AppStrings.settingsSetupGuideSubtitle,
@@ -130,9 +94,6 @@ const Map<String, String> enTranslations = {
   'settingsMoreAppsSubtitle': AppStrings.settingsMoreAppsSubtitle,
   'settingsPrivacyPolicy': AppStrings.settingsPrivacyPolicy,
   'settingsPrivacyPolicySubtitle': AppStrings.settingsPrivacyPolicySubtitle,
-  'settingsVersion': AppStrings.settingsVersion,
-  'settingsDeveloper': AppStrings.settingsDeveloper,
-  'settingsDeveloperName': AppStrings.settingsDeveloperName,
 
   // Language Selection
   'languageSelectionTitle': AppStrings.languageSelectionTitle,
@@ -162,16 +123,10 @@ const Map<String, String> enTranslations = {
   // Keyboard Preview
   'keyboardPreviewTitle': AppStrings.keyboardPreviewTitle,
   'keyboardPreviewSubtitle': AppStrings.keyboardPreviewSubtitle,
-  'keyboardPreviewTabPhonetic': AppStrings.keyboardPreviewTabPhonetic,
-  'keyboardPreviewTabAlphabetic': AppStrings.keyboardPreviewTabAlphabetic,
-  'keyboardPreviewTabEnglish': AppStrings.keyboardPreviewTabEnglish,
-  'keyboardPreviewPhoneticHint': AppStrings.keyboardPreviewPhoneticHint,
 
-  // Sleek Permission Dialog Box
+  // Permission Dialog
   'permissionMicTitle': AppStrings.permissionMicTitle,
   'permissionMicDesc': AppStrings.permissionMicDesc,
   'permissionAllow': AppStrings.permissionAllow,
   'permissionNotNow': AppStrings.permissionNotNow,
-  'permissionSettings': AppStrings.permissionSettings,
-  'permissionDeniedMsg': AppStrings.permissionDeniedMsg,
 };

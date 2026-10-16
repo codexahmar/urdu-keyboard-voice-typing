@@ -4,10 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:urdu_keyboard/core/constants/app_constants.dart';
 import 'package:urdu_keyboard/core/localization/app_localizations.dart';
 import 'package:urdu_keyboard/core/theme/app_theme.dart';
 import 'package:urdu_keyboard/features/home/home_screen.dart';
+import 'package:urdu_keyboard/routes/app_routes.dart';
 import 'package:urdu_keyboard/state/app_state.dart';
 
 void main() {
@@ -31,7 +31,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           theme: AppTheme.theme,
           routes: {
-            AppConstants.settingsRoute: (context) {
+            AppRoutes.settings: (context) {
               settingsNavigated = true;
               return const Scaffold(body: Text('Settings Screen Mock'));
             },
@@ -44,7 +44,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify title and subtitle exist
-    expect(find.text('Urdu Smart Keyboard'), findsOneWidget);
+    expect(find.text('Urdu Keyboard'), findsOneWidget);
     expect(find.text('Your complete Urdu & English typing companion'), findsOneWidget);
 
     // Verify test keyboard TextField is completely removed
@@ -93,7 +93,7 @@ void main() {
 
     // Verify Active badge and vibrant card elements
     expect(find.text('Active'), findsOneWidget);
-    expect(find.text('Urdu Smart Keyboard is now active'), findsOneWidget);
+    expect(find.text('Urdu Keyboard is now active'), findsOneWidget);
 
     // Verify subtitle text has NO number 2
     expect(find.text('Open WhatsApp or any app to start typing in Urdu!'), findsOneWidget);

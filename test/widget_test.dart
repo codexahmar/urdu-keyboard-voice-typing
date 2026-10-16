@@ -13,7 +13,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('Urdu Smart Keyboard app smoke test', (WidgetTester tester) async {
+  testWidgets('Urdu Keyboard app smoke test', (WidgetTester tester) async {
     // Set a realistic phone screen size to prevent layout overflows in the test
     tester.view.physicalSize = const Size(1080, 1920);
     tester.view.devicePixelRatio = 1.0;
@@ -31,12 +31,12 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider<AppState>.value(
         value: appState,
-        child: const UrduSmartKeyboardApp(),
+        child: const UrduKeyboardApp(),
       ),
     );
 
     // Verify splash screen presence
-    expect(find.text('اردو اسمارٹ کی بورڈ'), findsOneWidget);
+    expect(find.text('اردو کی بورڈ'), findsOneWidget);
 
     // Let the splash screen timer complete to avoid pending timer exception
     await tester.pumpAndSettle(const Duration(seconds: 3));

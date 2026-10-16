@@ -2,10 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'en.dart';
+import 'language_model.dart';
 import 'ur.dart';
 
-/// Production-ready typed localization provider for Urdu Smart Keyboard.
-/// Provides compile-time safe getters backed by en.dart and ur.dart dictionaries.
+export 'language_model.dart';
+
+/// Production-ready typed localization provider for Urdu Keyboard.
 class AppLocalizations {
   final Locale locale;
   final Map<String, String> _localizedStrings;
@@ -27,6 +29,24 @@ class AppLocalizations {
     Locale('en'),
   ];
 
+  /// Supported application languages metadata configuration.
+  static const List<AppLanguage> supportedLanguages = [
+    AppLanguage(
+      code: 'ur',
+      name: 'Urdu',
+      nativeName: 'اردو',
+      isRecommended: true,
+      description: 'Type in Urdu using Roman letters (phonetic typing)',
+    ),
+    AppLanguage(
+      code: 'en',
+      name: 'English',
+      nativeName: 'English',
+      isRecommended: false,
+      description: 'Standard English QWERTY keyboard',
+    ),
+  ];
+
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = [
     delegate,
     GlobalMaterialLocalizations.delegate,
@@ -34,37 +54,19 @@ class AppLocalizations {
     GlobalCupertinoLocalizations.delegate,
   ];
 
-  String _get(String key) => _localizedStrings[key] ?? enTranslations[key] ?? key;
+  String _get(String key) =>
+      _localizedStrings[key] ?? enTranslations[key] ?? key;
 
-  // App & Branding
+  // App & Common Actions
   String get appName => _get('appName');
-  String get appTagline => _get('appTagline');
-  String get splashTitle => _get('splashTitle');
-  String get splashSubtitle => _get('splashSubtitle');
-
-  // Common Actions
   String get next => _get('next');
   String get back => _get('back');
   String get skip => _get('skip');
-  String get finish => _get('finish');
   String get getStarted => _get('getStarted');
-  String get cancel => _get('cancel');
-  String get done => _get('done');
   String get save => _get('save');
-  String get ok => _get('ok');
-  String get later => _get('later');
-  String get grant => _get('grant');
-  String get openSettings => _get('openSettings');
-  String get enable => _get('enable');
-  String get select => _get('select');
-  String get enabled => _get('enabled');
-  String get disabled => _get('disabled');
   String get active => _get('active');
-  String get notActive => _get('notActive');
   String get recommended => _get('recommended');
-  String get language => _get('language');
   String get english => _get('english');
-  String get urdu => _get('urdu');
   String get urduNative => _get('urduNative');
 
   // Onboarding Page 1
@@ -74,8 +76,10 @@ class AppLocalizations {
   String get onboardingPhoneticSubtitle => _get('onboardingPhoneticSubtitle');
   String get onboardingSwitchTitle => _get('onboardingSwitchTitle');
   String get onboardingSwitchSubtitle => _get('onboardingSwitchSubtitle');
-  String get onboardingVoiceFeatureTitle => _get('onboardingVoiceFeatureTitle');
-  String get onboardingVoiceFeatureSubtitle => _get('onboardingVoiceFeatureSubtitle');
+  String get onboardingVoiceFeatureTitle =>
+      _get('onboardingVoiceFeatureTitle');
+  String get onboardingVoiceFeatureSubtitle =>
+      _get('onboardingVoiceFeatureSubtitle');
 
   // Onboarding Page 2
   String get onboardingPage2Title => _get('onboardingPage2Title');
@@ -85,23 +89,23 @@ class AppLocalizations {
   String get onboardingVoiceStep3 => _get('onboardingVoiceStep3');
   String get onboardingSampleSpeech => _get('onboardingSampleSpeech');
   String get onboardingSpeechRecognized => _get('onboardingSpeechRecognized');
-  String get onboardingMicPermissionTitle => _get('onboardingMicPermissionTitle');
-  String get onboardingMicPermissionSubtitle => _get('onboardingMicPermissionSubtitle');
   String get onboardingGrantPermission => _get('onboardingGrantPermission');
-  String get onboardingPermissionGranted => _get('onboardingPermissionGranted');
+  String get onboardingPermissionGranted =>
+      _get('onboardingPermissionGranted');
 
   // Onboarding Page 3
   String get onboardingPage3Title => _get('onboardingPage3Title');
   String get onboardingPage3Subtitle => _get('onboardingPage3Subtitle');
   String get onboardingEnableStep1 => _get('onboardingEnableStep1');
   String get onboardingEnableStep2 => _get('onboardingEnableStep2');
-  String get onboardingOpenKeyboardSettings => _get('onboardingOpenKeyboardSettings');
-  String get onboardingKeyboardAlreadyEnabled => _get('onboardingKeyboardAlreadyEnabled');
-  String get onboardingKeyboardNotYetEnabled => _get('onboardingKeyboardNotYetEnabled');
-  String get onboardingSimulatedToggleHint => _get('onboardingSimulatedToggleHint');
-  String get onboardingSimulatedPickerHint => _get('onboardingSimulatedPickerHint');
-  String get labelRomanEnglish => _get('labelRomanEnglish');
-  String get labelUrduScript => _get('labelUrduScript');
+  String get onboardingOpenKeyboardSettings =>
+      _get('onboardingOpenKeyboardSettings');
+  String get onboardingKeyboardAlreadyEnabled =>
+      _get('onboardingKeyboardAlreadyEnabled');
+  String get onboardingKeyboardNotYetEnabled =>
+      _get('onboardingKeyboardNotYetEnabled');
+  String get onboardingSimulatedToggleHint =>
+      _get('onboardingSimulatedToggleHint');
 
   // Onboarding Page 4
   String get onboardingPage4Title => _get('onboardingPage4Title');
@@ -109,14 +113,15 @@ class AppLocalizations {
   String get onboardingSelectStep1 => _get('onboardingSelectStep1');
   String get onboardingSelectStep2 => _get('onboardingSelectStep2');
   String get onboardingSelectKeyboard => _get('onboardingSelectKeyboard');
-  String get onboardingKeyboardAlreadyActive => _get('onboardingKeyboardAlreadyActive');
-  String get onboardingKeyboardNotYetActive => _get('onboardingKeyboardNotYetActive');
+  String get onboardingKeyboardAlreadyActive =>
+      _get('onboardingKeyboardAlreadyActive');
+  String get onboardingKeyboardNotYetActive =>
+      _get('onboardingKeyboardNotYetActive');
+  String get onboardingSimulatedPickerHint =>
+      _get('onboardingSimulatedPickerHint');
   String get onboardingSwitchTipTitle => _get('onboardingSwitchTipTitle');
-  String get onboardingSwitchTipSubtitle => _get('onboardingSwitchTipSubtitle');
-  String get onboardingTestFieldHint => _get('onboardingTestFieldHint');
-  String get onboardingTestChip1 => _get('onboardingTestChip1');
-  String get onboardingTestChip2 => _get('onboardingTestChip2');
-  String get onboardingTestChip3 => _get('onboardingTestChip3');
+  String get onboardingSwitchTipSubtitle =>
+      _get('onboardingSwitchTipSubtitle');
 
   // Home
   String get homeWelcome => _get('homeWelcome');
@@ -128,33 +133,24 @@ class AppLocalizations {
   String get homeStatusNotActive => _get('homeStatusNotActive');
   String get homeActionEnable => _get('homeActionEnable');
   String get homeActionSelect => _get('homeActionSelect');
-  String get homeActionTest => _get('homeActionTest');
   String get homeTestHint => _get('homeTestHint');
   String get homeActiveHint => _get('homeActiveHint');
-
-  // Home Action Cards
-  String get homeCardLanguageTitle => _get('homeCardLanguageTitle');
-  String get homeCardLanguageSubtitle => _get('homeCardLanguageSubtitle');
   String get homeCardPreviewTitle => _get('homeCardPreviewTitle');
   String get homeCardPreviewSubtitle => _get('homeCardPreviewSubtitle');
   String get homeCardVoiceTitle => _get('homeCardVoiceTitle');
   String get homeCardVoiceSubtitle => _get('homeCardVoiceSubtitle');
-  String get homeCardSettingsTitle => _get('homeCardSettingsTitle');
-  String get homeCardSettingsSubtitle => _get('homeCardSettingsSubtitle');
 
   // Settings
   String get settingsTitle => _get('settingsTitle');
   String get settingsGeneralSection => _get('settingsGeneralSection');
   String get settingsLanguage => _get('settingsLanguage');
-  String get settingsTextSize => _get('settingsTextSize');
-  String get settingsTextSizeSmall => _get('settingsTextSizeSmall');
-  String get settingsTextSizeMedium => _get('settingsTextSizeMedium');
-  String get settingsTextSizeLarge => _get('settingsTextSizeLarge');
   String get settingsHelpSection => _get('settingsHelpSection');
   String get settingsSetupGuide => _get('settingsSetupGuide');
-  String get settingsSetupGuideSubtitle => _get('settingsSetupGuideSubtitle');
+  String get settingsSetupGuideSubtitle =>
+      _get('settingsSetupGuideSubtitle');
   String get settingsVoiceGuide => _get('settingsVoiceGuide');
-  String get settingsVoiceGuideSubtitle => _get('settingsVoiceGuideSubtitle');
+  String get settingsVoiceGuideSubtitle =>
+      _get('settingsVoiceGuideSubtitle');
   String get settingsAboutSection => _get('settingsAboutSection');
   String get settingsRateApp => _get('settingsRateApp');
   String get settingsRateAppSubtitle => _get('settingsRateAppSubtitle');
@@ -164,10 +160,8 @@ class AppLocalizations {
   String get settingsMoreApps => _get('settingsMoreApps');
   String get settingsMoreAppsSubtitle => _get('settingsMoreAppsSubtitle');
   String get settingsPrivacyPolicy => _get('settingsPrivacyPolicy');
-  String get settingsPrivacyPolicySubtitle => _get('settingsPrivacyPolicySubtitle');
-  String get settingsVersion => _get('settingsVersion');
-  String get settingsDeveloper => _get('settingsDeveloper');
-  String get settingsDeveloperName => _get('settingsDeveloperName');
+  String get settingsPrivacyPolicySubtitle =>
+      _get('settingsPrivacyPolicySubtitle');
 
   // Language Selection
   String get languageSelectionTitle => _get('languageSelectionTitle');
@@ -192,23 +186,18 @@ class AppLocalizations {
   String get voiceGuideTip1 => _get('voiceGuideTip1');
   String get voiceGuideTip2 => _get('voiceGuideTip2');
   String get voiceGuideTip3 => _get('voiceGuideTip3');
-  String get voiceGuidePermissionPrompt => _get('voiceGuidePermissionPrompt');
+  String get voiceGuidePermissionPrompt =>
+      _get('voiceGuidePermissionPrompt');
 
   // Keyboard Preview
   String get keyboardPreviewTitle => _get('keyboardPreviewTitle');
   String get keyboardPreviewSubtitle => _get('keyboardPreviewSubtitle');
-  String get keyboardPreviewTabPhonetic => _get('keyboardPreviewTabPhonetic');
-  String get keyboardPreviewTabAlphabetic => _get('keyboardPreviewTabAlphabetic');
-  String get keyboardPreviewTabEnglish => _get('keyboardPreviewTabEnglish');
-  String get keyboardPreviewPhoneticHint => _get('keyboardPreviewPhoneticHint');
 
-  // Sleek Permission Dialog
+  // Permission Dialog
   String get permissionMicTitle => _get('permissionMicTitle');
   String get permissionMicDesc => _get('permissionMicDesc');
   String get permissionAllow => _get('permissionAllow');
   String get permissionNotNow => _get('permissionNotNow');
-  String get permissionSettings => _get('permissionSettings');
-  String get permissionDeniedMsg => _get('permissionDeniedMsg');
 }
 
 class _AppLocalizationsDelegate

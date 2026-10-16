@@ -126,7 +126,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               const SizedBox(height: 6),
               const Text(
-                'اردو اسمارٹ کی بورڈ',
+                'اردو کی بورڈ',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,

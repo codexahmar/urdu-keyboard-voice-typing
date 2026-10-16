@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../routes/app_routes.dart';
 import '../../../state/app_state.dart';
 
 /// Controller handling external links, sharing, and navigation for Settings.
@@ -58,11 +59,11 @@ class SettingsController {
 
   /// Navigates to keyboard preview screen.
   void navigateToKeyboardPreview(BuildContext context) {
-    Navigator.pushNamed(context, AppConstants.keyboardPreviewRoute);
+    Navigator.pushNamed(context, AppRoutes.keyboardPreview);
   }
 
   /// Navigates to voice typing guide screen.
   void navigateToVoiceTypingGuide(BuildContext context) {
-    Navigator.pushNamed(context, AppConstants.voiceTypingGuideRoute);
+    Navigator.pushNamed(context, AppRoutes.voiceTypingGuide);
   }
 }

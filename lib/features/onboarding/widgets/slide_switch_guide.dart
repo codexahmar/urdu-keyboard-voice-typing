@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -128,7 +129,7 @@ class SlideSwitchGuide extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Urdu Smart Keyboard',
+                        AppConstants.appName,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
