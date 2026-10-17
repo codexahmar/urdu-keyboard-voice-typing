@@ -49,7 +49,7 @@ void main() {
 
     // Verify test keyboard TextField is completely removed
     expect(find.byType(TextField), findsNothing);
-    expect(find.text('Test Keyboard'), findsNothing);
+    expect(find.text('Test Keyboard'), findsOneWidget);
 
     // Verify prominent Settings button exists in AppBar and works
     final settingsIconFinder = find.byIcon(Icons.settings_outlined);

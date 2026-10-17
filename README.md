@@ -1,4 +1,4 @@
-# Urdu Smart Keyboard
+# Urdu Keyboard
 
 A production-grade **Flutter + Native Android (Kotlin) hybrid application** designed to provide a modern, accessible, and intelligent Urdu keyboard experience for Android users.
 
@@ -9,17 +9,23 @@ This project demonstrates advanced mobile engineering capabilities, including **
 
 ## 📱 App Screenshots
 
-<p align="center">
-  <img src="screenshots/splash.png" width="220" alt="Splash Screen"/>
-  <img src="screenshots/home.png" width="220" alt="Home Screen"/>
-  <img src="screenshots/keyboard_preview.png" width="220" alt="Keyboard Preview"/>
-</p>
+<div align="center">
+
+| **Home Dashboard** | **Roman Urdu (Phonetic)** | **Urdu Voice Typing** |
+|:---:|:---:|:---:|
+| <img src="screenshots/01_home.png" width="240" alt="Home Dashboard" /> | <img src="screenshots/02_roman_urdu.png" width="240" alt="Roman Urdu Typing" /> | <img src="screenshots/03_voice_typing.png" width="240" alt="Urdu Voice Typing" /> |
+
+| **1-Tap Quick Switch** | **Easy Setup Flow** | **Language & Settings** |
+|:---:|:---:|:---:|
+| <img src="screenshots/04_one_tap_switch.png" width="240" alt="1-Tap Quick Switch" /> | <img src="screenshots/05_easy_setup.png" width="240" alt="Easy Setup Flow" /> | <img src="screenshots/06_language_settings.png" width="240" alt="Language & Settings" /> |
+
+</div>
 
 ---
 
 ## Project Overview
 
-Urdu Smart Keyboard is a **hybrid mobile system** composed of:
+Urdu Keyboard is a **hybrid mobile system** composed of:
 
 * A **Flutter-based application layer** for UI, onboarding, and user configuration
 * A **native Android keyboard engine (Kotlin)** built using `InputMethodService`
@@ -211,8 +217,17 @@ Instructional module for voice input usage.
 
 ```yaml
 dependencies:
-  provider:
-  shared_preferences:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  provider: ^6.1.1
+  shared_preferences: ^2.2.2
+  permission_handler: ^11.3.0
+  google_fonts: ^8.2.1
+  url_launcher: ^6.3.3
+  share_plus: ^13.3.1
+  cupertino_icons: ^1.0.8
 ```
 
 ---

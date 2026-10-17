@@ -1,11 +1,11 @@
 {
-    "name": "urdu_keyboard",
-    "short_name": "urdu_keyboard",
+    "name": "Urdu Keyboard",
+    "short_name": "Urdu Keyboard",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Urdu Keyboard - A simple, ad-free keyboard app for Urdu typing.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

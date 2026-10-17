@@ -10,7 +10,7 @@ import android.view.inputmethod.InputMethodManager
 import com.codexahmar.urdu_keyboard.utils.PreferenceHelper
 
 /**
- * Main InputMethodService for Urdu Smart Keyboard
+ * Main InputMethodService for Urdu Keyboard
  * This service is the entry point for the system keyboard
  */
 class UrduKeyboardService : InputMethodService() {

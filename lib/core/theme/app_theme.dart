@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// Single unified Pakistan Flag Green & White theme for Urdu Smart Keyboard.
+/// Single unified Pakistan Flag Green & White theme for Urdu Keyboard.
 /// Elegantly styled with authentic Pakistan Green (#01411C), pure white surfaces,
 /// and relatable Google Fonts (Outfit for clean UI & Noto Nastaliq Urdu for authentic Urdu typography).
 class AppTheme {

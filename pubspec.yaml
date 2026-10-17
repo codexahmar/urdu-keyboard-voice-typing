@@ -1,8 +1,8 @@
 name: urdu_keyboard
-description: "Urdu Smart Keyboard - A simple, ad-free keyboard app for Urdu typing"
+description: "Urdu Keyboard - A simple, ad-free keyboard app for Urdu typing"
 publish_to: 'none'
 
-version: 1.0.0+4
+version: 1.0.0+5
 
 environment:
   sdk: ^3.10.4
