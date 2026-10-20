@@ -16,41 +16,61 @@
         android:layout_height="216dp"
         app:emojiGridColumns="8" />
 
-    <!-- Bottom Actions Bar: ABC | Space | ⌫ -->
+    <!-- Bottom Actions Bar: ABC | Search Emoji Pill | ⌫ -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingStart="6dp"
-        android:paddingEnd="6dp"
+        android:splitMotionEvents="true"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
         android:paddingBottom="4dp">
 
         <!-- ABC / Back to keyboard -->
         <Button
             android:id="@+id/emoji_key_abc"
-            style="@style/KeyboardButtonBottomSmall"
-            android:layout_width="0dp"
-            android:layout_weight="1.35"
+            style="@style/KeyboardButtonFunctional"
+            android:layout_width="48dp"
             android:layout_height="36dp"
             android:text="ABC"
             android:textSize="13sp" />
 
-        <!-- Space bar -->
-        <Button
-            android:id="@+id/emoji_key_space"
-            style="@style/KeyboardButtonSpace"
+        <!-- Gboard-Style Search Emoji Pill -->
+        <LinearLayout
+            android:id="@+id/emoji_search_pill"
             android:layout_width="0dp"
-            android:layout_weight="4"
             android:layout_height="36dp"
-            android:text="Space" />
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/emoji_search_bg"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true">
 
-        <!-- Backspace -->
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_search"
+                android:contentDescription="Search" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="Search emoji"
+                android:textColor="#757575"
+                android:textSize="13sp"
+                android:fontFamily="sans-serif" />
+        </LinearLayout>
+
+        <!-- Backspace (remove) -->
         <Button
             android:id="@+id/emoji_key_backspace"
             style="@style/KeyboardButtonIcon"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+            android:layout_width="48dp"
             android:layout_height="36dp"
             android:text=""
             android:drawableTop="@drawable/ic_backspace"

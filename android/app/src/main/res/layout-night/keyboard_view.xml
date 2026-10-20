@@ -6,6 +6,7 @@
     android:background="@color/kb_bg_dark"
     android:clipToPadding="false"
     android:orientation="vertical"
+    android:splitMotionEvents="true"
     android:paddingStart="4dp"
     android:paddingEnd="4dp"
     android:paddingTop="6dp">
@@ -17,6 +18,7 @@
         android:layout_height="40dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:paddingStart="4dp"
         android:paddingEnd="4dp">
 
@@ -66,6 +68,7 @@
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:orientation="horizontal">
         <Button android:id="@+id/key_q" style="@style/KeyboardButton" android:text="q" />
         <Button android:id="@+id/key_w" style="@style/KeyboardButton" android:text="w" />
@@ -84,6 +87,7 @@
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:orientation="horizontal">
         <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="0.5" />
         <Button android:id="@+id/key_a" style="@style/KeyboardButton" android:text="a" />
@@ -103,6 +107,7 @@
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:layout_marginBottom="3dp"
         android:orientation="horizontal">
         <Button android:id="@+id/key_shift" style="@style/KeyboardButtonShift" android:layout_weight="1.5" android:text="" android:drawableTop="@drawable/ic_shift_dark" android:drawablePadding="0dp" />
@@ -121,6 +126,7 @@
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:paddingBottom="2dp"
         android:orientation="horizontal">
         <Button android:id="@+id/key_symbols" style="@style/KeyboardButtonBottomSmall" android:text="\?123" />

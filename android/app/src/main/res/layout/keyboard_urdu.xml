@@ -19,6 +19,7 @@
     android:clipToPadding="false"
     android:layoutDirection="ltr"
     android:orientation="vertical"
+    android:splitMotionEvents="true"
     android:paddingStart="4dp"
     android:paddingEnd="4dp"
     android:paddingTop="6dp">
@@ -30,6 +31,7 @@
         android:layout_height="40dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:paddingStart="4dp"
         android:paddingEnd="4dp">
 
@@ -80,6 +82,7 @@
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:orientation="horizontal">
         <Button android:id="@+id/urdu_key_1"  style="@style/KeyboardButtonUrdu" android:text="ض" />
         <Button android:id="@+id/urdu_key_2"  style="@style/KeyboardButtonUrdu" android:text="ص" />
@@ -99,6 +102,7 @@
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:orientation="horizontal">
         <Button android:id="@+id/urdu_key_11" style="@style/KeyboardButtonUrdu" android:text="ج" />
         <Button android:id="@+id/urdu_key_12" style="@style/KeyboardButtonUrdu" android:text="چ" />
@@ -118,6 +122,7 @@
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:orientation="horizontal">
         <Button android:id="@+id/urdu_key_21" style="@style/KeyboardButtonUrdu" android:text="پ" />
         <Button android:id="@+id/urdu_key_22" style="@style/KeyboardButtonUrdu" android:text="ت" />
@@ -137,6 +142,7 @@
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:layout_marginBottom="3dp"
         android:orientation="horizontal">
 
@@ -170,6 +176,7 @@
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:paddingBottom="2dp"
         android:orientation="horizontal">
 

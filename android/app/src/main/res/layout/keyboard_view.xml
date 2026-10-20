@@ -12,6 +12,7 @@
     android:background="@color/kb_bg_light"
     android:clipToPadding="false"
     android:orientation="vertical"
+    android:splitMotionEvents="true"
     android:paddingStart="4dp"
     android:paddingEnd="4dp"
     android:paddingTop="6dp">
@@ -23,6 +24,7 @@
         android:layout_height="40dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:paddingStart="4dp"
         android:paddingEnd="4dp">
 
@@ -73,6 +75,7 @@
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:orientation="horizontal">
 
         <Button android:id="@+id/key_q" style="@style/KeyboardButton" android:text="q" />
@@ -94,6 +97,7 @@
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:orientation="horizontal">
 
         <!-- ~half-key left spacer -->
@@ -124,6 +128,7 @@
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:layout_marginBottom="3dp"
         android:orientation="horizontal">
 
@@ -159,6 +164,7 @@
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:splitMotionEvents="true"
         android:orientation="horizontal"
         android:paddingBottom="2dp">
 

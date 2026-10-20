@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.Button
@@ -75,6 +76,7 @@ class KeyboardController(
 
     private var isEmojiMode = false
     private var isUrduShifted = false
+    private var isHapticFeedbackEnabled = true
     private var emojiView: View? = null
     private var spaceLongPressRunnable: Runnable? = null
     // Debounce runnable for suggestion updates — ultra-fast 25ms response
@@ -197,6 +199,7 @@ class KeyboardController(
             updateKeyboardLayout()
             refreshEnglishKeyLabels()
             applyBottomInsetPadding()
+            enableSplitMotionEvents(keyboardView)
             ViewCompat.requestApplyInsets(keyboardView)
             return keyboardView
         }
@@ -247,11 +250,22 @@ class KeyboardController(
         updateKeyboardLayout()
         refreshEnglishKeyLabels()
         applyBottomInsetPadding()
+        enableSplitMotionEvents(keyboardView)
 
         return keyboardView
     }
 
+    private fun enableSplitMotionEvents(view: View) {
+        if (view is ViewGroup) {
+            view.isMotionEventSplittingEnabled = true
+            for (i in 0 until view.childCount) {
+                enableSplitMotionEvents(view.getChildAt(i))
+            }
+        }
+    }
+
     fun onStartInput(ic: InputConnection?, info: EditorInfo?) {
+        isHapticFeedbackEnabled = preferenceHelper.isHapticFeedbackEnabled()
         val shouldCap = shouldAutoCap(info)
         shiftState = if (shouldCap) ShiftState.SHIFT_ONCE else ShiftState.OFF
         Log.d(TAG, "onStartInput: IC=${if (ic != null) "valid" else "null"} autoCap=$shouldCap")
@@ -529,13 +543,16 @@ class KeyboardController(
         // Backspace — long-press handled by BackspaceHandler
         val bsId = context.resources.getIdentifier("${backPrefix}backspace", "id", context.packageName)
         keyboardView.findViewById<Button>(bsId)?.setOnTouchListener { view, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
+            val action = event.actionMasked
+            when (action) {
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                    view.isPressed = true
                     applyTapFeedback(view)
                     backspaceHandler.onBackspaceDown()
                     true
                 }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL -> {
+                    view.isPressed = false
                     backspaceHandler.onBackspaceUp()
                     view.performClick()
                     true
@@ -585,13 +602,18 @@ class KeyboardController(
         var downY = 0f
 
         spaceButton.setOnTouchListener { view, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
+            val action = event.actionMasked
+            when (action) {
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                    view.isPressed = true
                     applyTapFeedback(view)
                     isLongPressHandled = false
                     isSwipeSwitchHandled = false
                     downX = event.x
                     downY = event.y
+
+                    // Immediately commit space on touch down (0ms latency, guaranteed typing order)
+                    onSpacePressed()
 
                     spaceLongPressRunnable?.let(mainHandler::removeCallbacks)
                     spaceLongPressRunnable = Runnable {
@@ -609,23 +631,24 @@ class KeyboardController(
                         if (kotlin.math.abs(dx) >= swipeThresholdPx && kotlin.math.abs(dx) > kotlin.math.abs(dy)) {
                             spaceLongPressRunnable?.let(mainHandler::removeCallbacks)
                             isSwipeSwitchHandled = true
-                            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                            // User intended swipe gesture: revert the space character inserted on down
+                            currentInputConnection?.deleteSurroundingText(1, 0)
+                            applyTapFeedback(view)
                             onLanguageSwitch()
                         }
                     }
                     true
                 }
 
-                MotionEvent.ACTION_UP -> {
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+                    view.isPressed = false
                     spaceLongPressRunnable?.let(mainHandler::removeCallbacks)
-                    if (!isLongPressHandled && !isSwipeSwitchHandled) {
-                        onSpacePressed()
-                    }
                     view.performClick()
                     true
                 }
 
                 MotionEvent.ACTION_CANCEL -> {
+                    view.isPressed = false
                     spaceLongPressRunnable?.let(mainHandler::removeCallbacks)
                     true
                 }
@@ -636,24 +659,33 @@ class KeyboardController(
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Touch listener with instant tap response and ripple feedback
+    // Touch listener with instant tap response, multi-touch, and ripple feedback
     // ─────────────────────────────────────────────────────────────────────────
 
     private fun setFastTapListener(button: Button?, onTap: () -> Unit) {
         button?.setOnTouchListener { view, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
+            val action = event.actionMasked
+            when (action) {
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
                     view.isPressed = true
                     applyTapFeedback(view)
                     onTap()
                     true
                 }
-                MotionEvent.ACTION_UP -> {
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
                     view.isPressed = false
                     true
                 }
                 MotionEvent.ACTION_CANCEL -> {
                     view.isPressed = false
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val x = event.x
+                    val y = event.y
+                    if (x < 0 || x > view.width || y < 0 || y > view.height) {
+                        view.isPressed = false
+                    }
                     true
                 }
                 else -> false
@@ -662,7 +694,12 @@ class KeyboardController(
     }
 
     private fun applyTapFeedback(view: View) {
-        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        if (isHapticFeedbackEnabled) {
+            view.performHapticFeedback(
+                HapticFeedbackConstants.KEYBOARD_TAP,
+                HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING
+            )
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -673,31 +710,41 @@ class KeyboardController(
         val uppercase = shouldUseUppercase()
         val output = if (uppercase) key.uppercase() else key.lowercase()
         composingText.append(output)
-        currentInputConnection?.setComposingText(composingText.toString(), 1)
+        val ic = currentInputConnection
+        ic?.beginBatchEdit()
+        ic?.setComposingText(composingText.toString(), 1)
+        ic?.endBatchEdit()
         updateSuggestions()
 
         if (shiftState == ShiftState.SHIFT_ONCE) {
             shiftState = ShiftState.OFF
-            refreshEnglishKeyLabels()
+            updateShiftButtonIcon()
+            mainHandler.post { refreshEnglishKeyLabels() }
         }
     }
 
     private fun onUrduKeyPressed(urduLetter: String) {
         composingText.append(urduLetter)
-        currentInputConnection?.setComposingText(composingText.toString(), 1)
+        val ic = currentInputConnection
+        ic?.beginBatchEdit()
+        ic?.setComposingText(composingText.toString(), 1)
+        ic?.endBatchEdit()
         updateSuggestions()
         if (isUrduShifted) {
             isUrduShifted = false
-            refreshUrduKeyLabels()
+            mainHandler.post { refreshUrduKeyLabels() }
         }
     }
 
     private fun onPunctuationPressed(symbol: String) {
+        val ic = currentInputConnection
+        ic?.beginBatchEdit()
         if (composingText.isNotEmpty()) {
-            currentInputConnection?.commitText(composingText.toString(), 1)
+            ic?.commitText(composingText.toString(), 1)
             clearComposingState()
         }
-        commitText(symbol)
+        ic?.commitText(symbol, 1)
+        ic?.endBatchEdit()
         if (symbol == "." || symbol == "?" || symbol == "!" || symbol == "۔" || symbol == "؟") {
             shiftState = ShiftState.SHIFT_ONCE
             refreshEnglishKeyLabels()
@@ -705,21 +752,26 @@ class KeyboardController(
     }
 
     private fun onSpacePressed() {
+        val ic = currentInputConnection
+        ic?.beginBatchEdit()
         if (composingText.isNotEmpty()) {
-            currentInputConnection?.commitText(composingText.toString(), 1)
-            currentInputConnection?.commitText(" ", 1)
+            ic?.commitText("${composingText} ", 1)
             clearComposingState()
         } else {
-            commitText(" ")
+            ic?.commitText(" ", 1)
         }
+        ic?.endBatchEdit()
     }
 
     private fun onEnterPressed() {
+        val ic = currentInputConnection
+        ic?.beginBatchEdit()
         if (composingText.isNotEmpty()) {
-            currentInputConnection?.commitText(composingText.toString(), 1)
+            ic?.commitText(composingText.toString(), 1)
             clearComposingState()
         }
-        commitText("\n")
+        ic?.commitText("\n", 1)
+        ic?.endBatchEdit()
         shiftState = ShiftState.SHIFT_ONCE
         refreshEnglishKeyLabels()
     }
@@ -787,6 +839,11 @@ class KeyboardController(
                 button.text = targetText
             }
         }
+        updateShiftButtonIcon()
+    }
+
+    private fun updateShiftButtonIcon() {
+        if (isUrduKeyboardLayout || isSymbolMode) return
 
         // Detect night mode so we pick the right icon variant for contrast.
         val nightModeBits = context.resources.configuration.uiMode and
@@ -907,11 +964,13 @@ class KeyboardController(
         if (suggestion.isEmpty()) return
         // Cancel any pending debounce before committing
         suggestionDebounceRunnable?.let(mainHandler::removeCallbacks)
-        currentInputConnection?.commitText(suggestion, 1)
-        currentInputConnection?.commitText(" ", 1)
+        val ic = currentInputConnection
+        ic?.beginBatchEdit()
+        ic?.commitText("$suggestion ", 1)
+        clearComposingState()
+        ic?.endBatchEdit()
         // Track frequency so this word bubbles up in future suggestions
         ioScope.launch { preferenceHelper.incrementWordFrequency(suggestion) }
-        clearComposingState()
     }
 
     private fun clearComposingState() {
@@ -921,21 +980,24 @@ class KeyboardController(
     }
 
     private fun clearSuggestionsUI() {
-        suggestionLeftBtn?.text = ""
-        suggestionCenterBtn?.text = ""
-        suggestionRightBtn?.text = ""
+        if (!suggestionLeftBtn?.text.isNullOrEmpty()) suggestionLeftBtn?.text = ""
+        if (!suggestionCenterBtn?.text.isNullOrEmpty()) suggestionCenterBtn?.text = ""
+        if (!suggestionRightBtn?.text.isNullOrEmpty()) suggestionRightBtn?.text = ""
     }
 
     fun handleBackspaceAction(count: Int = 1): Boolean {
         if (composingText.isNotEmpty()) {
             val toDelete = minOf(count, composingText.length)
             composingText.delete(composingText.length - toDelete, composingText.length)
+            val ic = currentInputConnection
+            ic?.beginBatchEdit()
             if (composingText.isEmpty()) {
                 clearComposingState()
             } else {
-                currentInputConnection?.setComposingText(composingText.toString(), 1)
+                ic?.setComposingText(composingText.toString(), 1)
                 updateSuggestions()
             }
+            ic?.endBatchEdit()
             return true
         }
         return false
@@ -976,18 +1038,18 @@ class KeyboardController(
     }
 
     private fun displaySuggestions(suggestions: List<String>, rawInput: String) {
-        clearSuggestionsUI()
-        if (suggestions.isEmpty()) return
-
-        suggestionLeftBtn?.text = rawInput
-
-        if (suggestions.isNotEmpty()) {
-            suggestionCenterBtn?.text = suggestions[0]
+        if (suggestions.isEmpty()) {
+            clearSuggestionsUI()
+            return
         }
 
-        if (suggestions.size > 1) {
-            suggestionRightBtn?.text = suggestions[1]
-        }
+        val left = rawInput
+        val center = if (suggestions.isNotEmpty()) suggestions[0] else ""
+        val right = if (suggestions.size > 1) suggestions[1] else ""
+
+        if (suggestionLeftBtn?.text?.toString() != left) suggestionLeftBtn?.text = left
+        if (suggestionCenterBtn?.text?.toString() != center) suggestionCenterBtn?.text = center
+        if (suggestionRightBtn?.text?.toString() != right) suggestionRightBtn?.text = right
     }
 
     private fun onEmojiModeToggle() {
@@ -1003,25 +1065,31 @@ class KeyboardController(
             commitText(emojiViewItem.emoji)
         }
 
-        keyboardView.findViewById<Button>(R.id.emoji_key_abc)?.setOnClickListener {
+        val abcBtn = keyboardView.findViewById<Button>(R.id.emoji_key_abc)
+        setFastTapListener(abcBtn) {
+            isEmojiMode = false
+            (context as? UrduKeyboardService)?.recreateKeyboard()
+        }
+
+        val searchPill = keyboardView.findViewById<View>(R.id.emoji_search_pill)
+        searchPill?.setOnClickListener {
             applyTapFeedback(it)
             isEmojiMode = false
             (context as? UrduKeyboardService)?.recreateKeyboard()
         }
 
-        keyboardView.findViewById<Button>(R.id.emoji_key_space)?.setOnClickListener {
-            applyTapFeedback(it)
-            commitText(" ")
-        }
-
-        keyboardView.findViewById<Button>(R.id.emoji_key_backspace)?.setOnTouchListener { view, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
+        val backspaceBtn = keyboardView.findViewById<Button>(R.id.emoji_key_backspace)
+        backspaceBtn?.setOnTouchListener { view, event ->
+            val action = event.actionMasked
+            when (action) {
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                    view.isPressed = true
                     applyTapFeedback(view)
                     backspaceHandler.onBackspaceDown()
                     true
                 }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL -> {
+                    view.isPressed = false
                     backspaceHandler.onBackspaceUp()
                     view.performClick()
                     true

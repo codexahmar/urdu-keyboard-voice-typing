@@ -95,6 +95,9 @@ class PreferenceHelper(context: Context) {
         }
     }
 
+    @Volatile
+    private var cachedTopWords: List<Pair<String, Int>>? = null
+
     /**
      * Get how many times the user has committed this exact word.
      */
@@ -113,20 +116,25 @@ class PreferenceHelper(context: Context) {
         val current = frequencyCache[lower] ?: 0
         val next = minOf(current + 1, 9999)
         frequencyCache[lower] = next
+        cachedTopWords = null
         prefs.edit().putInt(FREQ_PREFIX + lower, next).apply()
     }
 
     /**
      * Return the top-N words (Urdu or Roman) sorted by frequency desc.
-     * Used to pre-populate suggestion strip at the start of a word.
+     * Cached in memory so fast typists get instant O(1) suggestion responses.
      */
     fun getTopFrequentWords(limit: Int = 30): List<Pair<String, Int>> {
         ensureCacheLoaded()
-        return frequencyCache.entries
+        val cached = cachedTopWords
+        if (cached != null) return cached
+        val sorted = frequencyCache.entries
             .asSequence()
             .map { it.key to it.value }
             .sortedByDescending { it.second }
             .take(limit)
             .toList()
+        cachedTopWords = sorted
+        return sorted
     }
 }
