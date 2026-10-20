@@ -64,6 +64,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
         <Button android:id="@+id/key_q" style="@style/KeyboardButton" android:text="q" />
         <Button android:id="@+id/key_w" style="@style/KeyboardButton" android:text="w" />
@@ -80,6 +82,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
         <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="0.5" />
         <Button android:id="@+id/key_a" style="@style/KeyboardButton" android:text="a" />

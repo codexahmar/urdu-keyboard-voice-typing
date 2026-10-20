@@ -66,6 +66,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
         <Button android:id="@+id/urdu_key_1"  style="@style/KeyboardButtonUrdu" android:text="ض" />
         <Button android:id="@+id/urdu_key_2"  style="@style/KeyboardButtonUrdu" android:text="ص" />
@@ -83,6 +85,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
         <Button android:id="@+id/urdu_key_11" style="@style/KeyboardButtonUrdu" android:text="ج" />
         <Button android:id="@+id/urdu_key_12" style="@style/KeyboardButtonUrdu" android:text="چ" />
@@ -100,6 +104,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
         <Button android:id="@+id/urdu_key_21" style="@style/KeyboardButtonUrdu" android:text="پ" />
         <Button android:id="@+id/urdu_key_22" style="@style/KeyboardButtonUrdu" android:text="ت" />

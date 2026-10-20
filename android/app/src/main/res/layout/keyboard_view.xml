@@ -71,6 +71,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <Button android:id="@+id/key_q" style="@style/KeyboardButton" android:text="q" />
@@ -90,6 +92,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <!-- ~half-key left spacer -->

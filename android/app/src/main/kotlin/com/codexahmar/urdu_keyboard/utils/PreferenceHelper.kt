@@ -75,12 +75,32 @@ class PreferenceHelper(context: Context) {
     // ─────────────────────────────────────────────────────────────────────────
 
     private val FREQ_PREFIX = "wf_"
+    private val frequencyCache = java.util.concurrent.ConcurrentHashMap<String, Int>()
+    @Volatile private var isCacheLoaded = false
+
+    private fun ensureCacheLoaded() {
+        if (!isCacheLoaded) {
+            synchronized(frequencyCache) {
+                if (!isCacheLoaded) {
+                    try {
+                        prefs.all.forEach { (key, value) ->
+                            if (key.startsWith(FREQ_PREFIX) && value is Int && value > 0) {
+                                frequencyCache[key.removePrefix(FREQ_PREFIX)] = value
+                            }
+                        }
+                    } catch (_: Exception) {}
+                    isCacheLoaded = true
+                }
+            }
+        }
+    }
 
     /**
      * Get how many times the user has committed this exact word.
      */
     fun getWordFrequency(word: String): Int {
-        return prefs.getInt(FREQ_PREFIX + word.lowercase(), 0)
+        ensureCacheLoaded()
+        return frequencyCache[word.lowercase()] ?: 0
     }
 
     /**
@@ -88,9 +108,12 @@ class PreferenceHelper(context: Context) {
      * Cap at 9999 to keep pref data sane.
      */
     fun incrementWordFrequency(word: String) {
-        val key = FREQ_PREFIX + word.lowercase()
-        val current = prefs.getInt(key, 0)
-        prefs.edit().putInt(key, minOf(current + 1, 9999)).apply()
+        val lower = word.lowercase()
+        ensureCacheLoaded()
+        val current = frequencyCache[lower] ?: 0
+        val next = minOf(current + 1, 9999)
+        frequencyCache[lower] = next
+        prefs.edit().putInt(FREQ_PREFIX + lower, next).apply()
     }
 
     /**
@@ -98,14 +121,12 @@ class PreferenceHelper(context: Context) {
      * Used to pre-populate suggestion strip at the start of a word.
      */
     fun getTopFrequentWords(limit: Int = 30): List<Pair<String, Int>> {
-        return prefs.all
-            .filterKeys { it.startsWith(FREQ_PREFIX) }
-            .mapNotNull { (key, value) ->
-                val word = key.removePrefix(FREQ_PREFIX)
-                val count = value as? Int ?: 0
-                if (count > 0) word to count else null
-            }
+        ensureCacheLoaded()
+        return frequencyCache.entries
+            .asSequence()
+            .map { it.key to it.value }
             .sortedByDescending { it.second }
             .take(limit)
+            .toList()
     }
 }

@@ -70,7 +70,6 @@ class KeyboardController(
     private var suggestionCenterBtn: Button? = null
     private var suggestionRightBtn: Button? = null
     private var lastShiftTapUptimeMs = 0L
-    private var isAutoCapNext = true
     private var isSymbolMode = false
     private var lastKnownBottomInsetPx = 0
 
@@ -78,7 +77,6 @@ class KeyboardController(
     private var isUrduShifted = false
     private var emojiView: View? = null
     private var spaceLongPressRunnable: Runnable? = null
-    private var lastFeedbackUptimeMs = 0L
     // Debounce runnable for suggestion updates — ultra-fast 25ms response
     private var suggestionDebounceRunnable: Runnable? = null
 
@@ -92,11 +90,7 @@ class KeyboardController(
         private const val TAG = "KeyboardController"
         // Extra bottom clearance so content clears the nav bar shadow.
         private const val EXTRA_BOTTOM_GAP_DP = 8
-        // Press-animation scale factor — only scale down, no scale-back chain for speed
-        private const val PRESS_SCALE = 0.90f
-        private const val ANIM_DURATION_MS = 20L   // 20 ms single-phase flash
         private const val SPACE_SWIPE_SWITCH_THRESHOLD_DP = 24
-        private const val FEEDBACK_THROTTLE_MS = 20L  // tighter throttle for fast typists
         // Rapid 25 ms debounce for instantaneous suggestion updates without lag
         private const val SUGGESTION_DEBOUNCE_MS = 25L
     }
@@ -202,6 +196,7 @@ class KeyboardController(
             }
             updateKeyboardLayout()
             refreshEnglishKeyLabels()
+            applyBottomInsetPadding()
             ViewCompat.requestApplyInsets(keyboardView)
             return keyboardView
         }
@@ -257,15 +252,32 @@ class KeyboardController(
     }
 
     fun onStartInput(ic: InputConnection?, info: EditorInfo?) {
-        isAutoCapNext = true
-        shiftState = ShiftState.OFF
-        Log.d(TAG, "onStartInput: IC=${if (ic != null) "valid" else "null"}")
+        val shouldCap = shouldAutoCap(info)
+        shiftState = if (shouldCap) ShiftState.SHIFT_ONCE else ShiftState.OFF
+        Log.d(TAG, "onStartInput: IC=${if (ic != null) "valid" else "null"} autoCap=$shouldCap")
         clearComposingState()
         refreshEnglishKeyLabels()
     }
 
+    private fun shouldAutoCap(info: EditorInfo?): Boolean {
+        if (info == null) return true
+        val inputType = info.inputType
+        if (inputType == 0) return true
+        val clazz = inputType and android.text.InputType.TYPE_MASK_CLASS
+        if (clazz != android.text.InputType.TYPE_CLASS_TEXT) return false
+        val variation = inputType and android.text.InputType.TYPE_MASK_VARIATION
+        if (variation == android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD ||
+            variation == android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
+            variation == android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD ||
+            variation == android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS ||
+            variation == android.text.InputType.TYPE_TEXT_VARIATION_URI ||
+            variation == android.text.InputType.TYPE_TEXT_VARIATION_FILTER) {
+            return false
+        }
+        return true
+    }
+
     fun onFinishInput() {
-        isAutoCapNext = true
         shiftState = ShiftState.OFF
         clearComposingState()
         if (::voiceInputManager.isInitialized) {
@@ -380,49 +392,13 @@ class KeyboardController(
             val btn = keyboardView.findViewById<Button>(id) ?: continue
             val baseLetter = urduBaseLetters[index]
             urduButtonsMap[baseLetter] = btn
-            setUrduKeyListener(btn, index)
+            setFastTapListener(btn) {
+                val currentLetter = if (isUrduShifted) urduShiftLetters[index] else urduBaseLetters[index]
+                onUrduKeyPressed(currentLetter)
+            }
         }
         setupPunctuationButtons()
         refreshUrduKeyLabels()
-    }
-
-    private fun setUrduKeyListener(button: Button, index: Int) {
-        var longPressRunnable: Runnable? = null
-        var isLongPressed = false
-
-        button.setOnTouchListener { view, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    applyTapFeedback(view)
-                    isLongPressed = false
-                    val currentLetter = if (isUrduShifted) urduShiftLetters[index] else urduBaseLetters[index]
-                    val alternate = urduLongPressAlternates[currentLetter]
-                    if (alternate != null) {
-                        longPressRunnable = Runnable {
-                            isLongPressed = true
-                            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                            onUrduKeyPressed(alternate)
-                        }
-                        mainHandler.postDelayed(longPressRunnable!!, ViewConfiguration.getLongPressTimeout().toLong())
-                    }
-                    true
-                }
-                MotionEvent.ACTION_UP -> {
-                    longPressRunnable?.let(mainHandler::removeCallbacks)
-                    if (!isLongPressed) {
-                        val currentLetter = if (isUrduShifted) urduShiftLetters[index] else urduBaseLetters[index]
-                        onUrduKeyPressed(currentLetter)
-                    }
-                    view.performClick()
-                    true
-                }
-                MotionEvent.ACTION_CANCEL -> {
-                    longPressRunnable?.let(mainHandler::removeCallbacks)
-                    true
-                }
-                else -> false
-            }
-        }
     }
 
     private fun setupPunctuationButtons() {
@@ -438,11 +414,10 @@ class KeyboardController(
             Triple("${prefix}comma", comma, false),
             Triple("${prefix}dot", dot, true),
             Triple("${prefix}question", question, true)
-        ).forEach { (idName, symbol, isEndSentence) ->
+        ).forEach { (idName, symbol, _) ->
             val id = context.resources.getIdentifier(idName, "id", context.packageName)
             setFastTapListener(keyboardView.findViewById(id)) {
                 onPunctuationPressed(symbol)
-                if (isEndSentence) isAutoCapNext = true
             }
         }
 
@@ -661,19 +636,24 @@ class KeyboardController(
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Touch listener with press animation
+    // Touch listener with instant tap response and ripple feedback
     // ─────────────────────────────────────────────────────────────────────────
 
     private fun setFastTapListener(button: Button?, onTap: () -> Unit) {
         button?.setOnTouchListener { view, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    view.isPressed = true
                     applyTapFeedback(view)
                     onTap()
                     true
                 }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    view.performClick()
+                MotionEvent.ACTION_UP -> {
+                    view.isPressed = false
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    view.isPressed = false
                     true
                 }
                 else -> false
@@ -681,46 +661,21 @@ class KeyboardController(
         }
     }
 
-    /**
-     * Single-phase scale-down flash on key press (Gboard-style).
-     * Removed the scale-back chain — the view naturally resets via the next press.
-     * This halves animation overhead from ~80 ms to ~20 ms per key.
-     */
-    private fun animateKeyPress(view: View) {
-        view.animate().cancel()
-        view.scaleX = PRESS_SCALE
-        view.scaleY = PRESS_SCALE
-        view.animate()
-            .scaleX(1f)
-            .scaleY(1f)
-            .setDuration(ANIM_DURATION_MS)
-            .start()
-    }
-
     private fun applyTapFeedback(view: View) {
-        if (!shouldEmitVisualFeedback()) return
-        animateKeyPress(view)
         view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
     }
 
-    private fun shouldEmitVisualFeedback(): Boolean {
-        val now = SystemClock.uptimeMillis()
-        val allow = (now - lastFeedbackUptimeMs) >= FEEDBACK_THROTTLE_MS
-        if (allow) lastFeedbackUptimeMs = now
-        return allow
-    }
-
     // ─────────────────────────────────────────────────────────────────────────
-    // Key action handlers (all input logic unchanged)
+    // Key action handlers
     // ─────────────────────────────────────────────────────────────────────────
 
     private fun onEnglishKeyPressed(key: String) {
-        val output = if (shouldUseUppercase()) key.uppercase() else key.lowercase()
+        val uppercase = shouldUseUppercase()
+        val output = if (uppercase) key.uppercase() else key.lowercase()
         composingText.append(output)
         currentInputConnection?.setComposingText(composingText.toString(), 1)
         updateSuggestions()
 
-        isAutoCapNext = false
         if (shiftState == ShiftState.SHIFT_ONCE) {
             shiftState = ShiftState.OFF
             refreshEnglishKeyLabels()
@@ -731,7 +686,6 @@ class KeyboardController(
         composingText.append(urduLetter)
         currentInputConnection?.setComposingText(composingText.toString(), 1)
         updateSuggestions()
-        isAutoCapNext = false
         if (isUrduShifted) {
             isUrduShifted = false
             refreshUrduKeyLabels()
@@ -744,7 +698,10 @@ class KeyboardController(
             clearComposingState()
         }
         commitText(symbol)
-        isAutoCapNext = symbol == "." || symbol == "?" || symbol == "؟" || symbol == "!" || symbol == "۔"
+        if (symbol == "." || symbol == "?" || symbol == "!" || symbol == "۔" || symbol == "؟") {
+            shiftState = ShiftState.SHIFT_ONCE
+            refreshEnglishKeyLabels()
+        }
     }
 
     private fun onSpacePressed() {
@@ -763,7 +720,8 @@ class KeyboardController(
             clearComposingState()
         }
         commitText("\n")
-        isAutoCapNext = true
+        shiftState = ShiftState.SHIFT_ONCE
+        refreshEnglishKeyLabels()
     }
 
     private fun onShiftPressed() {
@@ -786,14 +744,16 @@ class KeyboardController(
             (now - lastShiftTapUptimeMs) <= doubleTapTimeoutMs
         ) {
             ShiftState.CAPS_LOCK
-        } else {
+        } else if (shiftState == ShiftState.OFF) {
             ShiftState.SHIFT_ONCE
+        } else {
+            ShiftState.OFF
         }
         lastShiftTapUptimeMs = now
         refreshEnglishKeyLabels()
     }
 
-    private fun shouldUseUppercase() = shiftState != ShiftState.OFF || isAutoCapNext
+    private fun shouldUseUppercase() = shiftState != ShiftState.OFF
 
     /**
      * Refresh Urdu key labels when shift state changes.
@@ -804,7 +764,9 @@ class KeyboardController(
         for (i in 0 until 38) {
             val id = context.resources.getIdentifier("urdu_key_${i + 1}", "id", context.packageName)
             val btn = keyboardView.findViewById<Button>(id) ?: continue
-            btn.text = letters[i]
+            if (btn.text != letters[i]) {
+                btn.text = letters[i]
+            }
         }
         val shiftButton = keyboardView.findViewById<Button>(R.id.urdu_key_shift)
         shiftButton?.isSelected = isUrduShifted
@@ -820,7 +782,10 @@ class KeyboardController(
 
         val uppercase = shouldUseUppercase()
         englishButtonsMap.forEach { (key, button) ->
-            button.text = if (uppercase) key.uppercase() else key.lowercase()
+            val targetText = if (uppercase) key.uppercase() else key.lowercase()
+            if (button.text != targetText) {
+                button.text = targetText
+            }
         }
 
         // Detect night mode so we pick the right icon variant for contrast.
@@ -862,8 +827,10 @@ class KeyboardController(
         } else {
             updateKeyboardLayout()
         }
-        isAutoCapNext = true
-        shiftState = ShiftState.OFF
+        shiftState = if (!isUrduKeyboardLayout) ShiftState.SHIFT_ONCE else ShiftState.OFF
+        if (!isUrduKeyboardLayout) {
+            refreshEnglishKeyLabels()
+        }
 
         val langName = when (newLang) {
             "ur" -> "اردو"
