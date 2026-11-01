@@ -53,6 +53,38 @@ class UrduKeyboardService : InputMethodService() {
     }
 
     /**
+     * Called when the cursor, selection, or composing span changes in the target editor.
+     * Crucial for synchronizing composing text and preventing stale backspace deletions.
+     */
+    override fun onUpdateSelection(
+        oldSelStart: Int,
+        oldSelEnd: Int,
+        newSelStart: Int,
+        newSelEnd: Int,
+        candidatesStart: Int,
+        candidatesEnd: Int
+    ) {
+        super.onUpdateSelection(
+            oldSelStart,
+            oldSelEnd,
+            newSelStart,
+            newSelEnd,
+            candidatesStart,
+            candidatesEnd
+        )
+        if (::keyboardController.isInitialized) {
+            keyboardController.onUpdateSelection(
+                oldSelStart,
+                oldSelEnd,
+                newSelStart,
+                newSelEnd,
+                candidatesStart,
+                candidatesEnd
+            )
+        }
+    }
+
+    /**
      * Handle key press events
      */
     fun handleKeyPress(key: String) {
@@ -66,8 +98,11 @@ class UrduKeyboardService : InputMethodService() {
      * Handle backspace
      */
     fun handleBackspace() {
-        val ic: InputConnection? = currentInputConnection
-        ic?.deleteSurroundingText(1, 0)
+        if (::keyboardController.isInitialized) {
+            keyboardController.performBackspace()
+        } else {
+            currentInputConnection?.deleteSurroundingText(1, 0)
+        }
     }
 
     /**
@@ -102,18 +137,22 @@ class UrduKeyboardService : InputMethodService() {
 
     /**
      * Recreate keyboard view (called when switching layouts)
+     * Now performs an instant zero-window-detachment layer swap
      */
     fun recreateKeyboard() {
-        setInputView(onCreateInputView())
-        keyboardController.onStartInput(currentInputConnection, currentInputEditorInfo)
+        keyboardController.updateActiveLayer()
     }
 
     /**
      * Insert text from voice recognition
      */
     fun insertVoiceText(text: String) {
-        val ic: InputConnection? = currentInputConnection
-        ic?.commitText(text, 1)
+        if (::keyboardController.isInitialized) {
+            keyboardController.commitVoiceText(text)
+        } else {
+            val ic: InputConnection? = currentInputConnection
+            ic?.commitText(text, 1)
+        }
     }
 
     /**

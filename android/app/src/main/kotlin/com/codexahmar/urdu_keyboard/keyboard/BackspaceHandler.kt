@@ -1,9 +1,12 @@
 package com.codexahmar.urdu_keyboard.keyboard
 
 import android.content.Context
+import android.inputmethodservice.InputMethodService
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.KeyEvent
 import android.view.inputmethod.InputConnection
 
 /**
@@ -84,9 +87,35 @@ class BackspaceHandler(
         }
 
         try {
-            ic.deleteSurroundingText(charCount, 0)
+            // 1. If text is currently selected, commit empty string to delete the selection
+            val selectedText = ic.getSelectedText(0)
+            if (!selectedText.isNullOrEmpty()) {
+                ic.commitText("", 1)
+                return
+            }
+
+            // 2. Delete charCount code points before the cursor (RTL- and Unicode-safe)
+            val deleted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                ic.deleteSurroundingTextInCodePoints(charCount, 0)
+            } else {
+                ic.deleteSurroundingText(charCount, 0)
+            }
+
+            // 3. Fallback to native hardware KEYCODE_DEL if deleteSurroundingText was unhandled
+            if (!deleted) {
+                val ims = context as? InputMethodService
+                for (i in 0 until charCount) {
+                    ims?.sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting text: ${e.message}")
+            try {
+                val ims = context as? InputMethodService
+                for (i in 0 until charCount) {
+                    ims?.sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
+                }
+            } catch (_: Exception) {}
         }
     }
 

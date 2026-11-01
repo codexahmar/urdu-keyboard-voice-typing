@@ -1,11 +1,14 @@
 package com.codexahmar.urdu_keyboard.keyboard
 
 import android.content.Context
+import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -15,7 +18,11 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.Button
-import android.widget.Toast
+import android.widget.FrameLayout
+import android.widget.GridLayout
+import android.widget.HorizontalScrollView
+import android.widget.ScrollView
+import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.emoji2.emojipicker.EmojiPickerView
@@ -30,37 +37,46 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * KeyboardController — manages keyboard view creation, input logic, and UI state.
+ * KeyboardController — Ultra-fast production-grade IME controller.
  *
- * Architectural notes (v2):
- *  - urduLetters array corrected: 38 unique characters, zero duplicates.
- *  - Key-press animation added (subtle 0.87 → 1.0 scale, 60 ms) for tactile feel.
- *  - Shift key now swaps vector drawables (ic_shift / ic_shift_active) instead of
- *    mutating button text, keeping icon-only buttons consistent.
- *  - applyBottomInsetPadding() consolidated to a single reliable
- *    ViewCompat.setOnApplyWindowInsetsListener flow with a manual trigger post-layout.
- *  - All functionality (text commit, language switch, voice, symbols) is unchanged.
+ * Gboard-Grade Performance Optimizations:
+ *  1. Persistent Unified Root Container: Swapping between English, Urdu, Symbols, and
+ *     Emoji occurs via instant in-memory layer visibility toggles (0ms) without calling
+ *     setInputView() or tearing down the hardware rendering window.
+ *  2. Zero-Relayout Shift & Key Presentation: Letters remain in fixed lowercase presentation
+ *     matching Google Gboard standard. Shift toggles only the Shift button icon, completely
+ *     eliminating main-thread layout thrashing across 26 TextView widgets during typing.
+ *  3. Zero Runtime Reflection: All 80+ key views are mapped directly via compile-time R.id
+ *     constants rather than resources.getIdentifier(), eliminating native AssetManager lock contention.
+ *  4. Pre-Indexed Prefix Transliteration: PhoneticMapper uses pre-indexed prefix buckets for O(1)
+ *     suggestions without iterating 500+ items or allocating redundant collections.
+ *  5. Batch InputConnection Operations: Batched text insertions defer target app layout passes.
  */
 class KeyboardController(
     private val context: Context,
     private val preferenceHelper: PreferenceHelper
 ) {
-    private lateinit var keyboardView: View
+    private var rootContainer: FrameLayout? = null
+    private var currentLayoutInflater: LayoutInflater? = null
+
     private val languageManager = LanguageManager(context, preferenceHelper)
     private lateinit var voiceInputManager: VoiceInputManager
     private lateinit var backspaceHandler: BackspaceHandler
     private val mainHandler = Handler(Looper.getMainLooper())
     private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
+    // Cached layer views inside rootContainer
     private var englishView: View? = null
     private var urduView: View? = null
     private var symbolsView: View? = null
+    private var emojiView: View? = null
+    private var currentActiveView: View? = null
 
     private val currentInputConnection: InputConnection?
         get() = (context as? UrduKeyboardService)?.currentInputConnection
 
-    private val englishButtonsMap = mutableMapOf<String, Button>()
-    private val urduButtonsMap = mutableMapOf<String, Button>()
+    private val englishButtons = mutableMapOf<String, Button>()
+    private val urduButtons = mutableListOf<Button>()
 
     private var isUrduKeyboardLayout = false
     private var shiftState = ShiftState.OFF
@@ -77,10 +93,54 @@ class KeyboardController(
     private var isEmojiMode = false
     private var isUrduShifted = false
     private var isHapticFeedbackEnabled = true
-    private var emojiView: View? = null
     private var spaceLongPressRunnable: Runnable? = null
-    // Debounce runnable for suggestion updates — ultra-fast 25ms response
     private var suggestionDebounceRunnable: Runnable? = null
+
+    private val isNightMode: Boolean
+        get() = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
+    private val englishEmojiCategories = listOf(
+        "All" to "",
+        "❤️ Love" to "love",
+        "😂 Funny" to "laugh",
+        "😊 Smile" to "smile",
+        "🔥 Lit" to "fire",
+        "😢 Sad" to "sad",
+        "👍 Hands" to "thumb",
+        "🤲 Dua" to "pray",
+        "🇵🇰 Pak" to "pakistan",
+        "🍕 Food" to "food",
+        "☕ Chai" to "tea",
+        "🎉 Party" to "party",
+        "🚗 Travel" to "car",
+        "🐱 Animals" to "cat",
+        "🌹 Flowers" to "flower",
+        "⭐ Stars" to "star",
+        "💰 Money" to "money"
+    )
+
+    private val urduEmojiCategories = listOf(
+        "سب" to "",
+        "❤️ محبت" to "love",
+        "😂 ہنسی" to "laugh",
+        "😊 مسکراہٹ" to "smile",
+        "🔥 زبردست" to "fire",
+        "😢 اداس" to "sad",
+        "👍 ہاتھ" to "thumb",
+        "🤲 دعا" to "pray",
+        "🇵🇰 پاکستان" to "pakistan",
+        "🍕 کھانا" to "food",
+        "☕ چائے" to "tea",
+        "🎉 جشن" to "party",
+        "🚗 سفر" to "car",
+        "🐱 جانور" to "cat",
+        "🌹 پھول" to "flower",
+        "⭐ ستارے" to "star",
+        "💰 پیسے" to "money"
+    )
+
+    private var selectedEmojiCategoryIndex = 0
+    private val emojiChipViews = mutableListOf<TextView>()
 
     private enum class ShiftState {
         OFF,
@@ -90,82 +150,55 @@ class KeyboardController(
 
     companion object {
         private const val TAG = "KeyboardController"
-        // Extra bottom clearance so content clears the nav bar shadow.
         private const val EXTRA_BOTTOM_GAP_DP = 8
         private const val SPACE_SWIPE_SWITCH_THRESHOLD_DP = 24
-        // Rapid 25 ms debounce for instantaneous suggestion updates without lag
         private const val SUGGESTION_DEBOUNCE_MS = 25L
     }
 
-    /**
-     * Complete Urdu Alphabets & Secondary Layers
-     *
-     * Base Layer (38 keys):
-     * Row 1 (keys 1–10):  ض ص ث ق ف غ ع ہ خ ح
-     * Row 2 (keys 11–20): ج چ ظ ط ز ر ڑ د ڈ ب  (includes ڑ)
-     * Row 3 (keys 21–30): پ ت ٹ ش س ک گ ل م ن
-     * Row 4 (keys 31–38): و ے ی ں ھ ا آ ء     (includes ں, ھ, ء)
-     */
+    // ── Urdu Character Sets (38 unique keys) ──────────────────────────────────
     private val urduBaseLetters = arrayOf(
-        // Row 1
         "ض", "ص", "ث", "ق", "ف", "غ", "ع", "ہ", "خ", "ح",
-        // Row 2
         "ج", "چ", "ظ", "ط", "ز", "ر", "ڑ", "د", "ڈ", "ب",
-        // Row 3
         "پ", "ت", "ٹ", "ش", "س", "ک", "گ", "ل", "م", "ن",
-        // Row 4
         "و", "ے", "ی", "ں", "ھ", "ا", "آ", "ء"
     )
 
-    /**
-     * Shift Layer (38 keys):
-     * Row 1: Diacritics / Aeraab (َ ِ ُ ً ٍ ٌ ّ ْ ٰ ٖ)
-     * Row 2: Secondary characters & honorifics (ذ ژ ئ ؤ ۂ ﷲ ﷺ ﷽ ؑ ؒ)
-     * Row 3: Punctuation & symbols (؛ ؟ ٪ « » ؓ ۖ ۗ ۘ ؞)
-     * Row 4: Urdu numerals (۰ ۱ ۲ ۳ ۴ ۵ ۶ ۷)
-     */
     private val urduShiftLetters = arrayOf(
-        // Row 1 (Aeraab / Vowels)
         "َ", "ِ", "ُ", "ً", "ٍ", "ٌ", "ّ", "ْ", "ٰ", "ٖ",
-        // Row 2 (Secondary Letters & Honorifics)
         "ذ", "ژ", "ئ", "ؤ", "ۂ", "ﷲ", "ﷺ", "﷽", "ؑ", "ؒ",
-        // Row 3 (Urdu Punctuation & Quranic Signs)
         "؛", "؟", "٪", "«", "»", "ؓ", "ۖ", "ۗ", "ۘ", "؞",
-        // Row 4 (Urdu Numerals)
         "۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷"
     )
 
-    /**
-     * Long-press alternate letter mappings for seamless fluid typing without switching layers.
-     */
-    private val urduLongPressAlternates = mapOf(
-        "ر" to "ڑ",
-        "ڑ" to "ر",
-        "ن" to "ں",
-        "ں" to "ن",
-        "ہ" to "ھ",
-        "ھ" to "ہ",
-        "ا" to "آ",
-        "آ" to "ا",
-        "و" to "ؤ",
-        "ؤ" to "و",
-        "ی" to "ئ",
-        "ئ" to "ی",
-        "ے" to "ۓ",
-        "ت" to "ٹ",
-        "ٹ" to "ت",
-        "د" to "ڈ",
-        "ڈ" to "د",
-        "ز" to "ژ",
-        "ژ" to "ز",
-        "ء" to "ئ",
-        "ح" to "خ",
-        "س" to "ش",
-        "ص" to "ض",
-        "ط" to "ظ",
-        "ع" to "غ",
-        "ک" to "گ",
-        "ب" to "پ"
+    // ── Compile-Time IDs for Zero-Reflection Mapping ───────────────────────────
+    private val englishKeyIdMap = intArrayOf(
+        R.id.key_q, R.id.key_w, R.id.key_e, R.id.key_r, R.id.key_t,
+        R.id.key_y, R.id.key_u, R.id.key_i, R.id.key_o, R.id.key_p,
+        R.id.key_a, R.id.key_s, R.id.key_d, R.id.key_f, R.id.key_g,
+        R.id.key_h, R.id.key_j, R.id.key_k, R.id.key_l,
+        R.id.key_z, R.id.key_x, R.id.key_c, R.id.key_v, R.id.key_b,
+        R.id.key_n, R.id.key_m
+    )
+    private val englishKeyCharMap = arrayOf(
+        "q", "w", "e", "r", "t", "y", "u", "i", "o", "p",
+        "a", "s", "d", "f", "g", "h", "j", "k", "l",
+        "z", "x", "c", "v", "b", "n", "m"
+    )
+
+    private val urduKeyIds = intArrayOf(
+        R.id.urdu_key_1, R.id.urdu_key_2, R.id.urdu_key_3, R.id.urdu_key_4, R.id.urdu_key_5,
+        R.id.urdu_key_6, R.id.urdu_key_7, R.id.urdu_key_8, R.id.urdu_key_9, R.id.urdu_key_10,
+        R.id.urdu_key_11, R.id.urdu_key_12, R.id.urdu_key_13, R.id.urdu_key_14, R.id.urdu_key_15,
+        R.id.urdu_key_16, R.id.urdu_key_17, R.id.urdu_key_18, R.id.urdu_key_19, R.id.urdu_key_20,
+        R.id.urdu_key_21, R.id.urdu_key_22, R.id.urdu_key_23, R.id.urdu_key_24, R.id.urdu_key_25,
+        R.id.urdu_key_26, R.id.urdu_key_27, R.id.urdu_key_28, R.id.urdu_key_29, R.id.urdu_key_30,
+        R.id.urdu_key_31, R.id.urdu_key_32, R.id.urdu_key_33, R.id.urdu_key_34, R.id.urdu_key_35,
+        R.id.urdu_key_36, R.id.urdu_key_37, R.id.urdu_key_38
+    )
+
+    private val symDigitIds = intArrayOf(
+        R.id.sym_key_0, R.id.sym_key_1, R.id.sym_key_2, R.id.sym_key_3, R.id.sym_key_4,
+        R.id.sym_key_5, R.id.sym_key_6, R.id.sym_key_7, R.id.sym_key_8, R.id.sym_key_9
     )
 
     init {
@@ -174,57 +207,11 @@ class KeyboardController(
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Public API
+    // Public Lifecycle & View Construction
     // ─────────────────────────────────────────────────────────────────────────
 
     fun createKeyboardView(inflater: LayoutInflater): View {
-        val cachedView = when {
-            isEmojiMode -> emojiView
-            isSymbolMode -> symbolsView
-            isUrduKeyboardLayout -> urduView
-            else -> englishView
-        }
-
-        if (cachedView != null) {
-            keyboardView = cachedView
-            if (isEmojiMode) {
-                setupEmojiKeyboardButtons()
-            } else if (isSymbolMode) {
-                setupSymbolButtons()
-                setupCommonButtons()
-                setupSuggestionButtons()
-            } else {
-                setupSuggestionButtons()
-            }
-            updateKeyboardLayout()
-            refreshEnglishKeyLabels()
-            applyBottomInsetPadding()
-            enableSplitMotionEvents(keyboardView)
-            ViewCompat.requestApplyInsets(keyboardView)
-            return keyboardView
-        }
-
-        val layoutId = when {
-            isEmojiMode -> R.layout.keyboard_emoji
-            isSymbolMode -> R.layout.keyboard_symbols
-            isUrduKeyboardLayout -> R.layout.keyboard_urdu
-            else -> R.layout.keyboard_view
-        }
-
-        val newView = inflater.inflate(layoutId, null)
-        keyboardView = newView
-        if (isEmojiMode) {
-            setupEmojiKeyboardButtons()
-        } else {
-            setupSuggestionButtons()
-        }
-
-        when {
-            isEmojiMode -> emojiView = newView
-            isSymbolMode -> symbolsView = newView
-            isUrduKeyboardLayout -> urduView = newView
-            else -> englishView = newView
-        }
+        currentLayoutInflater = inflater
 
         if (!::backspaceHandler.isInitialized) {
             backspaceHandler = BackspaceHandler(
@@ -242,17 +229,97 @@ class KeyboardController(
             }
         }
 
-        if (isEmojiMode) {
-            setupEmojiKeyboardButtons()
-        } else {
-            setupKeyboardButtons()
+        var container = rootContainer
+        if (container == null) {
+            container = FrameLayout(context).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                isMotionEventSplittingEnabled = true
+            }
+            rootContainer = container
+            applyBottomInsetPadding(container)
         }
-        updateKeyboardLayout()
-        refreshEnglishKeyLabels()
-        applyBottomInsetPadding()
-        enableSplitMotionEvents(keyboardView)
 
-        return keyboardView
+        updateActiveLayer()
+        return container
+    }
+
+    /**
+     * Instantaneous layer visibility swap.
+     * ZERO window detachment, ZERO setInputView() invocation, ZERO layout inflation on repeat visits.
+     */
+    fun updateActiveLayer() {
+        val inflater = currentLayoutInflater ?: LayoutInflater.from(context)
+
+        val targetView = when {
+            isEmojiMode -> getOrCreateEmojiView(inflater)
+            isSymbolMode -> getOrCreateSymbolsView(inflater)
+            isUrduKeyboardLayout -> getOrCreateUrduView(inflater)
+            else -> getOrCreateEnglishView(inflater)
+        }
+
+        currentActiveView = targetView
+
+        englishView?.visibility = if (targetView === englishView) View.VISIBLE else View.GONE
+        urduView?.visibility = if (targetView === urduView) View.VISIBLE else View.GONE
+        symbolsView?.visibility = if (targetView === symbolsView) View.VISIBLE else View.GONE
+        emojiView?.visibility = if (targetView === emojiView) View.VISIBLE else View.GONE
+
+        // Point suggestions strip references to active view
+        if (!isEmojiMode) {
+            suggestionLeftBtn = targetView.findViewById(R.id.suggestion_left)
+            suggestionCenterBtn = targetView.findViewById(R.id.suggestion_center)
+            suggestionRightBtn = targetView.findViewById(R.id.suggestion_right)
+            clearSuggestionsUI()
+        }
+
+        updateKeyboardLayout()
+        updateShiftButtonIcon()
+    }
+
+    private fun getOrCreateEnglishView(inflater: LayoutInflater): View {
+        englishView?.let { return it }
+        val view = inflater.inflate(R.layout.keyboard_view, rootContainer, false)
+        enableSplitMotionEvents(view)
+        setupEnglishViewButtons(view)
+        setupSuggestionButtons(view)
+        rootContainer?.addView(view)
+        englishView = view
+        return view
+    }
+
+    private fun getOrCreateUrduView(inflater: LayoutInflater): View {
+        urduView?.let { return it }
+        val view = inflater.inflate(R.layout.keyboard_urdu, rootContainer, false)
+        enableSplitMotionEvents(view)
+        setupUrduViewButtons(view)
+        setupSuggestionButtons(view)
+        rootContainer?.addView(view)
+        urduView = view
+        return view
+    }
+
+    private fun getOrCreateSymbolsView(inflater: LayoutInflater): View {
+        symbolsView?.let { return it }
+        val view = inflater.inflate(R.layout.keyboard_symbols, rootContainer, false)
+        enableSplitMotionEvents(view)
+        setupSymbolsViewButtons(view)
+        setupSuggestionButtons(view)
+        rootContainer?.addView(view)
+        symbolsView = view
+        return view
+    }
+
+    private fun getOrCreateEmojiView(inflater: LayoutInflater): View {
+        emojiView?.let { return it }
+        val view = inflater.inflate(R.layout.keyboard_emoji, rootContainer, false)
+        enableSplitMotionEvents(view)
+        setupEmojiViewButtons(view)
+        rootContainer?.addView(view)
+        emojiView = view
+        return view
     }
 
     private fun enableSplitMotionEvents(view: View) {
@@ -268,9 +335,8 @@ class KeyboardController(
         isHapticFeedbackEnabled = preferenceHelper.isHapticFeedbackEnabled()
         val shouldCap = shouldAutoCap(info)
         shiftState = if (shouldCap) ShiftState.SHIFT_ONCE else ShiftState.OFF
-        Log.d(TAG, "onStartInput: IC=${if (ic != null) "valid" else "null"} autoCap=$shouldCap")
         clearComposingState()
-        refreshEnglishKeyLabels()
+        updateShiftButtonIcon()
     }
 
     private fun shouldAutoCap(info: EditorInfo?): Boolean {
@@ -299,6 +365,32 @@ class KeyboardController(
         }
     }
 
+    /**
+     * Synchronizes composing state when cursor or selection changes.
+     * Prevents stale composing text from hijacking backspace at a new cursor position.
+     */
+    fun onUpdateSelection(
+        oldSelStart: Int,
+        oldSelEnd: Int,
+        newSelStart: Int,
+        newSelEnd: Int,
+        candidatesStart: Int,
+        candidatesEnd: Int
+    ) {
+        if (composingText.isNotEmpty()) {
+            val isOurComposing = candidatesStart >= 0 &&
+                candidatesEnd >= 0 &&
+                newSelStart == candidatesEnd &&
+                newSelEnd == candidatesEnd &&
+                (candidatesEnd - candidatesStart) == composingText.length
+
+            if (!isOurComposing) {
+                // User tapped elsewhere, selected a range, or composing span was ended
+                clearComposingState()
+            }
+        }
+    }
+
     fun handleKeyPress(key: String, ic: InputConnection) {
         when {
             isUrduKeyboardLayout -> onUrduKeyPressed(key)
@@ -312,6 +404,10 @@ class KeyboardController(
     fun cleanup() {
         spaceLongPressRunnable?.let(mainHandler::removeCallbacks)
         spaceLongPressRunnable = null
+        suggestionDebounceRunnable?.let(mainHandler::removeCallbacks)
+        suggestionDebounceRunnable = null
+        emojiChipViews.clear()
+        selectedEmojiCategoryIndex = 0
         ioScope.cancel()
         if (::backspaceHandler.isInitialized) {
             backspaceHandler.cleanup()
@@ -319,230 +415,345 @@ class KeyboardController(
         if (::voiceInputManager.isInitialized) {
             voiceInputManager.cleanup()
         }
+        rootContainer?.removeAllViews()
+        rootContainer = null
         englishView = null
         urduView = null
         symbolsView = null
-        englishButtonsMap.clear()
-        urduButtonsMap.clear()
+        emojiView = null
+        englishButtons.clear()
+        urduButtons.clear()
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Inset handling — single consolidated path, no redundant triple-calls
+    // Inset Handling
     // ─────────────────────────────────────────────────────────────────────────
 
-    private fun applyBottomInsetPadding() {
+    private fun applyBottomInsetPadding(targetView: View) {
         val extraGap = dpToPx(EXTRA_BOTTOM_GAP_DP)
         val minBottom = dpToPx(2)
-        val baseLeft = keyboardView.paddingLeft
-        val baseTop = keyboardView.paddingTop
-        val baseRight = keyboardView.paddingRight
+        val baseLeft = targetView.paddingLeft
+        val baseTop = targetView.paddingTop
+        val baseRight = targetView.paddingRight
 
         fun applyInset(bottomInset: Int) {
             lastKnownBottomInsetPx = bottomInset
-            keyboardView.setPadding(
+            targetView.setPadding(
                 baseLeft, baseTop, baseRight,
                 max(minBottom, bottomInset) + extraGap
             )
         }
 
-        // Apply a best-effort initial padding so there's no first-frame jump.
         applyInset(lastKnownBottomInsetPx)
 
-        // Register the reliable callback — fires whenever insets change.
-        ViewCompat.setOnApplyWindowInsetsListener(keyboardView) { _, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(targetView) { _, insets ->
             val navBottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
             val systemBarsBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
             applyInset(max(navBottom, systemBarsBottom))
             insets
         }
 
-        // Trigger manually after the view is laid out (handles cases where the
-        // callback fires before the view is attached).
-        keyboardView.post { ViewCompat.requestApplyInsets(keyboardView) }
+        targetView.post { ViewCompat.requestApplyInsets(targetView) }
     }
 
     private fun dpToPx(dp: Int): Int =
         (dp * context.resources.displayMetrics.density).toInt()
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Button wiring
+    // Button Wiring (Direct Compile-Time IDs — Zero Reflection)
     // ─────────────────────────────────────────────────────────────────────────
 
-    private fun setupKeyboardButtons() {
-        when {
-            isSymbolMode -> setupSymbolButtons()
-            isUrduKeyboardLayout -> setupUrduKeyboardButtons()
-            else -> {
-                setupEnglishKeyboardButtons()
-                setupPunctuationButtons()
-            }
+    private fun setupEnglishViewButtons(view: View) {
+        for (i in englishKeyIdMap.indices) {
+            val key = englishKeyCharMap[i]
+            val btn = view.findViewById<Button>(englishKeyIdMap[i]) ?: continue
+            englishButtons[key] = btn
+            setFastTapListener(btn) { onEnglishKeyPressed(key) }
         }
-        setupCommonButtons()
+
+        // Punctuation
+        setFastTapListener(view.findViewById(R.id.key_comma)) { onPunctuationPressed(",") }
+        setFastTapListener(view.findViewById(R.id.key_dot)) { onPunctuationPressed(".") }
+
+        // Action Keys
+        setupSpaceButton(view.findViewById(R.id.key_space))
+        setupBackspaceButton(view.findViewById(R.id.key_backspace))
+        setFastTapListener(view.findViewById(R.id.key_enter)) { onEnterPressed() }
+        view.findViewById<Button>(R.id.key_voice)?.setOnClickListener { onVoiceInput() }
+        view.findViewById<Button>(R.id.key_language)?.setOnClickListener { onLanguageSwitch() }
+        view.findViewById<Button>(R.id.key_symbols)?.setOnClickListener { onSymbolsModeToggle() }
+        view.findViewById<Button>(R.id.key_emoji)?.setOnClickListener { onEmojiModeToggle() }
+        view.findViewById<Button>(R.id.key_shift)?.setOnClickListener { onShiftPressed() }
     }
 
-    private fun setupEnglishKeyboardButtons() {
-        val letterKeys = arrayOf(
-            "q", "w", "e", "r", "t", "y", "u", "i", "o", "p",
-            "a", "s", "d", "f", "g", "h", "j", "k", "l",
-            "z", "x", "c", "v", "b", "n", "m"
-        )
-        englishButtonsMap.clear()
-        letterKeys.forEach { key ->
-            val id = context.resources.getIdentifier("key_$key", "id", context.packageName)
-            val btn = keyboardView.findViewById<Button>(id)
-            if (btn != null) {
-                englishButtonsMap[key] = btn
-                setFastTapListener(btn) { onEnglishKeyPressed(key) }
-            }
-        }
-    }
-
-    private fun setupUrduKeyboardButtons() {
-        urduButtonsMap.clear()
+    private fun setupUrduViewButtons(view: View) {
+        urduButtons.clear()
         for (index in 0 until 38) {
-            val id = context.resources.getIdentifier(
-                "urdu_key_${index + 1}", "id", context.packageName
-            )
-            val btn = keyboardView.findViewById<Button>(id) ?: continue
-            val baseLetter = urduBaseLetters[index]
-            urduButtonsMap[baseLetter] = btn
+            val btn = view.findViewById<Button>(urduKeyIds[index]) ?: continue
+            urduButtons.add(btn)
             setFastTapListener(btn) {
                 val currentLetter = if (isUrduShifted) urduShiftLetters[index] else urduBaseLetters[index]
                 onUrduKeyPressed(currentLetter)
             }
         }
-        setupPunctuationButtons()
+
+        // Punctuation
+        setFastTapListener(view.findViewById(R.id.urdu_key_comma)) { onPunctuationPressed("،") }
+        setFastTapListener(view.findViewById(R.id.urdu_key_dot)) { onPunctuationPressed("۔") }
+
+        // Action Keys
+        setupSpaceButton(view.findViewById(R.id.urdu_key_space))
+        setupBackspaceButton(view.findViewById(R.id.urdu_backspace))
+        setFastTapListener(view.findViewById(R.id.urdu_key_enter)) { onEnterPressed() }
+        view.findViewById<Button>(R.id.urdu_key_voice)?.setOnClickListener { onVoiceInput() }
+        view.findViewById<Button>(R.id.urdu_key_language)?.setOnClickListener { onLanguageSwitch() }
+        view.findViewById<Button>(R.id.urdu_key_symbols)?.setOnClickListener { onSymbolsModeToggle() }
+        view.findViewById<Button>(R.id.urdu_key_emoji)?.setOnClickListener { onEmojiModeToggle() }
+        view.findViewById<Button>(R.id.urdu_key_shift)?.setOnClickListener { onShiftPressed() }
+
         refreshUrduKeyLabels()
     }
 
-    private fun setupPunctuationButtons() {
-        val prefix = when {
-            isUrduKeyboardLayout -> "urdu_key_"
-            else -> "key_"
-        }
-        val comma = if (isUrduKeyboardLayout) "،" else ","
-        val dot = if (isUrduKeyboardLayout) "۔" else "."
-        val question = if (isUrduKeyboardLayout) "؟" else "?"
-
-        listOf(
-            Triple("${prefix}comma", comma, false),
-            Triple("${prefix}dot", dot, true),
-            Triple("${prefix}question", question, true)
-        ).forEach { (idName, symbol, _) ->
-            val id = context.resources.getIdentifier(idName, "id", context.packageName)
-            setFastTapListener(keyboardView.findViewById(id)) {
-                onPunctuationPressed(symbol)
-            }
-        }
-
-        // Extra symbols — silently skip if the key doesn't exist in this layout.
-        mapOf(
-            "${prefix}apostrophe" to "'",
-            "${prefix}slash" to "/",
-            "${prefix}at" to "@",
-            "${prefix}minus" to "-",
-            "${prefix}plus" to "+"
-        ).forEach { (idName, symbol) ->
-            val id = context.resources.getIdentifier(idName, "id", context.packageName)
-            val btn = keyboardView.findViewById<Button?>(id) ?: return@forEach
-            setFastTapListener(btn) { onPunctuationPressed(symbol) }
-        }
-    }
-
-    private fun setupSymbolButtons() {
+    private fun setupSymbolsViewButtons(view: View) {
         val urduDigits = listOf("۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹")
 
-        // Number row: sym_key_0 .. sym_key_9 (sym_key_1..9, 0)
+        // Digits 0..9
         for (i in 0..9) {
-            val id = context.resources.getIdentifier("sym_key_$i", "id", context.packageName)
-            val btn = keyboardView.findViewById<Button?>(id) ?: continue
+            val btn = view.findViewById<Button?>(symDigitIds[i]) ?: continue
             val symbol = if (isUrduKeyboardLayout) urduDigits[i] else i.toString()
             btn.text = symbol
-            if (isUrduKeyboardLayout) {
-                btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
-            } else {
-                btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
-            }
+            btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, if (isUrduKeyboardLayout) 22f else 19f)
             setFastTapListener(btn) { commitText(symbol) }
         }
 
         // Language-adaptive punctuation
-        val punctuationMap = if (isUrduKeyboardLayout) {
-            mapOf(
-                "sym_key_question" to "؟",
-                "sym_key_comma" to "،",
-                "sym_key_dot" to "۔",
-                "sym_key_semicolon" to "؛",
-                "sym_key_percent" to "٪"
+        val punctPairs = if (isUrduKeyboardLayout) {
+            arrayOf(
+                Pair(R.id.sym_key_question, "؟"), Pair(R.id.sym_key_comma, "،"),
+                Pair(R.id.sym_key_dot, "۔"), Pair(R.id.sym_key_semicolon, "؛"),
+                Pair(R.id.sym_key_percent, "٪")
             )
         } else {
-            mapOf(
-                "sym_key_question" to "?",
-                "sym_key_comma" to ",",
-                "sym_key_dot" to ".",
-                "sym_key_semicolon" to ";",
-                "sym_key_percent" to "%"
+            arrayOf(
+                Pair(R.id.sym_key_question, "?"), Pair(R.id.sym_key_comma, ","),
+                Pair(R.id.sym_key_dot, "."), Pair(R.id.sym_key_semicolon, ";"),
+                Pair(R.id.sym_key_percent, "%")
             )
         }
 
-        punctuationMap.forEach { (idName, symbol) ->
-            val id = context.resources.getIdentifier(idName, "id", context.packageName)
-            val btn = keyboardView.findViewById<Button?>(id) ?: return@forEach
-            btn.text = symbol
-            if (isUrduKeyboardLayout) {
-                btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
-            } else {
-                btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
-            }
-            setFastTapListener(btn) { commitText(symbol) }
+        for ((id, sym) in punctPairs) {
+            val btn = view.findViewById<Button?>(id) ?: continue
+            btn.text = sym
+            btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, if (isUrduKeyboardLayout) 22f else 19f)
+            setFastTapListener(btn) { commitText(sym) }
         }
 
-        // Standard symbols common across languages
-        mapOf(
-            "sym_key_at" to "@", "sym_key_hash" to "#", "sym_key_dollar" to "$",
-            "sym_key_amp" to "&", "sym_key_star" to "*",
-            "sym_key_minus" to "-", "sym_key_plus" to "+",
-            "sym_key_lparen" to "(", "sym_key_rparen" to ")",
-            "sym_key_slash" to "/", "sym_key_quote" to "\"",
-            "sym_key_apostrophe" to "'", "sym_key_colon" to ":",
-            "sym_key_exclamation" to "!", "sym_key_equal" to "=",
-            "sym_key_lbracket" to "[", "sym_key_rbracket" to "]",
-            "sym_key_lbrace" to "{", "sym_key_rbrace" to "}",
-            "sym_key_backslash" to "\\", "sym_key_less" to "<",
-            "sym_key_greater" to ">", "sym_key_caret" to "^",
-            "sym_key_tilde" to "~"
-        ).forEach { (idName, symbol) ->
-            val id = context.resources.getIdentifier(idName, "id", context.packageName)
-            val btn = keyboardView.findViewById<Button?>(id) ?: return@forEach
-            btn.text = symbol
+        // Standard Symbols
+        val commonSyms = arrayOf(
+            Pair(R.id.sym_key_at, "@"), Pair(R.id.sym_key_hash, "#"), Pair(R.id.sym_key_dollar, "$"),
+            Pair(R.id.sym_key_amp, "&"), Pair(R.id.sym_key_star, "*"), Pair(R.id.sym_key_minus, "-"),
+            Pair(R.id.sym_key_plus, "+"), Pair(R.id.sym_key_lparen, "("), Pair(R.id.sym_key_rparen, ")"),
+            Pair(R.id.sym_key_slash, "/"), Pair(R.id.sym_key_quote, "\""), Pair(R.id.sym_key_apostrophe, "'"),
+            Pair(R.id.sym_key_colon, ":"), Pair(R.id.sym_key_exclamation, "!")
+        )
+        for ((id, sym) in commonSyms) {
+            val btn = view.findViewById<Button?>(id) ?: continue
+            btn.text = sym
             btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
-            setFastTapListener(btn) { commitText(symbol) }
+            setFastTapListener(btn) { commitText(sym) }
         }
 
-        // Return key to letter mode: "اردو" for Urdu, "ABC" for English
-        val abcBtn = keyboardView.findViewById<Button?>(R.id.sym_key_abc)
-        abcBtn?.text = if (isUrduKeyboardLayout) "اردو" else "ABC"
+        // Action Keys
+        setupSpaceButton(view.findViewById(R.id.sym_key_space))
+        setupBackspaceButton(view.findViewById(R.id.sym_backspace))
+        setFastTapListener(view.findViewById(R.id.sym_key_enter)) { onEnterPressed() }
+        view.findViewById<Button>(R.id.sym_key_voice)?.setOnClickListener { onVoiceInput() }
+        view.findViewById<Button>(R.id.sym_key_language)?.setOnClickListener { onLanguageSwitch() }
+        view.findViewById<Button>(R.id.sym_key_abc)?.setOnClickListener { onSymbolsModeToggle() }
+        view.findViewById<Button>(R.id.sym_key_emoji)?.setOnClickListener { onEmojiModeToggle() }
     }
 
-    private fun setupCommonButtons() {
-        val prefix = when {
-            isSymbolMode -> "sym_key_"
-            isUrduKeyboardLayout -> "urdu_key_"
-            else -> "key_"
-        }
-        val backPrefix = when {
-            isSymbolMode -> "sym_"
-            isUrduKeyboardLayout -> "urdu_"
-            else -> "key_"
+    private fun setupEmojiViewButtons(view: View) {
+        val emojiPickerView = view.findViewById<EmojiPickerView>(R.id.emoji_picker_view)
+        emojiPickerView?.setOnEmojiPickedListener { emojiViewItem ->
+            applyTapFeedback(emojiPickerView)
+            commitText(emojiViewItem.emoji)
         }
 
-        // Space
-        val spaceId = context.resources.getIdentifier("${prefix}space", "id", context.packageName)
-        setupSpaceButton(keyboardView.findViewById(spaceId))
+        val abcBtn = view.findViewById<Button>(R.id.emoji_key_abc)
+        abcBtn?.text = if (isUrduKeyboardLayout) "اردو" else "ABC"
+        setFastTapListener(abcBtn) {
+            clearComposingState()
+            isEmojiMode = false
+            updateActiveLayer()
+        }
 
-        // Backspace — long-press handled by BackspaceHandler
-        val bsId = context.resources.getIdentifier("${backPrefix}backspace", "id", context.packageName)
-        keyboardView.findViewById<Button>(bsId)?.setOnTouchListener { view, event ->
+        setupBackspaceButton(view.findViewById(R.id.emoji_key_backspace))
+
+        val searchPill = view.findViewById<View>(R.id.emoji_search_pill)
+        val clearBtn = view.findViewById<Button>(R.id.emoji_search_clear_btn)
+        val chipsScroll = view.findViewById<HorizontalScrollView>(R.id.emoji_search_chips_scroll)
+        val chipsContainer = view.findViewById<ViewGroup>(R.id.emoji_search_chips_container)
+
+        buildEmojiChips(chipsContainer)
+
+        setFastTapListener(clearBtn) {
+            selectEmojiCategory(0)
+        }
+
+        setFastTapListener(searchPill) {
+            // Tapping search pill stays ON the emoji screen!
+            if (selectedEmojiCategoryIndex != 0) {
+                selectEmojiCategory(0)
+            } else {
+                selectEmojiCategory(1) // Quick jump to "❤️ Love"
+                chipsScroll?.smoothScrollTo(0, 0)
+            }
+        }
+    }
+
+    private fun buildEmojiChips(container: ViewGroup?) {
+        if (container == null) return
+        container.removeAllViews()
+        emojiChipViews.clear()
+
+        val categories = if (isUrduKeyboardLayout) urduEmojiCategories else englishEmojiCategories
+        val chipMargin = dpToPx(6)
+        val horizontalPadding = dpToPx(12)
+        val verticalPadding = dpToPx(4)
+
+        for (i in categories.indices) {
+            val (label, _) = categories[i]
+            val chip = TextView(context).apply {
+                text = label
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                isClickable = true
+                isFocusable = true
+                gravity = Gravity.CENTER
+                setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding)
+                val lp = ViewGroup.MarginLayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                ).apply {
+                    marginEnd = chipMargin
+                }
+                layoutParams = lp
+            }
+            setFastTapListener(chip) {
+                selectEmojiCategory(i)
+            }
+            container.addView(chip)
+            emojiChipViews.add(chip)
+        }
+
+        updateEmojiChipsAppearance()
+    }
+
+    private fun selectEmojiCategory(index: Int) {
+        val categories = if (isUrduKeyboardLayout) urduEmojiCategories else englishEmojiCategories
+        val safeIndex = index.coerceIn(0, categories.lastIndex)
+        selectedEmojiCategoryIndex = safeIndex
+        val (label, tag) = categories[safeIndex]
+
+        updateEmojiChipsAppearance()
+
+        val emojiViewRef = emojiView ?: return
+        val emojiPicker = emojiViewRef.findViewById<View>(R.id.emoji_picker_view)
+        val gridScroll = emojiViewRef.findViewById<View>(R.id.emoji_search_grid_scroll)
+        val grid = emojiViewRef.findViewById<GridLayout>(R.id.emoji_search_grid)
+        val clearBtn = emojiViewRef.findViewById<View>(R.id.emoji_search_clear_btn)
+        val searchText = emojiViewRef.findViewById<TextView>(R.id.emoji_search_text)
+
+        if (tag.isEmpty()) {
+            gridScroll?.visibility = View.GONE
+            emojiPicker?.visibility = View.VISIBLE
+            clearBtn?.visibility = View.GONE
+            searchText?.text = if (isUrduKeyboardLayout) "ایموجی تلاش کریں" else "Search emoji"
+        } else {
+            emojiPicker?.visibility = View.GONE
+            gridScroll?.visibility = View.VISIBLE
+            clearBtn?.visibility = View.VISIBLE
+            searchText?.text = label
+            if (grid != null) {
+                val results = EmojiDictionary.search(tag)
+                displayFilteredEmojis(results, grid)
+            }
+        }
+    }
+
+    private fun updateEmojiChipsAppearance() {
+        val isDark = isNightMode
+        val categories = if (isUrduKeyboardLayout) urduEmojiCategories else englishEmojiCategories
+        for (i in emojiChipViews.indices) {
+            val chip = emojiChipViews[i]
+            if (i < categories.size) {
+                chip.text = categories[i].first
+            }
+            val isSelected = (i == selectedEmojiCategoryIndex)
+            chip.setBackgroundResource(
+                when {
+                    isSelected -> R.drawable.emoji_chip_bg_active
+                    isDark -> R.drawable.emoji_chip_bg_dark
+                    else -> R.drawable.emoji_chip_bg
+                }
+            )
+            chip.setTextColor(
+                when {
+                    isSelected -> Color.WHITE
+                    isDark -> Color.parseColor("#E8EAED")
+                    else -> Color.parseColor("#202124")
+                }
+            )
+        }
+    }
+
+    private fun displayFilteredEmojis(emojis: List<String>, grid: GridLayout) {
+        val displayMetrics = context.resources.displayMetrics
+        val screenWidth = displayMetrics.widthPixels
+        val horizontalPadding = dpToPx(8)
+        val availableWidth = (screenWidth - horizontalPadding).coerceAtLeast(dpToPx(280))
+        val colWidth = availableWidth / 8
+        val itemHeight = dpToPx(44)
+
+        val currentCount = grid.childCount
+        val targetCount = emojis.size
+
+        for (i in 0 until max(currentCount, targetCount)) {
+            if (i < targetCount) {
+                val emoji = emojis[i]
+                val cell = if (i < currentCount) {
+                    grid.getChildAt(i) as TextView
+                } else {
+                    TextView(context).apply {
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
+                        gravity = Gravity.CENTER
+                        val outValue = TypedValue()
+                        if (context.theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true)) {
+                            setBackgroundResource(outValue.resourceId)
+                        }
+                        isClickable = true
+                        isFocusable = true
+                        grid.addView(this)
+                    }
+                }
+                cell.text = emoji
+                val lp = cell.layoutParams as? GridLayout.LayoutParams ?: GridLayout.LayoutParams()
+                lp.width = colWidth
+                lp.height = itemHeight
+                cell.layoutParams = lp
+                cell.visibility = View.VISIBLE
+                setFastTapListener(cell) {
+                    applyTapFeedback(cell)
+                    commitText(emoji)
+                }
+            } else {
+                grid.getChildAt(i).visibility = View.GONE
+            }
+        }
+    }
+
+    private fun setupBackspaceButton(backspaceBtn: Button?) {
+        backspaceBtn?.setOnTouchListener { view, event ->
             val action = event.actionMasked
             when (action) {
                 MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
@@ -559,34 +770,6 @@ class KeyboardController(
                 }
                 else -> false
             }
-        }
-
-        // Enter
-        val enterId = context.resources.getIdentifier("${prefix}enter", "id", context.packageName)
-        setFastTapListener(keyboardView.findViewById(enterId)) { onEnterPressed() }
-
-        // Voice / Mic
-        val voiceId = context.resources.getIdentifier("${prefix}voice", "id", context.packageName)
-        keyboardView.findViewById<Button>(voiceId)?.setOnClickListener { onVoiceInput() }
-
-        // Language switch
-        val langId = context.resources.getIdentifier("${prefix}language", "id", context.packageName)
-        keyboardView.findViewById<Button>(langId)?.setOnClickListener { onLanguageSwitch() }
-
-        // Emoji toggle
-        val emojiId = context.resources.getIdentifier("${prefix}emoji", "id", context.packageName)
-        keyboardView.findViewById<Button>(emojiId)?.setOnClickListener { onEmojiModeToggle() }
-
-        // 123 ↔ ABC toggle
-        val toggleIdName = if (isSymbolMode) "sym_key_abc" else "${prefix}symbols"
-        val toggleId = context.resources.getIdentifier(toggleIdName, "id", context.packageName)
-        keyboardView.findViewById<Button>(toggleId)?.setOnClickListener { onSymbolsModeToggle() }
-
-        // Shift (Urdu & English)
-        if (!isSymbolMode) {
-            val shiftIdName = if (isUrduKeyboardLayout) "urdu_key_shift" else "key_shift"
-            val shiftId = context.resources.getIdentifier(shiftIdName, "id", context.packageName)
-            keyboardView.findViewById<Button>(shiftId)?.setOnClickListener { onShiftPressed() }
         }
     }
 
@@ -612,7 +795,6 @@ class KeyboardController(
                     downX = event.x
                     downY = event.y
 
-                    // Immediately commit space on touch down (0ms latency, guaranteed typing order)
                     onSpacePressed()
 
                     spaceLongPressRunnable?.let(mainHandler::removeCallbacks)
@@ -631,7 +813,6 @@ class KeyboardController(
                         if (kotlin.math.abs(dx) >= swipeThresholdPx && kotlin.math.abs(dx) > kotlin.math.abs(dy)) {
                             spaceLongPressRunnable?.let(mainHandler::removeCallbacks)
                             isSwipeSwitchHandled = true
-                            // User intended swipe gesture: revert the space character inserted on down
                             currentInputConnection?.deleteSurroundingText(1, 0)
                             applyTapFeedback(view)
                             onLanguageSwitch()
@@ -659,10 +840,10 @@ class KeyboardController(
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Touch listener with instant tap response, multi-touch, and ripple feedback
+    // Instant Touch Feedback Listener
     // ─────────────────────────────────────────────────────────────────────────
 
-    private fun setFastTapListener(button: Button?, onTap: () -> Unit) {
+    private fun setFastTapListener(button: View?, onTap: () -> Unit) {
         button?.setOnTouchListener { view, event ->
             val action = event.actionMasked
             when (action) {
@@ -703,36 +884,39 @@ class KeyboardController(
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Key action handlers
+    // Key Action Handlers (Zero-Relayout Fast Path)
     // ─────────────────────────────────────────────────────────────────────────
 
     private fun onEnglishKeyPressed(key: String) {
         val uppercase = shouldUseUppercase()
         val output = if (uppercase) key.uppercase() else key.lowercase()
         composingText.append(output)
+
         val ic = currentInputConnection
         ic?.beginBatchEdit()
         ic?.setComposingText(composingText.toString(), 1)
         ic?.endBatchEdit()
         updateSuggestions()
 
+        // Shift turn-off: Updates only Shift icon, ZERO layout passes on 26 keys
         if (shiftState == ShiftState.SHIFT_ONCE) {
             shiftState = ShiftState.OFF
             updateShiftButtonIcon()
-            mainHandler.post { refreshEnglishKeyLabels() }
         }
     }
 
     private fun onUrduKeyPressed(urduLetter: String) {
         composingText.append(urduLetter)
+
         val ic = currentInputConnection
         ic?.beginBatchEdit()
         ic?.setComposingText(composingText.toString(), 1)
         ic?.endBatchEdit()
         updateSuggestions()
+
         if (isUrduShifted) {
             isUrduShifted = false
-            mainHandler.post { refreshUrduKeyLabels() }
+            refreshUrduKeyLabels()
         }
     }
 
@@ -745,9 +929,10 @@ class KeyboardController(
         }
         ic?.commitText(symbol, 1)
         ic?.endBatchEdit()
+
         if (symbol == "." || symbol == "?" || symbol == "!" || symbol == "۔" || symbol == "؟") {
             shiftState = ShiftState.SHIFT_ONCE
-            refreshEnglishKeyLabels()
+            updateShiftButtonIcon()
         }
     }
 
@@ -772,8 +957,9 @@ class KeyboardController(
         }
         ic?.commitText("\n", 1)
         ic?.endBatchEdit()
+
         shiftState = ShiftState.SHIFT_ONCE
-        refreshEnglishKeyLabels()
+        updateShiftButtonIcon()
     }
 
     private fun onShiftPressed() {
@@ -785,7 +971,7 @@ class KeyboardController(
 
         if (shiftState == ShiftState.CAPS_LOCK) {
             shiftState = ShiftState.OFF
-            refreshEnglishKeyLabels()
+            updateShiftButtonIcon()
             return
         }
 
@@ -802,50 +988,28 @@ class KeyboardController(
             ShiftState.OFF
         }
         lastShiftTapUptimeMs = now
-        refreshEnglishKeyLabels()
+        updateShiftButtonIcon()
     }
 
     private fun shouldUseUppercase() = shiftState != ShiftState.OFF
 
-    /**
-     * Refresh Urdu key labels when shift state changes.
-     */
     private fun refreshUrduKeyLabels() {
-        if (!isUrduKeyboardLayout) return
+        if (!isUrduKeyboardLayout || urduButtons.isEmpty()) return
         val letters = if (isUrduShifted) urduShiftLetters else urduBaseLetters
-        for (i in 0 until 38) {
-            val id = context.resources.getIdentifier("urdu_key_${i + 1}", "id", context.packageName)
-            val btn = keyboardView.findViewById<Button>(id) ?: continue
+        for (i in 0 until minOf(38, urduButtons.size)) {
+            val btn = urduButtons[i]
             if (btn.text != letters[i]) {
                 btn.text = letters[i]
             }
         }
-        val shiftButton = keyboardView.findViewById<Button>(R.id.urdu_key_shift)
+        val shiftButton = urduView?.findViewById<Button>(R.id.urdu_key_shift)
         shiftButton?.isSelected = isUrduShifted
         shiftButton?.alpha = if (isUrduShifted) 0.6f else 1.0f
-    }
-
-    /**
-     * Refresh English key labels AND shift icon drawable when shift state changes.
-     * Dark-mode aware: uses the appropriate icon variant for contrast on both themes.
-     */
-    private fun refreshEnglishKeyLabels() {
-        if (isUrduKeyboardLayout || isSymbolMode) return
-
-        val uppercase = shouldUseUppercase()
-        englishButtonsMap.forEach { (key, button) ->
-            val targetText = if (uppercase) key.uppercase() else key.lowercase()
-            if (button.text != targetText) {
-                button.text = targetText
-            }
-        }
-        updateShiftButtonIcon()
     }
 
     private fun updateShiftButtonIcon() {
         if (isUrduKeyboardLayout || isSymbolMode) return
 
-        // Detect night mode so we pick the right icon variant for contrast.
         val nightModeBits = context.resources.configuration.uiMode and
             android.content.res.Configuration.UI_MODE_NIGHT_MASK
         val isNight = nightModeBits == android.content.res.Configuration.UI_MODE_NIGHT_YES
@@ -856,7 +1020,7 @@ class KeyboardController(
             ShiftState.CAPS_LOCK -> if (isNight) R.drawable.ic_shift_caps_dark else R.drawable.ic_shift_caps
         }
 
-        val shiftButton = keyboardView.findViewById<Button>(R.id.key_shift)
+        val shiftButton = englishView?.findViewById<Button>(R.id.key_shift)
         shiftButton?.setCompoundDrawablesWithIntrinsicBounds(0, shiftIcon, 0, 0)
         shiftButton?.isActivated = (shiftState == ShiftState.CAPS_LOCK)
         shiftButton?.contentDescription = when (shiftState) {
@@ -867,33 +1031,17 @@ class KeyboardController(
     }
 
     private fun onLanguageSwitch() {
+        clearComposingState()
         languageManager.switchToNextLanguage()
         val newLang = languageManager.getCurrentLanguage()
-        val wasSymbol = isSymbolMode
-        val wasEmoji = isEmojiMode
-        val wasUrdu = isUrduKeyboardLayout
         isUrduKeyboardLayout = (newLang == "ur")
-        if (isSymbolMode) isSymbolMode = false
-        if (isEmojiMode) isEmojiMode = false
+        isSymbolMode = false
+        isEmojiMode = false
         isUrduShifted = false
-        symbolsView = null
 
-        val needsRebuild = wasSymbol || wasEmoji || wasUrdu != isUrduKeyboardLayout
-        if (needsRebuild) {
-            (context as? UrduKeyboardService)?.recreateKeyboard()
-        } else {
-            updateKeyboardLayout()
-        }
+        updateActiveLayer()
         shiftState = if (!isUrduKeyboardLayout) ShiftState.SHIFT_ONCE else ShiftState.OFF
-        if (!isUrduKeyboardLayout) {
-            refreshEnglishKeyLabels()
-        }
-
-        val langName = when (newLang) {
-            "ur" -> "اردو"
-            else -> "English"
-        }
-        Toast.makeText(context, "Keyboard: $langName", Toast.LENGTH_SHORT).show()
+        updateShiftButtonIcon()
     }
 
     private fun onVoiceInput() {
@@ -907,31 +1055,48 @@ class KeyboardController(
     }
 
     private fun onSymbolsModeToggle() {
+        clearComposingState()
         isSymbolMode = !isSymbolMode
         isEmojiMode = false
-        (context as? UrduKeyboardService)?.recreateKeyboard()
+        updateActiveLayer()
+    }
+
+    private fun onEmojiModeToggle() {
+        clearComposingState()
+        isEmojiMode = !isEmojiMode
+        isSymbolMode = false
+        updateActiveLayer()
     }
 
     private fun updateKeyboardLayout() {
         val spaceText = if (isUrduKeyboardLayout) "اردو" else "English"
         val langShortText = if (isUrduKeyboardLayout) "اردو" else "EN"
 
-        val spaceButtonId = when {
-            isSymbolMode -> R.id.sym_key_space
-            isUrduKeyboardLayout -> R.id.urdu_key_space
-            else -> R.id.key_space
-        }
-        keyboardView.findViewById<Button>(spaceButtonId)?.text = spaceText
+        englishView?.findViewById<Button>(R.id.key_space)?.text = spaceText
+        englishView?.findViewById<Button>(R.id.key_language)?.text = langShortText
 
-        val languageButtonId = when {
-            isSymbolMode -> R.id.sym_key_language
-            isUrduKeyboardLayout -> R.id.urdu_key_language
-            else -> R.id.key_language
-        }
-        keyboardView.findViewById<Button>(languageButtonId)?.text = langShortText
+        urduView?.findViewById<Button>(R.id.urdu_key_space)?.text = spaceText
+        urduView?.findViewById<Button>(R.id.urdu_key_language)?.text = langShortText
 
-        if (isSymbolMode) {
-            keyboardView.findViewById<Button>(R.id.sym_key_abc)?.text = if (isUrduKeyboardLayout) "اردو" else "ABC"
+        symbolsView?.findViewById<Button>(R.id.sym_key_space)?.text = spaceText
+        symbolsView?.findViewById<Button>(R.id.sym_key_language)?.text = langShortText
+        symbolsView?.findViewById<Button>(R.id.sym_key_abc)?.text = if (isUrduKeyboardLayout) "اردو" else "ABC"
+
+        emojiView?.findViewById<Button>(R.id.emoji_key_abc)?.text = if (isUrduKeyboardLayout) "اردو" else "ABC"
+        emojiView?.let { view ->
+            val chipsContainer = view.findViewById<ViewGroup>(R.id.emoji_search_chips_container)
+            if (chipsContainer != null && emojiChipViews.isNotEmpty()) {
+                val categories = if (isUrduKeyboardLayout) urduEmojiCategories else englishEmojiCategories
+                for (i in emojiChipViews.indices) {
+                    if (i < categories.size) {
+                        emojiChipViews[i].text = categories[i].first
+                    }
+                }
+            }
+            if (selectedEmojiCategoryIndex == 0) {
+                view.findViewById<TextView>(R.id.emoji_search_text)?.text =
+                    if (isUrduKeyboardLayout) "ایموجی تلاش کریں" else "Search emoji"
+            }
         }
     }
 
@@ -941,35 +1106,51 @@ class KeyboardController(
     }
 
     private fun commitText(text: String) {
-        currentInputConnection?.commitText(text, 1)
+        val ic = currentInputConnection
+        ic?.beginBatchEdit()
+        if (composingText.isNotEmpty()) {
+            ic?.commitText(composingText.toString(), 1)
+            clearComposingState()
+        }
+        ic?.commitText(text, 1)
+        ic?.endBatchEdit()
+    }
+
+    fun commitVoiceText(text: String) {
+        val ic = currentInputConnection
+        ic?.beginBatchEdit()
+        if (composingText.isNotEmpty()) {
+            ic?.commitText(composingText.toString(), 1)
+            clearComposingState()
+        }
+        ic?.commitText(text, 1)
+        ic?.endBatchEdit()
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Composing and Suggestions Logic
+    // Suggestions & Composing
     // ─────────────────────────────────────────────────────────────────────────
 
-    private fun setupSuggestionButtons() {
-        suggestionLeftBtn = keyboardView.findViewById(R.id.suggestion_left)
-        suggestionCenterBtn = keyboardView.findViewById(R.id.suggestion_center)
-        suggestionRightBtn = keyboardView.findViewById(R.id.suggestion_right)
+    private fun setupSuggestionButtons(view: View) {
+        val left = view.findViewById<Button>(R.id.suggestion_left)
+        val center = view.findViewById<Button>(R.id.suggestion_center)
+        val right = view.findViewById<Button>(R.id.suggestion_right)
 
-        clearSuggestionsUI()
-
-        setFastTapListener(suggestionLeftBtn) { selectSuggestion(suggestionLeftBtn?.text?.toString() ?: "") }
-        setFastTapListener(suggestionCenterBtn) { selectSuggestion(suggestionCenterBtn?.text?.toString() ?: "") }
-        setFastTapListener(suggestionRightBtn) { selectSuggestion(suggestionRightBtn?.text?.toString() ?: "") }
+        setFastTapListener(left) { selectSuggestion(left?.text?.toString() ?: "") }
+        setFastTapListener(center) { selectSuggestion(center?.text?.toString() ?: "") }
+        setFastTapListener(right) { selectSuggestion(right?.text?.toString() ?: "") }
     }
 
     private fun selectSuggestion(suggestion: String) {
         if (suggestion.isEmpty()) return
-        // Cancel any pending debounce before committing
         suggestionDebounceRunnable?.let(mainHandler::removeCallbacks)
+
         val ic = currentInputConnection
         ic?.beginBatchEdit()
         ic?.commitText("$suggestion ", 1)
         clearComposingState()
         ic?.endBatchEdit()
-        // Track frequency so this word bubbles up in future suggestions
+
         ioScope.launch { preferenceHelper.incrementWordFrequency(suggestion) }
     }
 
@@ -987,9 +1168,17 @@ class KeyboardController(
 
     fun handleBackspaceAction(count: Int = 1): Boolean {
         if (composingText.isNotEmpty()) {
+            val ic = currentInputConnection
+            // Real-time cursor validation: verify cursor is actually right after composing text
+            val textBefore = ic?.getTextBeforeCursor(composingText.length, 0)?.toString()
+            if (textBefore != null && textBefore != composingText.toString()) {
+                // The cursor has moved away from our composing region
+                clearComposingState()
+                return false
+            }
+
             val toDelete = minOf(count, composingText.length)
             composingText.delete(composingText.length - toDelete, composingText.length)
-            val ic = currentInputConnection
             ic?.beginBatchEdit()
             if (composingText.isEmpty()) {
                 clearComposingState()
@@ -1003,6 +1192,29 @@ class KeyboardController(
         return false
     }
 
+    /**
+     * Fallback and external backspace invocation with selection handling and Unicode code-point safety.
+     */
+    fun performBackspace() {
+        if (!handleBackspaceAction(1)) {
+            val ic = currentInputConnection ?: return
+            val selectedText = ic.getSelectedText(0)
+            if (!selectedText.isNullOrEmpty()) {
+                ic.commitText("", 1)
+                return
+            }
+            val deleted = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                ic.deleteSurroundingTextInCodePoints(1, 0)
+            } else {
+                ic.deleteSurroundingText(1, 0)
+            }
+            if (!deleted) {
+                (context as? android.inputmethodservice.InputMethodService)
+                    ?.sendDownUpKeyEvents(android.view.KeyEvent.KEYCODE_DEL)
+            }
+        }
+    }
+
     private fun updateSuggestions() {
         val input = composingText.toString()
         if (input.isEmpty()) {
@@ -1011,9 +1223,6 @@ class KeyboardController(
             return
         }
 
-        // Debounce: cancel any pending lookup and schedule a fresh one
-        // after SUGGESTION_DEBOUNCE_MS of inactivity so fast typists don't
-        // flood the IO thread with coroutines on every single keypress.
         suggestionDebounceRunnable?.let(mainHandler::removeCallbacks)
         suggestionDebounceRunnable = Runnable {
             val snapshot = composingText.toString()
@@ -1031,7 +1240,6 @@ class KeyboardController(
     }
 
     private fun getSuggestionsForInput(input: String): List<String> {
-        // Build a frequency map of all tracked Urdu words for ranked completions
         val freqMap = preferenceHelper.getTopFrequentWords(50)
             .associate { (word, count) -> word to count }
         return phoneticMapper.getUrduSuggestions(input, freqMap)
@@ -1052,57 +1260,10 @@ class KeyboardController(
         if (suggestionRightBtn?.text?.toString() != right) suggestionRightBtn?.text = right
     }
 
-    private fun onEmojiModeToggle() {
-        isEmojiMode = !isEmojiMode
-        isSymbolMode = false
-        (context as? UrduKeyboardService)?.recreateKeyboard()
-    }
-
-    private fun setupEmojiKeyboardButtons() {
-        val emojiPickerView = keyboardView.findViewById<EmojiPickerView>(R.id.emoji_picker_view)
-        emojiPickerView?.setOnEmojiPickedListener { emojiViewItem ->
-            applyTapFeedback(emojiPickerView)
-            commitText(emojiViewItem.emoji)
-        }
-
-        val abcBtn = keyboardView.findViewById<Button>(R.id.emoji_key_abc)
-        setFastTapListener(abcBtn) {
-            isEmojiMode = false
-            (context as? UrduKeyboardService)?.recreateKeyboard()
-        }
-
-        val searchPill = keyboardView.findViewById<View>(R.id.emoji_search_pill)
-        searchPill?.setOnClickListener {
-            applyTapFeedback(it)
-            isEmojiMode = false
-            (context as? UrduKeyboardService)?.recreateKeyboard()
-        }
-
-        val backspaceBtn = keyboardView.findViewById<Button>(R.id.emoji_key_backspace)
-        backspaceBtn?.setOnTouchListener { view, event ->
-            val action = event.actionMasked
-            when (action) {
-                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
-                    view.isPressed = true
-                    applyTapFeedback(view)
-                    backspaceHandler.onBackspaceDown()
-                    true
-                }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL -> {
-                    view.isPressed = false
-                    backspaceHandler.onBackspaceUp()
-                    view.performClick()
-                    true
-                }
-                else -> false
-            }
-        }
-    }
-
     private fun updateVoiceButtonState(isListening: Boolean) {
         val voiceBtnIds = listOf(R.id.key_voice, R.id.urdu_key_voice, R.id.sym_key_voice)
         for (id in voiceBtnIds) {
-            val btn = keyboardView.findViewById<Button>(id) ?: continue
+            val btn = currentActiveView?.findViewById<Button>(id) ?: continue
             btn.isSelected = isListening
             btn.alpha = if (isListening) 0.6f else 1.0f
         }
