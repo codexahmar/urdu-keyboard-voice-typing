@@ -116,7 +116,7 @@ object EmojiDictionary {
 
     fun search(query: String): List<String> {
         val q = query.lowercase(Locale.ROOT).trim()
-        if (q.isEmpty()) return popularEmojis
+        if (q.isEmpty()) return emptyList()
 
         val results = LinkedHashSet<String>(30)
 
@@ -144,7 +144,7 @@ object EmojiDictionary {
             }
         }
 
-        return if (results.isEmpty()) popularEmojis else results.take(30)
+        return results.take(30)
     }
 }
 

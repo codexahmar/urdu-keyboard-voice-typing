@@ -1,12 +1,14 @@
 package com.codexahmar.urdu_keyboard.keyboard
 
+import android.content.Intent
 import android.inputmethodservice.InputMethodService
+import android.provider.Settings
+import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
-import android.content.Intent
-import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
+import com.codexahmar.urdu_keyboard.R
 import com.codexahmar.urdu_keyboard.utils.PreferenceHelper
 
 /**
@@ -19,6 +21,7 @@ class UrduKeyboardService : InputMethodService() {
     private lateinit var preferenceHelper: PreferenceHelper
 
     override fun onCreate() {
+        setTheme(R.style.KeyboardTheme)
         super.onCreate()
         preferenceHelper = PreferenceHelper(this)
         keyboardController = KeyboardController(this, preferenceHelper)
@@ -82,6 +85,28 @@ class UrduKeyboardService : InputMethodService() {
                 candidatesEnd
             )
         }
+    }
+
+    /**
+     * Intercept hardware key events from physical keyboards / emulators.
+     * When emoji mode is active, routes typing and backspace directly into the in-place emoji search bar.
+     */
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        if (::keyboardController.isInitialized && keyboardController.isEmojiModeActive()) {
+            if (keyboardController.handleEmojiSearchKeyEvent(keyCode, event)) {
+                return true
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+        if (::keyboardController.isInitialized && keyboardController.isEmojiModeActive()) {
+            if (keyboardController.handleEmojiSearchKeyUp(keyCode, event)) {
+                return true
+            }
+        }
+        return super.onKeyUp(keyCode, event)
     }
 
     /**

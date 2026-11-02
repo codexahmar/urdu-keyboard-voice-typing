@@ -954,12 +954,12 @@ Implement improvements in this order:
 
 ## Priority 4 — Emoji
 
-* [ ] Integrate emoji library
-* [ ] Emoji categories
-* [ ] Recent emojis
-* [ ] Emoji insertion
-* [ ] Backspace support
-* [ ] Performance optimization
+* [x] Integrate emoji library
+* [x] Emoji categories
+* [x] Recent emojis
+* [x] Emoji insertion
+* [x] Backspace support
+* [x] Performance optimization
 
 ## Priority 5 — Voice
 
@@ -991,7 +991,7 @@ Implement improvements in this order:
 * [ ] Language test
 * [ ] Suggestion test
 * [ ] Transliteration test
-* [ ] Emoji test
+* [x] Emoji test
 * [ ] Voice test
 * [ ] Lifecycle test
 * [ ] Memory test

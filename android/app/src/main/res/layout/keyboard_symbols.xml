@@ -28,7 +28,7 @@
     <LinearLayout
         android:id="@+id/suggestions_strip"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
+        android:layout_height="44dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:splitMotionEvents="true"
@@ -155,11 +155,13 @@
         <Button
             android:id="@+id/sym_key_abc"
             style="@style/KeyboardButtonBottomSmall"
+            android:layout_weight="1.5"
             android:text="ABC" />
 
         <Button
             android:id="@+id/sym_key_language"
             style="@style/KeyboardButtonLanguage"
+            android:layout_weight="1.0"
             android:text="EN" />
 
         <Button
@@ -173,12 +175,13 @@
         <Button
             android:id="@+id/sym_key_space"
             style="@style/KeyboardButtonSpace"
-            android:layout_weight="5.4"
+            android:layout_weight="5.0"
             android:text="Space" />
 
         <Button
             android:id="@+id/sym_key_enter"
             style="@style/KeyboardButtonEnter"
+            android:layout_weight="1.5"
             android:text=""
             android:drawableTop="@drawable/ic_enter"
             android:drawablePadding="0dp" />
