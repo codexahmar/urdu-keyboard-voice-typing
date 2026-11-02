@@ -1,0 +1,446 @@
+package com.codexahmar.urdu_keyboard.keyboard
+
+import java.util.Locale
+
+/**
+ * Gboard-grade Intelligent Suggestion Engine for English Keyboard.
+ * Provides:
+ *  1. Frequency-ranked English Lexicon for auto-completion.
+ *  2. Pre-indexed prefix buckets for O(1) candidate lookup.
+ *  3. Contextual Bigram Language Model (Next-Word prediction matching Gboard).
+ *  4. Dynamic user personalization (p13n) with usage boosting.
+ */
+class EnglishSuggestionEngine {
+
+    data class LexiconWord(val word: String, val frequency: Int)
+
+    companion object {
+        private val LEXICON_ENTRIES: List<LexiconWord> = listOf(
+            LexiconWord("the", 100),
+            LexiconWord("be", 98),
+            LexiconWord("to", 98),
+            LexiconWord("i", 98),
+            LexiconWord("is", 98),
+            LexiconWord("of", 97),
+            LexiconWord("and", 97),
+            LexiconWord("a", 97),
+            LexiconWord("in", 96),
+            LexiconWord("you", 96),
+            LexiconWord("are", 96),
+            LexiconWord("that", 95),
+            LexiconWord("have", 95),
+            LexiconWord("it", 95),
+            LexiconWord("was", 95),
+            LexiconWord("for", 94),
+            LexiconWord("not", 94),
+            LexiconWord("on", 94),
+            LexiconWord("thank", 94),
+            LexiconWord("thanks", 94),
+            LexiconWord("hello", 94),
+            LexiconWord("with", 93),
+            LexiconWord("do", 93),
+            LexiconWord("this", 93),
+            LexiconWord("my", 93),
+            LexiconWord("what", 93),
+            LexiconWord("your", 93),
+            LexiconWord("good", 93),
+            LexiconWord("he", 92),
+            LexiconWord("as", 92),
+            LexiconWord("at", 92),
+            LexiconWord("but", 92),
+            LexiconWord("we", 92),
+            LexiconWord("will", 92),
+            LexiconWord("me", 92),
+            LexiconWord("can", 92),
+            LexiconWord("like", 92),
+            LexiconWord("how", 92),
+            LexiconWord("were", 92),
+            LexiconWord("has", 92),
+            LexiconWord("am", 92),
+            LexiconWord("please", 92),
+            LexiconWord("hi", 92),
+            LexiconWord("ok", 92),
+            LexiconWord("yes", 92),
+            LexiconWord("name", 92),
+            LexiconWord("i'm", 92),
+            LexiconWord("it's", 92),
+            LexiconWord("his", 91),
+            LexiconWord("by", 91),
+            LexiconWord("from", 91),
+            LexiconWord("all", 91),
+            LexiconWord("no", 91),
+            LexiconWord("just", 91),
+            LexiconWord("know", 91),
+            LexiconWord("think", 91),
+            LexiconWord("want", 91),
+            LexiconWord("today", 91),
+            LexiconWord("they", 90),
+            LexiconWord("say", 90),
+            LexiconWord("she", 90),
+            LexiconWord("or", 90),
+            LexiconWord("one", 90),
+            LexiconWord("would", 90),
+            LexiconWord("there", 90),
+            LexiconWord("so", 90),
+            LexiconWord("if", 90),
+            LexiconWord("about", 90),
+            LexiconWord("get", 90),
+            LexiconWord("go", 90),
+            LexiconWord("time", 90),
+            LexiconWord("see", 90),
+            LexiconWord("now", 90),
+            LexiconWord("been", 90),
+            LexiconWord("had", 90),
+            LexiconWord("call", 90),
+            LexiconWord("help", 90),
+            LexiconWord("hey", 90),
+            LexiconWord("morning", 90),
+            LexiconWord("night", 90),
+            LexiconWord("great", 90),
+            LexiconWord("nice", 90),
+            LexiconWord("okay", 90),
+            LexiconWord("sure", 90),
+            LexiconWord("love", 90),
+            LexiconWord("phone", 90),
+            LexiconWord("number", 90),
+            LexiconWord("where", 90),
+            LexiconWord("why", 90),
+            LexiconWord("send", 90),
+            LexiconWord("need", 90),
+            LexiconWord("don't", 90),
+            LexiconWord("you're", 90),
+            LexiconWord("that's", 90),
+            LexiconWord("what's", 90),
+            LexiconWord("very", 90),
+            LexiconWord("really", 90),
+            LexiconWord("her", 89),
+            LexiconWord("an", 89),
+            LexiconWord("their", 89),
+            LexiconWord("up", 89),
+            LexiconWord("out", 89),
+            LexiconWord("who", 89),
+            LexiconWord("when", 89),
+            LexiconWord("make", 89),
+            LexiconWord("take", 89),
+            LexiconWord("some", 89),
+            LexiconWord("look", 89),
+            LexiconWord("come", 89),
+            LexiconWord("back", 89),
+            LexiconWord("our", 89),
+            LexiconWord("work", 89),
+            LexiconWord("well", 89),
+            LexiconWord("new", 89),
+            LexiconWord("day", 89),
+            LexiconWord("did", 89),
+            LexiconWord("going", 89),
+            LexiconWord("home", 89),
+            LexiconWord("tomorrow", 89),
+            LexiconWord("right", 89),
+            LexiconWord("more", 89),
+            LexiconWord("life", 89),
+            LexiconWord("world", 89),
+            LexiconWord("should", 89),
+            LexiconWord("here", 89),
+            LexiconWord("which", 88),
+            LexiconWord("him", 88),
+            LexiconWord("people", 88),
+            LexiconWord("into", 88),
+            LexiconWord("could", 88),
+            LexiconWord("them", 88),
+            LexiconWord("then", 88),
+            LexiconWord("only", 88),
+            LexiconWord("its", 88),
+            LexiconWord("also", 88),
+            LexiconWord("after", 88),
+            LexiconWord("two", 88),
+            LexiconWord("first", 88),
+            LexiconWord("way", 88),
+            LexiconWord("because", 88),
+            LexiconWord("any", 88),
+            LexiconWord("give", 88),
+            LexiconWord("us", 88),
+            LexiconWord("doing", 88),
+            LexiconWord("welcome", 88),
+            LexiconWord("fine", 88),
+            LexiconWord("yeah", 88),
+            LexiconWord("friend", 88),
+            LexiconWord("family", 88),
+            LexiconWord("money", 88),
+            LexiconWord("thing", 88),
+            LexiconWord("things", 88),
+            LexiconWord("food", 88),
+            LexiconWord("always", 88),
+            LexiconWord("never", 88),
+            LexiconWord("soon", 88),
+            LexiconWord("happy", 88),
+            LexiconWord("ready", 88),
+            LexiconWord("much", 88),
+            LexiconWord("many", 88),
+            LexiconWord("big", 88),
+            LexiconWord("again", 88),
+            LexiconWord("tell", 88),
+            LexiconWord("wait", 88),
+            LexiconWord("talk", 88),
+            LexiconWord("find", 88),
+            LexiconWord("let", 88),
+            LexiconWord("must", 88),
+            LexiconWord("may", 88),
+            LexiconWord("didn't", 88),
+            LexiconWord("won't", 88),
+            LexiconWord("can't", 88),
+            LexiconWord("we're", 88),
+            LexiconWord("there's", 88),
+            LexiconWord("let's", 88),
+            LexiconWord("still", 88),
+            LexiconWord("too", 88),
+            LexiconWord("year", 87),
+            LexiconWord("other", 87),
+            LexiconWord("than", 87),
+            LexiconWord("over", 87),
+            LexiconWord("use", 87),
+            LexiconWord("even", 87),
+            LexiconWord("these", 87),
+            LexiconWord("most", 87),
+            LexiconWord("house", 87),
+            LexiconWord("school", 87),
+            LexiconWord("office", 87),
+            LexiconWord("car", 87),
+            LexiconWord("place", 87),
+            LexiconWord("water", 87),
+            LexiconWord("yesterday", 87),
+            LexiconWord("little", 87),
+            LexiconWord("small", 87),
+            LexiconWord("long", 87),
+            LexiconWord("live", 87),
+            LexiconWord("feel", 87),
+            LexiconWord("try", 87),
+            LexiconWord("start", 87),
+            LexiconWord("stop", 87),
+            LexiconWord("meet", 87),
+            LexiconWord("read", 87),
+            LexiconWord("write", 87),
+            LexiconWord("learn", 87),
+            LexiconWord("play", 87),
+            LexiconWord("speak", 87),
+            LexiconWord("watch", 87),
+            LexiconWord("keep", 87),
+            LexiconWord("hope", 87),
+            LexiconWord("care", 87),
+            LexiconWord("every", 87),
+            LexiconWord("something", 87),
+            LexiconWord("problem", 87),
+            LexiconWord("idea", 87),
+            LexiconWord("question", 87),
+            LexiconWord("answer", 87),
+            LexiconWord("afternoon", 86),
+            LexiconWord("evening", 86),
+            LexiconWord("brother", 86),
+            LexiconWord("sister", 86),
+            LexiconWord("mother", 86),
+            LexiconWord("father", 86),
+            LexiconWord("sometimes", 86),
+            LexiconWord("late", 86),
+            LexiconWord("early", 86),
+            LexiconWord("fast", 86),
+            LexiconWord("easy", 86),
+            LexiconWord("hard", 86),
+            LexiconWord("busy", 86),
+            LexiconWord("free", 86),
+            LexiconWord("wrong", 86),
+            LexiconWord("true", 86),
+            LexiconWord("real", 86),
+            LexiconWord("less", 86),
+            LexiconWord("short", 86),
+            LexiconWord("high", 86),
+            LexiconWord("ask", 86),
+            LexiconWord("leave", 86),
+            LexiconWord("stay", 86),
+            LexiconWord("listen", 86),
+            LexiconWord("hear", 86),
+            LexiconWord("buy", 86),
+            LexiconWord("pay", 86),
+            LexiconWord("bring", 86),
+            LexiconWord("hold", 86),
+            LexiconWord("begin", 86),
+            LexiconWord("finish", 86),
+            LexiconWord("wish", 86),
+            LexiconWord("might", 86),
+            LexiconWord("cannot", 86),
+            LexiconWord("isn't", 86),
+            LexiconWord("aren't", 86),
+            LexiconWord("they're", 86),
+            LexiconWord("everyone", 86),
+            LexiconWord("everything", 86),
+            LexiconWord("someone", 86),
+            LexiconWord("nothing", 86),
+            LexiconWord("anything", 86),
+            LexiconWord("both", 86),
+            LexiconWord("each", 86),
+            LexiconWord("already", 86),
+            LexiconWord("yet", 86),
+            LexiconWord("enough", 86),
+            LexiconWord("pretty", 86),
+            LexiconWord("kind", 86),
+            LexiconWord("reason", 86),
+            LexiconWord("fact", 86),
+            LexiconWord("mind", 86),
+            LexiconWord("heart", 86),
+            LexiconWord("head", 86),
+            LexiconWord("hand", 86),
+            LexiconWord("eye", 86),
+            LexiconWord("face", 86),
+            LexiconWord("receive", 85),
+            LexiconWord("wasn't", 85),
+            LexiconWord("anyone", 85),
+            LexiconWord("almost", 85),
+            LexiconWord("quite", 85),
+            LexiconWord("matter", 85),
+            LexiconWord("slow", 84),
+            LexiconWord("low", 84),
+            LexiconWord("lose", 84),
+            LexiconWord("sell", 84),
+            LexiconWord("either", 84),
+            LexiconWord("sad", 82),
+            LexiconWord("neither", 82),
+        )
+
+        private val BIGRAM_TRANSITIONS: Map<String, List<String>> = mapOf(
+            "how" to listOf("are", "is", "about", "to", "was", "can"),
+            "what" to listOf("is", "are", "do", "about", "did", "happened"),
+            "where" to listOf("are", "is", "were", "did", "have"),
+            "when" to listOf("are", "will", "did", "you", "can"),
+            "why" to listOf("are", "did", "not", "is", "do"),
+            "who" to listOf("is", "are", "was", "were"),
+            "thank" to listOf("you", "God", "so", "very"),
+            "thanks" to listOf("a", "for", "again", "bro"),
+            "good" to listOf("morning", "night", "afternoon", "job", "luck", "idea"),
+            "see" to listOf("you", "the", "it", "what"),
+            "nice" to listOf("to", "one", "meeting", "picture"),
+            "please" to listOf("let", "help", "call", "send", "give"),
+            "i" to listOf("am", "will", "have", "would", "think", "can", "want", "know", "need"),
+            "you" to listOf("are", "have", "can", "will", "know", "want", "need", "should"),
+            "we" to listOf("are", "will", "have", "can", "should"),
+            "they" to listOf("are", "were", "will", "have"),
+            "he" to listOf("is", "was", "will", "has"),
+            "she" to listOf("is", "was", "will", "has"),
+            "it" to listOf("is", "was", "will", "would"),
+            "there" to listOf("is", "are", "was", "were"),
+            "let" to listOf("me", "us", "go"),
+            "call" to listOf("me", "you", "him", "later"),
+            "send" to listOf("me", "the", "it", "a"),
+            "take" to listOf("care", "it", "time", "your"),
+            "happy" to listOf("birthday", "eid", "new", "to"),
+            "sorry" to listOf("for", "about", "to", "I"),
+            "are" to listOf("you", "there", "we", "they"),
+            "is" to listOf("it", "that", "this", "there", "he", "she"),
+            "can" to listOf("you", "I", "we"),
+            "will" to listOf("be", "you", "do", "come", "call"),
+            "have" to listOf("a", "been", "to", "you"),
+            "do" to listOf("you", "not", "it"),
+            "did" to listOf("you", "not", "it"),
+            "want" to listOf("to", "you", "it"),
+            "need" to listOf("to", "you", "a", "help"),
+            "going" to listOf("to", "there", "home"),
+            "doing" to listOf("well", "good", "what"),
+            "am" to listOf("doing", "going", "fine", "not", "here"),
+        )
+    }
+
+    private val prefixBuckets: Map<Char, List<LexiconWord>> by lazy {
+        LEXICON_ENTRIES.groupBy { it.word.lowercase(Locale.ROOT).firstOrNull() ?: ' ' }
+    }
+
+    fun getNextWordPredictions(
+        previousWord: String,
+        userFrequencies: Map<String, Int> = emptyMap(),
+        maxSuggestions: Int = 3
+    ): List<String> {
+        val clean = previousWord.lowercase(Locale.ROOT).trim()
+        if (clean.isEmpty()) return emptyList()
+
+        val candidates = LinkedHashSet<String>(maxSuggestions)
+        val bigramTails = BIGRAM_TRANSITIONS[clean]
+        if (!bigramTails.isNullOrEmpty()) {
+            val sortedTails = if (userFrequencies.isNotEmpty()) {
+                bigramTails.sortedByDescending { userFrequencies[it] ?: 0 }
+            } else {
+                bigramTails
+            }
+            for (tail in sortedTails) {
+                if (candidates.size >= maxSuggestions) break
+                candidates.add(tail)
+            }
+        }
+
+        if (candidates.size < maxSuggestions && userFrequencies.isNotEmpty()) {
+            for ((word, _) in userFrequencies) {
+                if (candidates.size >= maxSuggestions) break
+                if (word.lowercase(Locale.ROOT) != clean && word.all { it in 'a'..'z' || it in 'A'..'Z' }) {
+                    candidates.add(word)
+                }
+            }
+        }
+
+        if (candidates.size < maxSuggestions) {
+            val defaults = listOf("the", "you", "to", "and", "is")
+            for (def in defaults) {
+                if (candidates.size >= maxSuggestions) break
+                if (def != clean) candidates.add(def)
+            }
+        }
+
+        return candidates.toList()
+    }
+
+    fun getSuggestions(
+        prefix: String,
+        previousWord: String? = null,
+        userFrequencies: Map<String, Int> = emptyMap(),
+        maxSuggestions: Int = 3
+    ): List<String> {
+        val cleanPrefix = prefix.lowercase(Locale.ROOT).trim()
+        if (cleanPrefix.isEmpty()) return emptyList()
+
+        val firstChar = cleanPrefix[0]
+        val bucket = prefixBuckets[firstChar] ?: emptyList()
+
+        val bigramContextSet = if (!previousWord.isNullOrBlank()) {
+            BIGRAM_TRANSITIONS[previousWord.lowercase(Locale.ROOT).trim()]?.toSet() ?: emptySet()
+        } else {
+            emptySet()
+        }
+
+        val matches = bucket.filter { it.word.lowercase(Locale.ROOT).startsWith(cleanPrefix) }
+
+        fun scoreWord(word: String, baseFreq: Int): Int {
+            var score = baseFreq
+            val userCount = userFrequencies[word.lowercase(Locale.ROOT)] ?: 0
+            score += userCount * 25
+            if (bigramContextSet.contains(word.lowercase(Locale.ROOT))) {
+                score += 50
+            }
+            if (word.equals(cleanPrefix, ignoreCase = true)) {
+                score += 30
+            }
+            return score
+        }
+
+        val candidateMap = mutableMapOf<String, Int>()
+        for (item in matches) {
+            candidateMap[item.word] = scoreWord(item.word, item.frequency)
+        }
+
+        if (userFrequencies.isNotEmpty()) {
+            for ((uWord, _) in userFrequencies) {
+                if (uWord.lowercase(Locale.ROOT).startsWith(cleanPrefix) && !candidateMap.containsKey(uWord)) {
+                    candidateMap[uWord] = scoreWord(uWord, 40)
+                }
+            }
+        }
+
+        return candidateMap.entries
+            .sortedByDescending { it.value }
+            .take(maxSuggestions)
+            .map { it.key }
+    }
+}

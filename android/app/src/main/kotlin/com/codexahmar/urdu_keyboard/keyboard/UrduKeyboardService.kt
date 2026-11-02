@@ -110,57 +110,6 @@ class UrduKeyboardService : InputMethodService() {
     }
 
     /**
-     * Handle key press events
-     */
-    fun handleKeyPress(key: String) {
-        val ic: InputConnection? = currentInputConnection
-        ic?.let {
-            keyboardController.handleKeyPress(key, it)
-        }
-    }
-
-    /**
-     * Handle backspace
-     */
-    fun handleBackspace() {
-        if (::keyboardController.isInitialized) {
-            keyboardController.performBackspace()
-        } else {
-            currentInputConnection?.deleteSurroundingText(1, 0)
-        }
-    }
-
-    /**
-     * Handle space key
-     */
-    fun handleSpace() {
-        val ic: InputConnection? = currentInputConnection
-        ic?.commitText(" ", 1)
-    }
-
-    /**
-     * Handle enter/return key
-     */
-    fun handleEnter() {
-        val ic: InputConnection? = currentInputConnection
-        ic?.commitText("\n", 1)
-    }
-
-    /**
-     * Switch language
-     */
-    fun switchLanguage() {
-        keyboardController.switchLanguage()
-    }
-
-    /**
-     * Start voice input
-     */
-    fun startVoiceInput() {
-        keyboardController.startVoiceInput()
-    }
-
-    /**
      * Recreate keyboard view (called when switching layouts)
      * Now performs an instant zero-window-detachment layer swap
      */

@@ -89,6 +89,8 @@ class KeyboardController(
 
     private val composingText = StringBuilder()
     private val phoneticMapper = PhoneticMapper()
+    private val urduSuggestionEngine = UrduSuggestionEngine()
+    private val englishSuggestionEngine = EnglishSuggestionEngine()
     private var suggestionLeftBtn: Button? = null
     private var suggestionCenterBtn: Button? = null
     private var suggestionRightBtn: Button? = null
@@ -210,8 +212,8 @@ class KeyboardController(
     )
 
     private val symDigitIds = intArrayOf(
-        R.id.sym_key_0, R.id.sym_key_1, R.id.sym_key_2, R.id.sym_key_3, R.id.sym_key_4,
-        R.id.sym_key_5, R.id.sym_key_6, R.id.sym_key_7, R.id.sym_key_8, R.id.sym_key_9
+        R.id.sym_key_1, R.id.sym_key_2, R.id.sym_key_3, R.id.sym_key_4, R.id.sym_key_5,
+        R.id.sym_key_6, R.id.sym_key_7, R.id.sym_key_8, R.id.sym_key_9, R.id.sym_key_0
     )
 
     init {
@@ -281,6 +283,10 @@ class KeyboardController(
         }
 
         currentActiveView = targetView
+
+        if (targetView === symbolsView) {
+            refreshSymbolsKeys(targetView)
+        }
 
         englishView?.visibility = if (targetView === englishView) View.VISIBLE else View.GONE
         urduView?.visibility = if (targetView === urduView) View.VISIBLE else View.GONE
@@ -430,16 +436,6 @@ class KeyboardController(
         }
     }
 
-    fun handleKeyPress(key: String, ic: InputConnection) {
-        when {
-            isUrduKeyboardLayout -> onUrduKeyPressed(key)
-            else -> onEnglishKeyPressed(key)
-        }
-    }
-
-    fun switchLanguage() = onLanguageSwitch()
-    fun startVoiceInput() = onVoiceInput()
-
     fun cleanup() {
         exitEmojiSearchMode()
         spaceLongPressRunnable?.let(mainHandler::removeCallbacks)
@@ -521,11 +517,11 @@ class KeyboardController(
         setupSpaceButton(view.findViewById(R.id.key_space))
         setupBackspaceButton(view.findViewById(R.id.key_backspace))
         setFastTapListener(view.findViewById(R.id.key_enter)) { onEnterPressed() }
-        view.findViewById<Button>(R.id.key_voice)?.setOnClickListener { onVoiceInput() }
-        view.findViewById<Button>(R.id.key_language)?.setOnClickListener { onLanguageSwitch() }
-        view.findViewById<Button>(R.id.key_symbols)?.setOnClickListener { onSymbolsModeToggle() }
-        view.findViewById<Button>(R.id.key_emoji)?.setOnClickListener { onEmojiModeToggle() }
-        view.findViewById<Button>(R.id.key_shift)?.setOnClickListener { onShiftPressed() }
+        setFastTapListener(view.findViewById(R.id.key_voice)) { onVoiceInput() }
+        setFastTapListener(view.findViewById(R.id.key_language)) { onLanguageSwitch() }
+        setFastTapListener(view.findViewById(R.id.key_symbols)) { onSymbolsModeToggle() }
+        setFastTapListener(view.findViewById(R.id.key_emoji)) { onEmojiModeToggle() }
+        setFastTapListener(view.findViewById(R.id.key_shift)) { onShiftPressed() }
     }
 
     private fun setupUrduViewButtons(view: View) {
@@ -548,19 +544,48 @@ class KeyboardController(
         setupSpaceButton(view.findViewById(R.id.urdu_key_space))
         setupBackspaceButton(view.findViewById(R.id.urdu_key_backspace))
         setFastTapListener(view.findViewById(R.id.urdu_key_enter)) { onEnterPressed() }
-        view.findViewById<Button>(R.id.key_voice)?.setOnClickListener { onVoiceInput() }
-        view.findViewById<Button>(R.id.urdu_key_language)?.setOnClickListener { onLanguageSwitch() }
-        view.findViewById<Button>(R.id.urdu_key_symbols)?.setOnClickListener { onSymbolsModeToggle() }
-        view.findViewById<Button>(R.id.urdu_key_emoji)?.setOnClickListener { onEmojiModeToggle() }
+        setFastTapListener(view.findViewById(R.id.key_voice)) { onVoiceInput() }
+        setFastTapListener(view.findViewById(R.id.urdu_key_language)) { onLanguageSwitch() }
+        setFastTapListener(view.findViewById(R.id.urdu_key_symbols)) { onSymbolsModeToggle() }
+        setFastTapListener(view.findViewById(R.id.urdu_key_emoji)) { onEmojiModeToggle() }
     }
 
     private fun setupSymbolsViewButtons(view: View) {
-        val urduDigits = listOf("۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹")
+        refreshSymbolsKeys(view)
 
-        // Digits 0..9
+        // Standard Symbols
+        val commonSyms = arrayOf(
+            Pair(R.id.sym_key_at, "@"), Pair(R.id.sym_key_hash, "#"), Pair(R.id.sym_key_dollar, "$"),
+            Pair(R.id.sym_key_amp, "&"), Pair(R.id.sym_key_star, "*"), Pair(R.id.sym_key_minus, "-"),
+            Pair(R.id.sym_key_plus, "+"), Pair(R.id.sym_key_lparen, "("), Pair(R.id.sym_key_rparen, ")"),
+            Pair(R.id.sym_key_slash, "/"), Pair(R.id.sym_key_quote, "\""), Pair(R.id.sym_key_apostrophe, "'"),
+            Pair(R.id.sym_key_colon, ":"), Pair(R.id.sym_key_exclamation, "!")
+        )
+        for ((id, sym) in commonSyms) {
+            val btn = view.findViewById<Button?>(id) ?: continue
+            btn.text = sym
+            btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
+            setFastTapListener(btn) { commitText(sym) }
+        }
+
+        // Action Keys
+        setupSpaceButton(view.findViewById(R.id.sym_key_space))
+        setupBackspaceButton(view.findViewById(R.id.sym_backspace))
+        setFastTapListener(view.findViewById(R.id.sym_key_enter)) { onEnterPressed() }
+        setFastTapListener(view.findViewById(R.id.sym_key_voice)) { onVoiceInput() }
+        setFastTapListener(view.findViewById(R.id.sym_key_language)) { onLanguageSwitch() }
+        setFastTapListener(view.findViewById(R.id.sym_key_abc)) { onSymbolsModeToggle() }
+        setFastTapListener(view.findViewById(R.id.sym_key_emoji)) { onEmojiModeToggle() }
+    }
+
+    private fun refreshSymbolsKeys(view: View) {
+        val urduDigits = listOf("۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹", "۰")
+        val englishDigits = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0")
+
+        // Digits 1..9, 0 (mapped linearly across Row 1 from sym_key_1 to sym_key_0)
         for (i in 0..9) {
             val btn = view.findViewById<Button?>(symDigitIds[i]) ?: continue
-            val symbol = if (isUrduKeyboardLayout) urduDigits[i] else i.toString()
+            val symbol = if (isUrduKeyboardLayout) urduDigits[i] else englishDigits[i]
             btn.text = symbol
             btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, if (isUrduKeyboardLayout) 22f else 19f)
             setFastTapListener(btn) { commitText(symbol) }
@@ -588,29 +613,13 @@ class KeyboardController(
             setFastTapListener(btn) { commitText(sym) }
         }
 
-        // Standard Symbols
-        val commonSyms = arrayOf(
-            Pair(R.id.sym_key_at, "@"), Pair(R.id.sym_key_hash, "#"), Pair(R.id.sym_key_dollar, "$"),
-            Pair(R.id.sym_key_amp, "&"), Pair(R.id.sym_key_star, "*"), Pair(R.id.sym_key_minus, "-"),
-            Pair(R.id.sym_key_plus, "+"), Pair(R.id.sym_key_lparen, "("), Pair(R.id.sym_key_rparen, ")"),
-            Pair(R.id.sym_key_slash, "/"), Pair(R.id.sym_key_quote, "\""), Pair(R.id.sym_key_apostrophe, "'"),
-            Pair(R.id.sym_key_colon, ":"), Pair(R.id.sym_key_exclamation, "!")
-        )
-        for ((id, sym) in commonSyms) {
-            val btn = view.findViewById<Button?>(id) ?: continue
-            btn.text = sym
-            btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
-            setFastTapListener(btn) { commitText(sym) }
-        }
+        // Return button text (e.g. "اردو" or "ABC")
+        val abcBtn = view.findViewById<Button?>(R.id.sym_key_abc)
+        abcBtn?.text = if (isUrduKeyboardLayout) "اردو" else "ABC"
 
-        // Action Keys
-        setupSpaceButton(view.findViewById(R.id.sym_key_space))
-        setupBackspaceButton(view.findViewById(R.id.sym_backspace))
-        setFastTapListener(view.findViewById(R.id.sym_key_enter)) { onEnterPressed() }
-        view.findViewById<Button>(R.id.sym_key_voice)?.setOnClickListener { onVoiceInput() }
-        view.findViewById<Button>(R.id.sym_key_language)?.setOnClickListener { onLanguageSwitch() }
-        view.findViewById<Button>(R.id.sym_key_abc)?.setOnClickListener { onSymbolsModeToggle() }
-        view.findViewById<Button>(R.id.sym_key_emoji)?.setOnClickListener { onEmojiModeToggle() }
+        // Language button label
+        val langBtn = view.findViewById<Button?>(R.id.sym_key_language)
+        langBtn?.text = if (isUrduKeyboardLayout) "EN" else "اردو"
     }
 
     private fun setupEmojiViewButtons(view: View) {
@@ -1162,13 +1171,27 @@ class KeyboardController(
 
         val ic = currentInputConnection
         ic?.beginBatchEdit()
+        var committedWord: String? = null
         if (composingText.isNotEmpty()) {
-            ic?.commitText("${composingText} ", 1)
-            clearComposingState()
+            val committed = composingText.toString()
+            ic?.commitText("${committed} ", 1)
+            committedWord = committed
+            clearComposingState(keepSuggestions = true)
         } else {
             ic?.commitText(" ", 1)
+            committedWord = getPreviousWordFromEditor()
         }
         ic?.endBatchEdit()
+
+        if (!committedWord.isNullOrBlank()) {
+            val wordToLearn = committedWord
+            ioScope.launch {
+                preferenceHelper.incrementWordFrequency(wordToLearn)
+                updateNextWordSuggestions(wordToLearn)
+            }
+        } else {
+            clearSuggestionsUI()
+        }
     }
 
     private fun onEnterPressed() {
@@ -1348,16 +1371,21 @@ class KeyboardController(
         val ic = currentInputConnection
         ic?.beginBatchEdit()
         ic?.commitText("$suggestion ", 1)
-        clearComposingState()
+        clearComposingState(keepSuggestions = true)
         ic?.endBatchEdit()
 
-        ioScope.launch { preferenceHelper.incrementWordFrequency(suggestion) }
+        ioScope.launch {
+            preferenceHelper.incrementWordFrequency(suggestion)
+            updateNextWordSuggestions(suggestion)
+        }
     }
 
-    private fun clearComposingState() {
+    private fun clearComposingState(keepSuggestions: Boolean = false) {
         composingText.setLength(0)
         currentInputConnection?.finishComposingText()
-        clearSuggestionsUI()
+        if (!keepSuggestions) {
+            clearSuggestionsUI()
+        }
     }
 
     private fun clearSuggestionsUI() {
@@ -1392,7 +1420,13 @@ class KeyboardController(
             composingText.delete(composingText.length - toDelete, composingText.length)
             ic?.beginBatchEdit()
             if (composingText.isEmpty()) {
-                clearComposingState()
+                clearComposingState(keepSuggestions = true)
+                val prev = getPreviousWordFromEditor()
+                if (!prev.isNullOrBlank()) {
+                    ioScope.launch { updateNextWordSuggestions(prev) }
+                } else {
+                    clearSuggestionsUI()
+                }
             } else {
                 ic?.setComposingText(composingText.toString(), 1)
                 updateSuggestions()
@@ -1426,11 +1460,24 @@ class KeyboardController(
         }
     }
 
+    private fun getPreviousWordFromEditor(): String? {
+        val ic = currentInputConnection ?: return null
+        val text = ic.getTextBeforeCursor(40, 0)?.toString() ?: return null
+        if (text.isBlank()) return null
+        val tokens = text.trimEnd().split(Regex("[\\s\\p{Punct}،۔؟]+"))
+        return tokens.lastOrNull()?.trim()
+    }
+
     private fun updateSuggestions() {
         val input = composingText.toString()
         if (input.isEmpty()) {
-            clearSuggestionsUI()
             suggestionDebounceRunnable?.let(mainHandler::removeCallbacks)
+            val prevWord = getPreviousWordFromEditor()
+            if (!prevWord.isNullOrBlank()) {
+                ioScope.launch { updateNextWordSuggestions(prevWord) }
+            } else {
+                clearSuggestionsUI()
+            }
             return
         }
 
@@ -1450,10 +1497,65 @@ class KeyboardController(
         mainHandler.postDelayed(suggestionDebounceRunnable!!, SUGGESTION_DEBOUNCE_MS)
     }
 
+    private fun updateNextWordSuggestions(previousWord: String) {
+        val freqMap = preferenceHelper.getTopFrequentWords(50)
+            .associate { (word, count) -> word to count }
+        val firstChar = previousWord.trim().firstOrNull() ?: ' '
+        val isUrdu = firstChar in '\u0600'..'\u06FF' || firstChar in '\uFB50'..'\uFDFF' || firstChar in '\uFE70'..'\uFEFF'
+        val predictions = if (isUrdu || isUrduKeyboardLayout) {
+            urduSuggestionEngine.getNextWordPredictions(previousWord, freqMap)
+        } else {
+            englishSuggestionEngine.getNextWordPredictions(previousWord, freqMap)
+        }
+        mainHandler.post {
+            if (composingText.isEmpty()) {
+                displayNextWordSuggestions(predictions)
+            }
+        }
+    }
+
     private fun getSuggestionsForInput(input: String): List<String> {
         val freqMap = preferenceHelper.getTopFrequentWords(50)
             .associate { (word, count) -> word to count }
-        return phoneticMapper.getUrduSuggestions(input, freqMap)
+        val prevWord = getPreviousWordFromEditor()
+        val firstChar = input.firstOrNull() ?: ' '
+        val isUrdu = firstChar in '\u0600'..'\u06FF' || firstChar in '\uFB50'..'\uFDFF' || firstChar in '\uFE70'..'\uFEFF'
+
+        if (isUrdu) {
+            return urduSuggestionEngine.getSuggestions(input, prevWord, freqMap)
+        }
+
+        // English Keyboard: intelligently blend English word completions with Roman-Urdu transliterations
+        val englishCandidates = englishSuggestionEngine.getSuggestions(input, prevWord, freqMap)
+        val urduPhoneticCandidates = phoneticMapper.getUrduSuggestions(input, freqMap)
+
+        val combined = LinkedHashSet<String>(4)
+        if (urduPhoneticCandidates.isNotEmpty()) {
+            combined.add(urduPhoneticCandidates[0])
+        }
+        for (eng in englishCandidates) {
+            if (combined.size >= 3) break
+            combined.add(eng)
+        }
+        for (ur in urduPhoneticCandidates.drop(1)) {
+            if (combined.size >= 3) break
+            combined.add(ur)
+        }
+        return combined.toList()
+    }
+
+    private fun displayNextWordSuggestions(predictions: List<String>) {
+        if (predictions.isEmpty()) {
+            clearSuggestionsUI()
+            return
+        }
+        val center = predictions.getOrNull(0) ?: ""
+        val left = predictions.getOrNull(1) ?: ""
+        val right = predictions.getOrNull(2) ?: ""
+
+        if (suggestionCenterBtn?.text?.toString() != center) suggestionCenterBtn?.text = center
+        if (suggestionLeftBtn?.text?.toString() != left) suggestionLeftBtn?.text = left
+        if (suggestionRightBtn?.text?.toString() != right) suggestionRightBtn?.text = right
     }
 
     private fun displaySuggestions(suggestions: List<String>, rawInput: String) {
