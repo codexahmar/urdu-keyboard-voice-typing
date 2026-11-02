@@ -224,7 +224,6 @@
         android:baselineAligned="false"
         android:gravity="center_vertical"
         android:splitMotionEvents="true"
-        android:layout_marginBottom="3dp"
         android:orientation="horizontal">
 
         <!-- Shift — icon button (1.5 keys wide, Gboard standard) -->

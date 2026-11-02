@@ -2,38 +2,49 @@
 <resources>
     <color name="ic_launcher_background">#00000000</color>
 
-    <!-- ===== Keyboard Light Mode ===== -->
+    <!-- ===== Keyboard Light Mode (Google Gboard Material Standard) ===== -->
     <!-- Overall keyboard surface -->
-    <color name="kb_bg_light">#F3F6FA</color>
+    <color name="kb_bg_light">#ECEFF4</color>
     <!-- Regular character key face -->
     <color name="kb_key_light">#FFFFFF</color>
-    <!-- Functional keys: shift, backspace, 123, mic, comma, period -->
-    <color name="kb_key_functional_light">#EAF1FA</color>
-    <!-- Light key outline -->
-    <color name="kb_key_stroke_light">#D5DEE8</color>
+    <!-- Soft 3D bottom bevel/shadow for character keys -->
+    <color name="kb_key_shadow_light">#CBD2DB</color>
+    <!-- Functional keys: shift, backspace, 123, language -->
+    <color name="kb_key_functional_light">#DDE2EA</color>
+    <!-- Soft 3D bottom bevel/shadow for functional keys -->
+    <color name="kb_key_functional_shadow_light">#BAC2CD</color>
     <!-- Primary text on character keys -->
-    <color name="kb_text_primary_light">#1A1C1E</color>
-    <!-- Text on functional/action keys -->
-    <color name="kb_text_functional_light">#2F3F57</color>
-    <!-- Ripple on light keys -->
-    <color name="kb_ripple_light">#1F0B57D0</color>
+    <color name="kb_text_primary_light">#1F2024</color>
+    <!-- Text and icons on functional/action keys -->
+    <color name="kb_text_functional_light">#3C4043</color>
+    <color name="kb_icon_light">#3C4043</color>
+    <!-- Touch ripple on light keys -->
+    <color name="kb_ripple_light">#1A000000</color>
 
-    <!-- ===== Keyboard Dark Mode ===== -->
-    <color name="kb_bg_dark">#1B1B1D</color>
-    <color name="kb_key_dark">#3D3D40</color>
-    <color name="kb_key_functional_dark">#1C1C1E</color>
-    <color name="kb_text_primary_dark">#E8E8EA</color>
-    <color name="kb_text_functional_dark">#AFAFB3</color>
-    <color name="kb_key_stroke_dark">#4B5059</color>
-    <color name="kb_ripple_dark">#55FFFFFF</color>
+    <!-- ===== Keyboard Dark Mode (Google Gboard Dark Standard) ===== -->
+    <!-- Overall dark surface -->
+    <color name="kb_bg_dark">#1C1D20</color>
+    <!-- Regular character key face -->
+    <color name="kb_key_dark">#3B3C3F</color>
+    <!-- Soft 3D bottom bevel/shadow for dark keys -->
+    <color name="kb_key_shadow_dark">#161719</color>
+    <!-- Dark functional keys: shift, backspace, 123, language -->
+    <color name="kb_key_functional_dark">#252628</color>
+    <!-- Soft 3D bottom bevel/shadow for dark functional keys -->
+    <color name="kb_key_functional_shadow_dark">#121314</color>
+    <!-- Primary text on dark keys -->
+    <color name="kb_text_primary_dark">#F0F1F5</color>
+    <!-- Text and icons on dark functional keys -->
+    <color name="kb_text_functional_dark">#BDC1C6</color>
+    <color name="kb_icon_dark">#BDC1C6</color>
+    <!-- Touch ripple on dark keys -->
+    <color name="kb_ripple_dark">#26FFFFFF</color>
 
     <!-- ===== Shared / Accent ===== -->
     <!-- Google Blue — enter key, active shift -->
     <color name="kb_accent">#0B57D0</color>
-    <!-- Text on the blue enter key -->
+    <!-- Bottom shadow for blue enter key -->
+    <color name="kb_accent_shadow">#073F99</color>
+    <!-- Text and icon on the blue enter key -->
     <color name="kb_enter_text">#FFFFFF</color>
-    <!-- Mic icon on light background -->
-    <color name="kb_icon_light">#2F3F57</color>
-    <!-- Mic/backspace icon on dark background -->
-    <color name="kb_icon_dark">#CCCCCC</color>
 </resources>

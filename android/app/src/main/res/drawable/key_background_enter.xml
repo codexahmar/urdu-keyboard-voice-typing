@@ -4,15 +4,27 @@
 
     <item android:id="@android:id/mask">
         <shape android:shape="rectangle">
-            <corners android:radius="5dp" />
+            <corners android:radius="8dp" />
             <solid android:color="@color/kb_accent" />
         </shape>
     </item>
 
     <item>
-        <shape android:shape="rectangle">
-            <corners android:radius="5dp" />
-            <solid android:color="@color/kb_accent" />
-        </shape>
+        <layer-list>
+            <!-- Soft bottom shadow bevel for accent key -->
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="8dp" />
+                    <solid android:color="@color/kb_accent_shadow" />
+                </shape>
+            </item>
+            <!-- Enter key face -->
+            <item android:bottom="1.5dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="8dp" />
+                    <solid android:color="@color/kb_accent" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
 </ripple>

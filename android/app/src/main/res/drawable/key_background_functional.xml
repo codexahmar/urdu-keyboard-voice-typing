@@ -4,18 +4,27 @@
 
     <item android:id="@android:id/mask">
         <shape android:shape="rectangle">
-            <corners android:radius="5dp" />
+            <corners android:radius="8dp" />
             <solid android:color="@color/kb_key_functional_light" />
         </shape>
     </item>
 
     <item>
-        <shape android:shape="rectangle">
-            <corners android:radius="5dp" />
-            <solid android:color="@color/kb_key_functional_light" />
-            <stroke
-                android:width="1dp"
-                android:color="@color/kb_key_stroke_light" />
-        </shape>
+        <layer-list>
+            <!-- Soft bottom shadow bevel -->
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="8dp" />
+                    <solid android:color="@color/kb_key_functional_shadow_light" />
+                </shape>
+            </item>
+            <!-- Functional key face -->
+            <item android:bottom="1.5dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="8dp" />
+                    <solid android:color="@color/kb_key_functional_light" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
 </ripple>

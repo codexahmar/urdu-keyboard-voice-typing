@@ -203,7 +203,6 @@
         android:baselineAligned="false"
         android:gravity="center_vertical"
         android:splitMotionEvents="true"
-        android:layout_marginBottom="3dp"
         android:orientation="horizontal">
         <Button android:id="@+id/key_shift" style="@style/KeyboardButtonShift" android:layout_weight="1.5" android:text="" android:drawableTop="@drawable/ic_shift_dark" android:drawablePadding="0dp" />
         <Button android:id="@+id/key_z" style="@style/KeyboardButton" android:text="z" />
