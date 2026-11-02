@@ -55,4 +55,6 @@ skills-lock.json
 # Analysis dumps & artifacts
 gboard_analysis/
 *gboard*
+.kotlin/
+
 

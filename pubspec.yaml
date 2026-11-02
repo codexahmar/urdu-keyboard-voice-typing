@@ -1,8 +1,8 @@
 name: urdu_keyboard
 description: "Urdu Keyboard - A simple, ad-free keyboard app for Urdu typing"
-publish_to: 'none'
+publish_to: "none"
 
-version: 1.0.0+5
+version: 1.0.0+6
 
 environment:
   sdk: ^3.10.4
@@ -34,11 +34,8 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
 
-
 flutter:
   uses-material-design: true
 
   assets:
     - assets/icons/
-
-

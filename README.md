@@ -1,286 +1,199 @@
-# Urdu Keyboard
+# Urdu Keyboard & Voice Typing
 
-A production-grade **Flutter + Native Android (Kotlin) hybrid application** designed to provide a modern, accessible, and intelligent Urdu keyboard experience for Android users.
-
-This project demonstrates advanced mobile engineering capabilities, including **cross-platform UI development, native Android integration, and real-world system architecture design**.
-
-> **Live on Google Play** — The application is publicly available and actively deployed.
-
-
-## 📱 App Screenshots
+A production-grade, open-source Android Input Method Editor (IME) built with **Kotlin and Flutter**, engineered to deliver a responsive, zero-latency Urdu and English typing experience aligned with Google Gboard standards.
 
 <div align="center">
 
-| **Home Dashboard** | **Roman Urdu (Phonetic)** | **Urdu Voice Typing** |
-|:---:|:---:|:---:|
-| <img src="screenshots/01_home.png" width="240" alt="Home Dashboard" /> | <img src="screenshots/02_roman_urdu.png" width="240" alt="Roman Urdu Typing" /> | <img src="screenshots/03_voice_typing.png" width="240" alt="Urdu Voice Typing" /> |
+<a href="https://play.google.com/store/apps/details?id=com.codexahmar.urdu_keyboard">
+  <img alt="Get it on Google Play" height="65" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" />
+</a>
 
-| **1-Tap Quick Switch** | **Easy Setup Flow** | **Language & Settings** |
-|:---:|:---:|:---:|
-| <img src="screenshots/04_one_tap_switch.png" width="240" alt="1-Tap Quick Switch" /> | <img src="screenshots/05_easy_setup.png" width="240" alt="Easy Setup Flow" /> | <img src="screenshots/06_language_settings.png" width="240" alt="Language & Settings" /> |
+<br/>
+
+[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Flutter-02569B?style=flat-square&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Kotlin](https://img.shields.io/badge/Language-Kotlin%202.2-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Min SDK](https://img.shields.io/badge/Min%20SDK-24-green?style=flat-square)](https://developer.android.com)
+[![Target SDK](https://img.shields.io/badge/Target%20SDK-35-blue?style=flat-square)](https://developer.android.com)
+[![License](https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square)](LICENSE)
 
 </div>
 
 ---
 
-## Project Overview
+## Overview
 
-Urdu Keyboard is a **hybrid mobile system** composed of:
-
-* A **Flutter-based application layer** for UI, onboarding, and user configuration
-* A **native Android keyboard engine (Kotlin)** built using `InputMethodService`
-* A **communication bridge using Platform Channels** to connect both layers
-
-This architecture allows Flutter to handle **user experience and state management**, while Kotlin handles **low-level system keyboard operations**, which Flutter cannot directly access.
-
-This project reflects real-world mobile engineering practices used in production-grade applications.
+Urdu Keyboard combines the speed of native Android system services with the user experience of Flutter. The system keyboard runs entirely in native **Kotlin** via Android's `InputMethodService` to guarantee hardware-accelerated 120Hz rendering, zero-latency touch response, and continuous text processing without window detachment. The accompanying Flutter application handles onboarding, guided system activation, text-scaling accessibility, and theme configuration.
 
 ---
 
-## Engineering Highlights
+## App Previews
 
-This project demonstrates strong proficiency in:
+<div align="center">
 
-### Cross-Platform + Native Integration
+| Home Dashboard | Roman Urdu (Phonetic) | Urdu Voice Typing |
+|:---:|:---:|:---:|
+| <img src="screenshots/01_home.png" width="230" alt="Home Dashboard" /> | <img src="screenshots/02_roman_urdu.png" width="230" alt="Roman Urdu Typing" /> | <img src="screenshots/03_voice_typing.png" width="230" alt="Urdu Voice Typing" /> |
 
-* Flutter ↔ Kotlin communication using Platform Channels
-* Bi-directional messaging between UI layer and system keyboard service
-* Clean separation between presentation layer and OS-level functionality
+| 1-Tap Quick Switch | Guided Setup Flow | Settings & Themes |
+|:---:|:---:|:---:|
+| <img src="screenshots/04_one_tap_switch.png" width="230" alt="1-Tap Quick Switch" /> | <img src="screenshots/05_easy_setup.png" width="230" alt="Easy Setup Flow" /> | <img src="screenshots/06_language_settings.png" width="230" alt="Language & Settings" /> |
 
-### Native Android System Development
-
-* Custom keyboard built using `InputMethodService`
-* Direct integration with Android input framework
-* System-level keyboard lifecycle management
-
-### Scalable Architecture Design
-
-* Feature-first modular structure
-* Separation of core, features, services, and state layers
-* Maintainable and production-ready code organization
-
-### UI/UX Engineering
-
-* Material 3 design implementation
-* Elder-friendly accessibility system (large text, high contrast, simplified flows)
-* Multi-step onboarding experience optimized for non-technical users
-
-### State & Data Management
-
-* Provider-based state management
-* Persistent local storage using SharedPreferences
-* Clean separation of UI and business logic
+</div>
 
 ---
 
-## Key Features
+## Core Capabilities
 
-* Multi-step onboarding system with guided setup flow
-* Multi-language support (Urdu, English, Arabic)
-* Keyboard preview and usage guidance system
-* Voice typing instruction module
-* Theme system (Light / Dark / System)
-* Adjustable accessibility text scaling
-* Elder-friendly UX design principles
-* Zero-ad experience (clean production UI)
-* Native Android keyboard integration (Kotlin)
-* Real-time Flutter ↔ Android communication
+### Bilingual Suggestion & Prediction Engine
+* **Statistical Unigram Model**: 730+ frequency-indexed Urdu words and 280+ common English words stored with probability weights.
+* **Contextual Bigram Transitions (Next-Word Prediction)**: Predicts next words immediately upon committing text (e.g. `آپ` $\to$ `کیسے`, `عید` $\to$ `مبارک`, `thank` $\to$ `you`).
+* **On-Device Personal Vocabulary**: Dynamically tracks your committed words with localized frequency increments, prioritizing your most typed vocabulary over generic dictionary defaults.
+* **O(1) Bucket Indexing**: Letter-indexed prefix lookups eliminate collection scanning and garbage collection pauses during rapid typing.
+
+### Phonetic Roman-to-Urdu Transliteration
+* **Natural Roman Typing**: Type in English letters (`kya hal hai`) to generate authentic Urdu script (`کیا حال ہے`).
+* **Greedy Tokenizer**: Evaluates trigraphs (`chh` $\to$ `چھ`), digraphs (`kh` $\to$ `خ`, `gh` $\to$ `غ`, `sh` $\to$ `ش`, `bh` $\to$ `بھ`), and aspirated single consonants in priority order.
+* **Contextual Orthography**: Automatically applies initial Alif Madda (`aa` $\to$ `آ`) and trailing Noon Ghunna (`n` preceded by vowels $\to$ `ں`).
+
+### Native Performance & Gesture Controls
+* **In-Memory Zero-Detachment Layer Swaps**: Switching between English, Urdu, Symbols, and Emoji layers toggles view visibility in memory (0ms latency) without reconstructing the window or calling `setInputView()`.
+* **Space Bar Cursor Glide**: Horizontal touch scrubbing across the space bar glides the editor cursor left and right with haptic tick feedback.
+* **Accelerated Backspace**: Exponential hold-to-delete velocity curve for rapid paragraph and sentence clearing.
+* **Multi-Touch Rollover**: Commits active keystrokes seamlessly when a second finger touches down during high-speed typing.
+
+### Gboard-Standard Ergonomics & Theming
+* **Key Dimensions**: 54dp key height with 8dp inter-row vertical spacing, matching standard Google Gboard touch targets.
+* **Soft 3D Tactile Design**: 8dp squircle key corners with layered bottom shadow bevels (`layer-list` drawables) in both Light and Dark modes.
+* **Adaptive Symbols Layer**:
+  * **Urdu Mode**: Displays Urdu numerals (`۱, ۲, ۳, ۴, ۵, ۶, ۷, ۸, ۹, ۰`) and punctuation (`؟, ،, ۔, ؛, ٪`).
+  * **English Mode**: Displays standard digits (`1, 2, 3, 4, 5, 6, 7, 8, 9, 0`) and symbols (`?, ,, ., ;, %`).
+* **In-Place Emoji Search**: Embedded query capsule above the keyboard with a blinking cursor and bilingual keyword matching.
+* **Hands-Free Dictation**: Google Speech Recognition integration for both Urdu (`ur-PK`) and English (`en-US`).
 
 ---
 
 ## System Architecture
 
-### High-Level Architecture
-
 ```text
-┌──────────────────────────────┐
-│        Flutter App           │
-│                              │
-│  UI Layer                    │
-│  Onboarding Flow             │
-│  Settings & Preferences      │
-│  State Management (Provider) │
-└──────────────┬───────────────┘
-               │
-     Platform Channels (IPC)
-               │
-               ▼
-┌──────────────────────────────┐
-│     Native Android Layer     │
-│          (Kotlin)            │
-│                              │
-│  InputMethodService          │
-│  Keyboard Engine             │
-│  System Input Handling       │
-└──────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│               Flutter Application Layer                │
+│  • Onboarding & System IME Enablement Wizard           │
+│  • Preference Management (Haptics, Themes, Scaling)    │
+│  • Interactive Keyboard Preview & Voice Guide          │
+└──────────────────────────┬─────────────────────────────┘
+                           │ Platform Channels (IPC)
+┌──────────────────────────▼─────────────────────────────┐
+│           Native Android IME Engine (Kotlin)           │
+│                                                        │
+│  UrduKeyboardService (InputMethodService)              │
+│  │                                                     │
+│  └── KeyboardController (Orchestrator)                 │
+│      ├── KeyboardLayerManager (Visibility & Insets)    │
+│      ├── KeyTouchHandler (Gestures & Fast Tap)         │
+│      ├── KeyboardSuggestionManager (N-Gram Pipelines)  │
+│      │   ├── UrduSuggestionEngine (UrduLexicon)        │
+│      │   ├── EnglishSuggestionEngine (EnglishLexicon)  │
+│      │   └── PhoneticMapper (RomanUrduDictionary)      │
+│      ├── EmojiSearchController (In-Place Filter)       │
+│      ├── VoiceInputManager (Speech Recognition)        │
+│      └── BackspaceHandler (Accelerated Repeat)         │
+└────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Project Structure
+## Repository Structure
 
 ```text
-lib/
-├── core/
-│   ├── constants/
-│   ├── theme/
-│   └── widgets/
-├── features/
-│   ├── splash/
-│   ├── onboarding/
-│   ├── home/
-│   ├── language_selection/
-│   ├── keyboard_preview/
-│   ├── voice_typing/
-│   └── settings/
-├── services/
-│   ├── platform_channel_service.dart
-│   └── preferences_service.dart
-├── state/
-│   └── app_state.dart
-└── main.dart
-```
-
-This structure follows a **feature-first scalable architecture**, making the codebase easy to extend, test, and maintain.
-
----
-
-## Flutter + Kotlin Integration
-
-A key highlight of this project is the **hybrid architecture combining Flutter and native Android**.
-
-### Why this approach?
-
-Flutter alone cannot implement system-level keyboard functionality. Therefore:
-
-* Flutter handles UI, onboarding, and configuration
-* Kotlin handles keyboard engine and system input
-* Platform Channels act as a communication bridge
-
-This enables:
-
-* Real-time language switching
-* Keyboard configuration updates from Flutter
-* Native system-level input handling
-
----
-
-## State Management
-
-* Provider is used for scalable and reactive state management
-* Ensures separation of UI and business logic
-* Lightweight and production-appropriate for this architecture
-
----
-
-## Design Principles
-
-* Clean Architecture with strict separation of concerns
-* Feature-first modular design
-* Accessibility-driven UX for elderly users
-* Native-first integration using Android system APIs
-* Production-ready code quality and maintainability
-
----
-
-## Application Modules
-
-### Onboarding System
-
-Guided multi-step setup flow for first-time users.
-
-### Home Dashboard
-
-Central navigation hub for all keyboard features.
-
-### Language Management
-
-Dynamic language selection with native script support.
-
-### Keyboard Preview
-
-Visual representation and usage guidance.
-
-### Voice Typing Guide
-
-Instructional module for voice input usage.
-
-### Settings System
-
-* Theme control
-* Accessibility scaling
-* App configuration
-
----
-
-## Dependencies
-
-```yaml
-dependencies:
-  flutter:
-    sdk: flutter
-  flutter_localizations:
-    sdk: flutter
-  provider: ^6.1.1
-  shared_preferences: ^2.2.2
-  permission_handler: ^11.3.0
-  google_fonts: ^8.2.1
-  url_launcher: ^6.3.3
-  share_plus: ^13.3.1
-  cupertino_icons: ^1.0.8
+android/app/src/main/kotlin/com/codexahmar/urdu_keyboard/
+├── MainActivity.kt                      # Flutter activity host
+├── channel/
+│   └── FlutterChannelHandler.kt         # MethodChannel bridge between Flutter and Kotlin
+├── keyboard/
+│   ├── UrduKeyboardService.kt           # Native IME Service lifecycle entrypoint
+│   ├── KeyboardController.kt            # High-level coordinator
+│   ├── KeyboardLayerManager.kt          # Cached view hierarchy, insets, and layer toggles
+│   ├── KeyTouchHandler.kt               # Touch dispatch, rollover, and space bar glide
+│   ├── KeyboardSuggestionManager.kt     # Debounced suggestion coordinator
+│   ├── UrduSuggestionEngine.kt          # Probabilistic Urdu word and bigram engine
+│   ├── EnglishSuggestionEngine.kt       # English auto-completion and bigram engine
+│   ├── PhoneticMapper.kt                # Algorithmic Roman-to-Urdu transliterator
+│   ├── EmojiSearchController.kt         # In-place search query and horizontal results strip
+│   ├── EmojiDictionary.kt               # Bilingual emoji keyword database
+│   ├── BackspaceHandler.kt              # Accelerated hold-to-delete logic
+│   ├── VoiceInputManager.kt             # Speech recognition manager
+│   ├── KeyPopupOverlay.kt               # Floating preview bubble and variant selector
+│   ├── KeyboardConstants.kt             # Compile-time key IDs, dimensions, and arrays
+│   ├── UrduLexicon.kt                   # Urdu unigrams and bigram transition tables
+│   ├── EnglishLexicon.kt                # English vocabulary and transition tables
+│   └── RomanUrduDictionary.kt           # Roman phonetic mappings and orthography rules
+└── utils/
+    └── PreferenceHelper.kt              # Persistent settings and learned word frequencies
 ```
 
 ---
 
 ## Getting Started
 
-### Requirements
+### Prerequisites
+* Flutter SDK (3.22 or higher)
+* Android Studio / Android SDK (API 34+)
+* JDK 17 or 21
 
-* Flutter SDK
-* Android Studio
-* Kotlin support enabled
-* Android device or emulator
+### Build and Run
 
-### Setup
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/codexahmar/urdu-keyboard-voice-typing.git
+   cd urdu-keyboard-voice-typing
+   ```
 
-```bash
-git clone https://github.com/codexahmar/urdu-keyboard-voice-typing
-flutter pub get
-flutter run
-```
+2. **Fetch Flutter dependencies:**
+   ```bash
+   flutter pub get
+   ```
 
-Note: Full functionality requires the native Android Kotlin keyboard module.
+3. **Deploy to a connected device:**
+   ```bash
+   flutter run
+   ```
 
----
-
-## Deployment
-
-The application is successfully deployed on the Google Play Store, demonstrating real-world production readiness.
-
-Google Play Store:
-https://play.google.com/store/apps/details?id=com.codexahmar.urdu_keyboard
-
----
-
-## Developer
-
-Ahmaryar Khan
-Flutter & Android Engineer
-
-Version: 1.0.0
+4. **Activate the Keyboard:**
+   * Launch the app on your device and tap **Switch Keyboard**.
+   * Toggle **Urdu Keyboard** on under `Settings > System > Languages & Input > On-screen keyboard`.
 
 ---
 
-## Summary
+## Contributing
 
-This project demonstrates the ability to:
+Contributions are welcome. If you would like to expand the vocabulary, refine phonetic rules, optimize performance, or report an issue, please follow these guidelines:
 
-* Build production-level Flutter applications
-* Integrate with native Android systems using Kotlin
-* Design scalable mobile architectures
-* Implement real-world cross-platform communication systems
-* Deliver user-focused, accessible mobile experiences
+1. **Fork** the repository and create your branch from `main`:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+2. **Commit your modifications** with clear, descriptive messages:
+   ```bash
+   git commit -m "Enhance Urdu bigram transition probabilities"
+   ```
+3. **Verify the build**:
+   ```bash
+   ./android/gradlew -p android assembleDebug
+   ```
+4. **Push to your fork** and submit a **Pull Request**.
+
+For bug reports or feature requests, please open an [Issue](https://github.com/codexahmar/urdu-keyboard-voice-typing/issues).
 
 ---
 
-Built with engineering precision for real-world mobile systems.
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for complete terms.
+
+---
+
+## Author
+
+**Ahmaryar Khan**  
+* Mobile Software Engineer (Flutter & Android)  
+* Google Play: [Urdu Keyboard on Play Store](https://play.google.com/store/apps/details?id=com.codexahmar.urdu_keyboard)
