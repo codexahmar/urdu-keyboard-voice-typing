@@ -51,3 +51,8 @@ android/upload-keystore.jks
 # AI Agent & Skills
 skills-lock.json
 .agents/
+
+# Analysis dumps & artifacts
+gboard_analysis/
+*gboard*
+

@@ -1,10 +1,5 @@
 package com.codexahmar.urdu_keyboard
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Bundle
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -15,10 +10,6 @@ class MainActivity : FlutterActivity() {
     
     private lateinit var channelHandler: FlutterChannelHandler
     private lateinit var preferenceHelper: PreferenceHelper
-    
-    companion object {
-        private const val RECORD_AUDIO_PERMISSION_CODE = 100
-    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -33,7 +24,4 @@ class MainActivity : FlutterActivity() {
             FlutterChannelHandler.CHANNEL_NAME
         ).setMethodCallHandler(channelHandler)
     }
-
-    // Microphone permission is now requested from Flutter side on home screen
-    // This allows better UX flow: permission -> keyboard setup
 }
